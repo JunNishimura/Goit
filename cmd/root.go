@@ -11,7 +11,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "Goit",
+	Use:   "goit",
 	Short: "Git made by Golang",
 	Long:  `This is a Git-like CLI tool made by Golang`,
 	// Uncomment the following line if your bare application
