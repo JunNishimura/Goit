@@ -1,4 +1,4 @@
-package sha
+package hash
 
 import (
 	"crypto/sha1"
@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func HashGenerator(content string) string {
+func StringToHash(content string) string {
 	sha1 := sha1.New()
 	io.WriteString(sha1, content)
 	return hex.EncodeToString(sha1.Sum(nil))
