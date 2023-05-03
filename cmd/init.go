@@ -17,10 +17,9 @@ var initCmd = &cobra.Command{
 	Short: "initialize Goit",
 	Long:  `This is a command to initialize Goit.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// .goitディレクトリの存在確認
-		if _, err := os.Stat(".goit"); !os.IsNotExist(err) {
-			// 既にinitされている場合はreturn
-			return errors.New("Goit is already initialized")
+		// check goit initizlied
+		if IsGoitInitialized() {
+			return errors.New("goit is already initialized")
 		}
 
 		// .goit作成

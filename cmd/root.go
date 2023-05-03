@@ -39,3 +39,8 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
+
+func IsGoitInitialized() bool {
+	_, err := os.Stat(".goit")
+	return !os.IsNotExist(err)
+}
