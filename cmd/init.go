@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/JunNishimura/Goit/object"
 	"github.com/spf13/cobra"
 )
 
@@ -22,19 +23,19 @@ var initCmd = &cobra.Command{
 			return errors.New("goit is already initialized")
 		}
 
-		// .goit作成
+		// make .goit directory
 		if err := os.Mkdir(".goit", os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make directory: %s", err.Error())
+			return fmt.Errorf("fail to make .goit directory: %v", err)
 		}
 
-		// .goit/objects作成
-		if err := os.Mkdir(".goit/objects", os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make directory: %s", err.Error())
+		// make .goit/objects directory
+		if err := os.Mkdir(object.OBJ_DIR, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make .goit/objects directory: %v", err)
 		}
 
-		// .goit/refs作成
+		// make .goit/refs directory
 		if err := os.Mkdir(".goit/refs", os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make directory: %s", err.Error())
+			return fmt.Errorf("fail to make .goit/refs directory: %v", err)
 		}
 
 		return nil
@@ -43,14 +44,4 @@ var initCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
