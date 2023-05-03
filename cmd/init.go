@@ -39,13 +39,13 @@ var initCmd = &cobra.Command{
 		REFS_HEADS_DIR := strings.Join([]string{REFS_DIR, "heads"}, "/")
 		REFS_TAGS_DIR := strings.Join([]string{REFS_DIR, "tags"}, "/")
 		if err := os.Mkdir(REFS_DIR, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make .goit/refs directory: %v", err)
+			return fmt.Errorf("fail to make %s directory: %v", REFS_DIR, err)
 		}
 		if err := os.Mkdir(REFS_HEADS_DIR, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make .goit/refs/heads directory: %v", err)
+			return fmt.Errorf("fail to make %s directory: %v", REFS_HEADS_DIR, err)
 		}
 		if err := os.Mkdir(REFS_TAGS_DIR, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make .goit/refs/tags directory: %v", err)
+			return fmt.Errorf("fail to make %s directory: %v", REFS_TAGS_DIR, err)
 		}
 
 		return nil
