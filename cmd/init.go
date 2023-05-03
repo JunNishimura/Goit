@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/JunNishimura/Goit/object"
 	"github.com/spf13/cobra"
@@ -34,8 +35,17 @@ var initCmd = &cobra.Command{
 		}
 
 		// make .goit/refs directory
-		if err := os.Mkdir(".goit/refs", os.ModePerm); err != nil {
+		REFS_DIR := ".goit/refs"
+		REFS_HEADS_DIR := strings.Join([]string{REFS_DIR, "heads"}, "/")
+		REFS_TAGS_DIR := strings.Join([]string{REFS_DIR, "tags"}, "/")
+		if err := os.Mkdir(REFS_DIR, os.ModePerm); err != nil {
 			return fmt.Errorf("fail to make .goit/refs directory: %v", err)
+		}
+		if err := os.Mkdir(REFS_HEADS_DIR, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make .goit/refs/heads directory: %v", err)
+		}
+		if err := os.Mkdir(REFS_TAGS_DIR, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make .goit/refs/tags directory: %v", err)
 		}
 
 		return nil
