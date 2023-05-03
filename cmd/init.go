@@ -18,7 +18,7 @@ var initCmd = &cobra.Command{
 	Long:  `This is a command to initialize Goit.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// check goit initizlied
-		if !IsGoitInitialized() {
+		if IsGoitInitialized() {
 			return errors.New("goit is already initialized")
 		}
 
