@@ -20,7 +20,7 @@ const (
 	INDEX_PATH = ".goit/index"
 )
 
-func isIndexNeedUpdated(filePath, hash string) (bool, error) {
+func isIndexNeedUpdated(hash, filePath string) (bool, error) {
 	f, err := os.Open(INDEX_PATH)
 	if err != nil {
 		return false, fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
@@ -39,6 +39,39 @@ func isIndexNeedUpdated(filePath, hash string) (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+func updateIndex(hash, filePath string) error {
+	f, err := os.OpenFile(INDEX_PATH, os.O_RDWR, 0666)
+	if err != nil {
+		return fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
+	}
+
+	// store lines of file except the line which has the same filePath
+	var lines []string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		blobInfo := strings.Split(scanner.Text(), " ")
+		if blobInfo[0] != hash && blobInfo[1] == filePath {
+			// skip the same file
+			continue
+		}
+		lines = append(lines, strings.Join(blobInfo, " "))
+	}
+	lines = append(lines, strings.Join([]string{hash, filePath}, " "))
+	f.Close()
+
+	// rewrite index
+	f, err = os.OpenFile(INDEX_PATH, os.O_RDWR|os.O_TRUNC, 0666)
+	if err != nil {
+		return fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
+	}
+	for _, line := range lines {
+		fmt.Fprintln(f, line)
+	}
+	defer f.Close()
+
+	return nil
 }
 
 func addObject(cmd *cobra.Command, args []string) error {
@@ -79,12 +112,17 @@ func addObject(cmd *cobra.Command, args []string) error {
 		}
 
 		// check if index needs to be updated
-		indexUpdateFlag, err := isIndexNeedUpdated(arg, hash)
+		indexUpdateFlag, err := isIndexNeedUpdated(hash, arg)
 		if err != nil {
 			return fmt.Errorf("fail to see if index needs to be updated: %v", err)
 		}
 		if !indexUpdateFlag {
 			continue
+		}
+
+		// update index
+		if err := updateIndex(hash, arg); err != nil {
+			return fmt.Errorf("fail to update index: %v", err)
 		}
 
 		// compress file by zlib
