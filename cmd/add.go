@@ -15,6 +15,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func writeIndex() {
+
+}
+
 func addObject(cmd *cobra.Command, args []string) error {
 	if !IsGoitInitialized() {
 		return errors.New("fatal: not a goit repository: .goit")
@@ -30,6 +34,13 @@ func addObject(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(`path "%s" did not match any files`, arg)
 		}
 	}
+
+	INDEX_PATH := ".goit/index"
+	fIndex, err := os.OpenFile(INDEX_PATH, os.O_RDWR|os.O_CREATE, 0664)
+	if err != nil {
+		return fmt.Errorf("fail to open/create %s: %v", INDEX_PATH, err)
+	}
+	defer fIndex.Close()
 
 	for _, arg := range args {
 		// make object source which is input of hash and zlib
