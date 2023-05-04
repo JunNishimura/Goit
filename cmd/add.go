@@ -4,6 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -14,6 +15,31 @@ import (
 	"github.com/JunNishimura/Goit/util"
 	"github.com/spf13/cobra"
 )
+
+const (
+	INDEX_PATH = ".goit/index"
+)
+
+func isIndexNeedUpdated(filePath, hash string) (bool, error) {
+	f, err := os.Open(INDEX_PATH)
+	if err != nil {
+		return false, fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		blobInfo := strings.Split(scanner.Text(), " ")
+		if len(blobInfo) != 2 {
+			return false, fmt.Errorf("find invalid blob info %v", blobInfo)
+		}
+		// if blob which has same path and hash is registered, return false.
+		if blobInfo[0] == hash && blobInfo[1] == filePath {
+			return false, nil
+		}
+	}
+	return true, nil
+}
 
 func addObject(cmd *cobra.Command, args []string) error {
 	if !IsGoitInitialized() {
@@ -32,7 +58,6 @@ func addObject(cmd *cobra.Command, args []string) error {
 	}
 
 	// make index file if index file is not found
-	INDEX_PATH := ".goit/index"
 	if _, err := os.Stat(INDEX_PATH); os.IsNotExist(err) {
 		_, err := os.Create(INDEX_PATH)
 		if err != nil {
@@ -51,6 +76,15 @@ func addObject(cmd *cobra.Command, args []string) error {
 		hash := hash.StringToHash(objSource)
 		if len(hash) != 40 {
 			return errors.New("fail to generate hash")
+		}
+
+		// check if index needs to be updated
+		indexUpdateFlag, err := isIndexNeedUpdated(arg, hash)
+		if err != nil {
+			return fmt.Errorf("fail to see if index needs to be updated: %v", err)
+		}
+		if !indexUpdateFlag {
+			continue
 		}
 
 		// compress file by zlib
