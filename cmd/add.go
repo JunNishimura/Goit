@@ -74,6 +74,36 @@ func updateIndex(hash, filePath string) error {
 	return nil
 }
 
+func deleteFromIndex() error {
+	f, err := os.Open(INDEX_PATH)
+	if err != nil {
+		return fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
+	}
+
+	// remove files to be deleted from index
+	var lines []string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		blobInfo := strings.Split(scanner.Text(), " ")
+		if _, err := os.Stat(blobInfo[1]); !os.IsNotExist(err) {
+			lines = append(lines, strings.Join(blobInfo, " "))
+		}
+	}
+	f.Close()
+
+	// rewrite index
+	f, err = os.OpenFile(INDEX_PATH, os.O_RDWR|os.O_TRUNC, 0666)
+	if err != nil {
+		return fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
+	}
+	for _, line := range lines {
+		fmt.Fprintln(f, line)
+	}
+	defer f.Close()
+
+	return nil
+}
+
 func addObject(cmd *cobra.Command, args []string) error {
 	if !IsGoitInitialized() {
 		return errors.New("fatal: not a goit repository: .goit")
@@ -151,6 +181,11 @@ func addObject(cmd *cobra.Command, args []string) error {
 		if _, err := f.Write(b.Bytes()); err != nil {
 			return fmt.Errorf("fail to write to %s: %v", filePath, err)
 		}
+	}
+
+	// delete non-tracking files from index
+	if err := deleteFromIndex(); err != nil {
+		return fmt.Errorf("fail to delete from index: %v", err)
 	}
 
 	return nil
