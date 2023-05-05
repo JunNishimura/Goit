@@ -14,6 +14,6 @@ func CreateObjectSource(filePath string, objType object.ObjectType) (string, err
 		return "", fmt.Errorf("fail to read file: %v", err)
 	}
 	fileSize := len(bytes)
-	input := string(objType) + " " + strconv.Itoa(fileSize) + "\x00" + string(bytes)
+	input := objType.String() + " " + strconv.Itoa(fileSize) + "\x00" + string(bytes)
 	return input, nil
 }
