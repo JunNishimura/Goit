@@ -135,7 +135,7 @@ var addCmd = &cobra.Command{
 
 		for _, arg := range args {
 			// make object source which is input of hash and zlib
-			objSource, err := util.CreateObjectSource(arg, object.Blob)
+			objSource, err := util.CreateObjectSource(arg, object.BLOB_TYPE)
 			if err != nil {
 				return fmt.Errorf("fail to generate object source: %v", err)
 			}
