@@ -3,22 +3,22 @@ package object
 type ObjectType int
 
 const (
-	OBJ_DIR            = ".goit/objects"
-	Blob    ObjectType = iota
-	Tree
-	Commit
-	Tag
+	OBJ_DIR              = ".goit/objects"
+	BLOB_TYPE ObjectType = iota
+	TREE_TYPE
+	COMMIT_TYPE
+	TAG_TYPE
 )
 
 func (ot ObjectType) String() string {
 	switch ot {
-	case Blob:
+	case BLOB_TYPE:
 		return "blob"
-	case Tree:
+	case TREE_TYPE:
 		return "tree"
-	case Commit:
+	case COMMIT_TYPE:
 		return "commit"
-	case Tag:
+	case TAG_TYPE:
 		return "tag"
 	default:
 		return ""
