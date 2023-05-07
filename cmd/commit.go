@@ -4,7 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 )
@@ -18,8 +18,12 @@ var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "commit",
 	Long:  "this is a command to commit",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("commit called", message)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if !IsGoitInitialized() {
+			return errors.New("fatal: not a goit repository: .goit")
+		}
+
+		return nil
 	},
 }
 
