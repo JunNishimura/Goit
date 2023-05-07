@@ -168,7 +168,7 @@ var addCmd = &cobra.Command{
 			}
 
 			// save file
-			dirPath := filepath.Join(object.OBJ_DIR, hash[:2])
+			dirPath := filepath.Join(".goit/objects", hash[:2])
 			filePath := filepath.Join(dirPath, hash[2:])
 			if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
 				return fmt.Errorf("fail to make %s: %v", dirPath, err)

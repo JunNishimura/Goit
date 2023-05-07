@@ -3,7 +3,6 @@ package object
 type ObjectType int
 
 const (
-	OBJ_DIR              = ".goit/objects"
 	BLOB_TYPE ObjectType = iota
 	TREE_TYPE
 	COMMIT_TYPE
