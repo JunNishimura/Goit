@@ -8,7 +8,7 @@ import (
 	"github.com/JunNishimura/Goit/object"
 )
 
-func CreateObjectSource(filePath string, objType object.ObjectType) (string, error) {
+func CreateObjectSource(filePath string, objType object.Type) (string, error) {
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return "", fmt.Errorf("fail to read file: %v", err)

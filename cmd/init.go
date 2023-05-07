@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/JunNishimura/Goit/object"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +29,7 @@ var initCmd = &cobra.Command{
 		}
 
 		// make .goit/objects directory
-		if err := os.Mkdir(object.OBJ_DIR, os.ModePerm); err != nil {
+		if err := os.Mkdir(".goit/objects", os.ModePerm); err != nil {
 			return fmt.Errorf("fail to make .goit/objects directory: %v", err)
 		}
 
