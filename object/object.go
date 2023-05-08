@@ -1,11 +1,11 @@
 package object
 
 import (
-	"crypto/sha1"
+	"bytes"
+	"compress/zlib"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/JunNishimura/Goit/sha"
 )
@@ -21,32 +21,30 @@ func (o *Object) Header() []byte {
 	return []byte(fmt.Sprintf("%s %d\x00", o.Type, o.Size))
 }
 
-func NewBlobObject(filePath string) (*Object, error) {
-	f, err := os.Stat(filePath)
-	if os.IsNotExist(err) {
-		return nil, fmt.Errorf(`fatal: Cannot open '%s': No such file`, filePath)
+func (o *Object) Write(compData []byte) error {
+	dirPath := filepath.Join(".goit", "objects", o.Hash.String()[:2])
+	filePath := filepath.Join(dirPath, o.Hash.String()[2:])
+	if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
+		return fmt.Errorf("fail to make %s: %v", dirPath, err)
 	}
-	if f.IsDir() {
-		return nil, fmt.Errorf(`fatal: '%s' is invalid to make blob object`, filePath)
-	}
-
-	data, err := ioutil.ReadFile(filePath)
+	f, err := os.Create(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("fail to read file: %v", err)
+		return fmt.Errorf("fail to make %s: %v", filePath, err)
 	}
-	size := len(data)
-
-	checkSum := sha1.New()
-	content := fmt.Sprintf("%s %d\x00%s", BlobObject, size, data)
-	io.WriteString(checkSum, content)
-	hash := checkSum.Sum(nil)
-
-	object := &Object{
-		Type: BlobObject,
-		Hash: hash,
-		Size: size,
-		Data: data,
+	defer f.Close()
+	if _, err := f.Write(compData); err != nil {
+		return fmt.Errorf("fail to write to %s: %v", filePath, err)
 	}
+	return nil
+}
 
-	return object, nil
+func (o *Object) CompressBlob() ([]byte, error) {
+	var b bytes.Buffer
+	w := zlib.NewWriter(&b)
+	defer w.Close()
+	data := append(o.Header(), o.Data...)
+	if _, err := w.Write(data); err != nil {
+		return nil, fmt.Errorf("fail to compress data: %v", err)
+	}
+	return b.Bytes(), nil
 }
