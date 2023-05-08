@@ -8,12 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/JunNishimura/Goit/hash"
 	"github.com/JunNishimura/Goit/object"
-	"github.com/JunNishimura/Goit/util"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +18,7 @@ const (
 	INDEX_PATH = ".goit/index"
 )
 
-func isIndexNeedUpdated(hash, filePath string) (bool, error) {
+func isIndexNeedUpdated(object *object.Object, filePath string) (bool, error) {
 	f, err := os.Open(INDEX_PATH)
 	if err != nil {
 		return false, fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
@@ -35,14 +32,14 @@ func isIndexNeedUpdated(hash, filePath string) (bool, error) {
 			return false, fmt.Errorf("find invalid blob info %v", blobInfo)
 		}
 		// if blob which has same path and hash is registered, return false.
-		if blobInfo[0] == hash && blobInfo[1] == filePath {
+		if blobInfo[0] == object.Hash.String() && blobInfo[1] == filePath {
 			return false, nil
 		}
 	}
 	return true, nil
 }
 
-func updateIndex(hash, filePath string) error {
+func updateIndex(object *object.Object, filePath string) error {
 	f, err := os.OpenFile(INDEX_PATH, os.O_RDWR, 0666)
 	if err != nil {
 		return fmt.Errorf("fail to open %s: %v", INDEX_PATH, err)
@@ -53,13 +50,13 @@ func updateIndex(hash, filePath string) error {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		blobInfo := strings.Split(scanner.Text(), " ")
-		if blobInfo[0] != hash && blobInfo[1] == filePath {
+		if blobInfo[0] != object.Hash.String() && blobInfo[1] == filePath {
 			// skip the same file
 			continue
 		}
 		lines = append(lines, strings.Join(blobInfo, " "))
 	}
-	lines = append(lines, strings.Join([]string{hash, filePath}, " "))
+	lines = append(lines, strings.Join([]string{object.Hash.String(), filePath}, " "))
 	f.Close()
 
 	// rewrite index
@@ -135,24 +132,14 @@ var addCmd = &cobra.Command{
 		}
 
 		for _, arg := range args {
-			// make object source which is input of hash and zlib
-			objType, err := object.NewType("blob")
+			// make blob object
+			object, err := object.NewBlobObject(arg)
 			if err != nil {
 				return err
 			}
-			objSource, err := util.CreateObjectSource(arg, objType)
-			if err != nil {
-				return fmt.Errorf("fail to generate object source: %v", err)
-			}
-
-			// make sha1 hash
-			hash := hash.StringToHash(objSource)
-			if len(hash) != 40 {
-				return errors.New("fail to generate hash")
-			}
 
 			// check if index needs to be updated
-			indexUpdateFlag, err := isIndexNeedUpdated(hash, arg)
+			indexUpdateFlag, err := isIndexNeedUpdated(object, arg)
 			if err != nil {
 				return fmt.Errorf("fail to see if index needs to be updated: %v", err)
 			}
@@ -161,36 +148,18 @@ var addCmd = &cobra.Command{
 			}
 
 			// update index
-			if err := updateIndex(hash, arg); err != nil {
+			if err := updateIndex(object, arg); err != nil {
 				return fmt.Errorf("fail to update index: %v", err)
 			}
 
 			// compress file by zlib
-			b, err := util.Compress(objSource)
+			compData, err := object.CompressBlob()
 			if err != nil {
 				return fmt.Errorf("fail to compress data: %v", err)
 			}
 
 			// save file
-			dirPath := filepath.Join(".goit/objects", hash[:2])
-			filePath := filepath.Join(dirPath, hash[2:])
-			if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
-				return fmt.Errorf("fail to make %s: %v", dirPath, err)
-			}
-			f, err := os.Create(filePath)
-			if err != nil {
-				return fmt.Errorf("fail to make %s: %v", filePath, err)
-			}
-			defer func() error {
-				err := f.Close()
-				if err != nil {
-					return fmt.Errorf("fail to close the file: %v", err)
-				}
-				return nil
-			}()
-			if _, err := f.Write(b.Bytes()); err != nil {
-				return fmt.Errorf("fail to write to %s: %v", filePath, err)
-			}
+			object.Write(compData)
 		}
 
 		// delete non-tracking files from index
