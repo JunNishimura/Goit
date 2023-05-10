@@ -13,14 +13,15 @@ type Entry struct {
 	Path string
 }
 
-type Index struct {
-	Entries []*Entry
-}
-
-type indexHeader struct {
+type Header struct {
 	Signature [4]byte
 	Version   uint32
 	EntryNum  uint32
+}
+
+type Index struct {
+	Header  Header
+	Entries []*Entry
 }
 
 func (i *Index) Write() error {
@@ -30,12 +31,7 @@ func (i *Index) Write() error {
 	}
 
 	// fixed length encoding
-	header := indexHeader{
-		Signature: [4]byte{'D', 'I', 'R', 'C'},
-		Version:   uint32(1),
-		EntryNum:  uint32(len(i.Entries)),
-	}
-	if err := binary.Write(f, binary.BigEndian, &header); err != nil {
+	if err := binary.Write(f, binary.BigEndian, &i.Header); err != nil {
 		return fmt.Errorf("fail to write fixed-length encoding: %v", err)
 	}
 
