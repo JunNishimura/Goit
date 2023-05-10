@@ -8,6 +8,10 @@ import (
 	"github.com/JunNishimura/Goit/sha"
 )
 
+const (
+	TERMINAL_SIGN = byte(0x00)
+)
+
 type Entry struct {
 	Hash sha.SHA1
 	Path string
@@ -40,7 +44,7 @@ func (i *Index) Write() error {
 	for _, entry := range i.Entries {
 		data = append(data, entry.Hash...)
 		data = append(data, []byte(entry.Path)...)
-		data = append(data, 0x00)
+		data = append(data, TERMINAL_SIGN)
 	}
 	if _, err := f.Write(data); err != nil {
 		return fmt.Errorf("fail to write variable-length encoding: %v", err)
