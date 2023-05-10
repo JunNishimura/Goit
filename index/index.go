@@ -9,8 +9,8 @@ import (
 )
 
 type Entry struct {
-	NameLength uint16
 	Hash       sha.SHA1
+	NameLength uint16
 	Path       string
 }
 
