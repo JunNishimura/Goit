@@ -123,14 +123,6 @@ var addCmd = &cobra.Command{
 			}
 		}
 
-		// make index file if index file is not found
-		if _, err := os.Stat(INDEX_PATH); os.IsNotExist(err) {
-			_, err := os.Create(INDEX_PATH)
-			if err != nil {
-				return fmt.Errorf("fail to make %s: %v", INDEX_PATH, err)
-			}
-		}
-
 		for _, arg := range args {
 			// make blob object
 			object, err := object.NewBlobObject(arg)
@@ -139,16 +131,16 @@ var addCmd = &cobra.Command{
 			}
 
 			// check if index needs to be updated
-			indexUpdateFlag, err := isIndexNeedUpdated(object, arg)
+			updateFlag, err := indexClient.IsUpdateNeeded()
 			if err != nil {
 				return fmt.Errorf("fail to see if index needs to be updated: %v", err)
 			}
-			if !indexUpdateFlag {
+			if !updateFlag {
 				continue
 			}
 
 			// update index
-			if err := updateIndex(object, arg); err != nil {
+			if err := indexClient.Update(); err != nil {
 				return fmt.Errorf("fail to update index: %v", err)
 			}
 

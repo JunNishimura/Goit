@@ -28,20 +28,38 @@ type Index struct {
 	Entries []*Entry
 }
 
-func (i *Index) Write() error {
+func NewIndex() *Index {
+	return &Index{
+		Header: Header{
+			Signature: [4]byte{'D', 'I', 'R', 'C'},
+			Version:   uint32(1),
+			EntryNum:  uint32(0),
+		},
+	}
+}
+
+func (idx *Index) IsUpdateNeeded() (bool, error) {
+	return false, nil
+}
+
+func (idx *Index) Update() error {
+	return nil
+}
+
+func (idx *Index) write() error {
 	f, err := os.Create(".goit/index")
 	if err != nil {
 		return fmt.Errorf("fail to create .goit/index: %v", err)
 	}
 
 	// fixed length encoding
-	if err := binary.Write(f, binary.BigEndian, &i.Header); err != nil {
+	if err := binary.Write(f, binary.BigEndian, &idx.Header); err != nil {
 		return fmt.Errorf("fail to write fixed-length encoding: %v", err)
 	}
 
 	// variable length encoding
 	var data []byte
-	for _, entry := range i.Entries {
+	for _, entry := range idx.Entries {
 		data = append(data, entry.Hash...)
 		data = append(data, []byte(entry.Path)...)
 		data = append(data, TERMINAL_SIGN)
