@@ -33,14 +33,20 @@ type Index struct {
 	Entries []*Entry
 }
 
-func NewIndex() *Index {
-	return &Index{
+func NewIndex() (*Index, error) {
+	index := &Index{
 		Header: Header{
 			Signature: [4]byte{'D', 'I', 'R', 'C'},
 			Version:   uint32(1),
 			EntryNum:  uint32(0),
 		},
 	}
+	if _, err := os.Stat(".goit/index"); !os.IsNotExist(err) {
+		if err := index.read(); err != nil {
+			return nil, fmt.Errorf("fail to read index: %v", err)
+		}
+	}
+	return index, nil
 }
 
 func (idx *Index) IsUpdateNeeded() (bool, error) {
@@ -52,10 +58,14 @@ func (idx *Index) Update(hash sha.SHA1, path string) error {
 	idx.Entries = append(idx.Entries, entry)
 	idx.EntryNum = uint32(len(idx.Entries))
 
-	return idx.Write()
+	return idx.write()
 }
 
-func (idx *Index) Write() error {
+func (idx *Index) read() error {
+	return nil
+}
+
+func (idx *Index) write() error {
 	f, err := os.Create(".goit/index")
 	if err != nil {
 		return fmt.Errorf("fail to create .goit/index: %v", err)

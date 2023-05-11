@@ -4,6 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/JunNishimura/Goit/index"
@@ -29,7 +30,12 @@ func Execute() {
 }
 
 func init() {
-	indexClient = index.NewIndex()
+	index, err := index.NewIndex()
+	if err != nil {
+		fmt.Printf("fail to NewIndex: %v", err)
+		return
+	}
+	indexClient = index
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
