@@ -14,6 +14,14 @@ type Entry struct {
 	Path       string
 }
 
+func NewEntry(hash sha.SHA1, path string) *Entry {
+	return &Entry{
+		Hash:       hash,
+		NameLength: uint16(len(path)),
+		Path:       path,
+	}
+}
+
 type Header struct {
 	Signature [4]byte
 	Version   uint32
@@ -36,14 +44,18 @@ func NewIndex() *Index {
 }
 
 func (idx *Index) IsUpdateNeeded() (bool, error) {
-	return false, nil
+	return true, nil
 }
 
-func (idx *Index) Update() error {
-	return nil
+func (idx *Index) Update(hash sha.SHA1, path string) error {
+	entry := NewEntry(hash, path)
+	idx.Entries = append(idx.Entries, entry)
+	idx.EntryNum = uint32(len(idx.Entries))
+
+	return idx.Write()
 }
 
-func (idx *Index) write() error {
+func (idx *Index) Write() error {
 	f, err := os.Create(".goit/index")
 	if err != nil {
 		return fmt.Errorf("fail to create .goit/index: %v", err)
@@ -57,7 +69,10 @@ func (idx *Index) write() error {
 	// variable length encoding
 	var data []byte
 	for _, entry := range idx.Entries {
+		bNameLength := make([]byte, 2)
+		binary.BigEndian.PutUint16(bNameLength, entry.NameLength)
 		data = append(data, entry.Hash...)
+		data = append(data, bNameLength...)
 		data = append(data, []byte(entry.Path)...)
 	}
 	if _, err := f.Write(data); err != nil {

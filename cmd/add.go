@@ -140,7 +140,8 @@ var addCmd = &cobra.Command{
 			}
 
 			// update index
-			if err := indexClient.Update(); err != nil {
+			path := arg //TODO: update path construction
+			if err := indexClient.Update(object.Hash, path); err != nil {
 				return fmt.Errorf("fail to update index: %v", err)
 			}
 
@@ -155,9 +156,9 @@ var addCmd = &cobra.Command{
 		}
 
 		// delete non-tracking files from index
-		if err := deleteFromIndex(); err != nil {
-			return fmt.Errorf("fail to delete from index: %v", err)
-		}
+		// if err := deleteFromIndex(); err != nil {
+		// 	return fmt.Errorf("fail to delete from index: %v", err)
+		// }
 
 		return nil
 	},
