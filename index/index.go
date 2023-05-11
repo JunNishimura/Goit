@@ -21,7 +21,7 @@ type Header struct {
 }
 
 type Index struct {
-	Header  Header
+	Header
 	Entries []*Entry
 }
 
