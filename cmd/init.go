@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -16,7 +16,7 @@ import (
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "initialize Goit",
-	Long:  `This is a command to initialize Goit.`,
+	Long:  "This is a command to initialize Goit.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// check goit initizlied
 		if IsGoitInitialized() {
@@ -29,22 +29,23 @@ var initCmd = &cobra.Command{
 		}
 
 		// make .goit/objects directory
-		if err := os.Mkdir(".goit/objects", os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make .goit/objects directory: %v", err)
+		objectsDir := filepath.Join(".goit", "objects")
+		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make %s directory: %v", objectsDir, err)
 		}
 
 		// make .goit/refs directory
-		REFS_DIR := ".goit/refs"
-		REFS_HEADS_DIR := strings.Join([]string{REFS_DIR, "heads"}, "/")
-		REFS_TAGS_DIR := strings.Join([]string{REFS_DIR, "tags"}, "/")
-		if err := os.Mkdir(REFS_DIR, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", REFS_DIR, err)
+		refsDir := filepath.Join(".goit", "refs")
+		headsDir := filepath.Join(".goit", "refs", "heads")
+		tagsDir := filepath.Join(".goit", "refs", "tags")
+		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make %s directory: %v", refsDir, err)
 		}
-		if err := os.Mkdir(REFS_HEADS_DIR, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", REFS_HEADS_DIR, err)
+		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make %s directory: %v", headsDir, err)
 		}
-		if err := os.Mkdir(REFS_TAGS_DIR, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", REFS_TAGS_DIR, err)
+		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make %s directory: %v", tagsDir, err)
 		}
 
 		return nil
