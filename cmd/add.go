@@ -96,10 +96,10 @@ var addCmd = &cobra.Command{
 			object.Write(compData)
 		}
 
-		// delete non-tracking files from index
-		// if err := deleteFromIndex(); err != nil {
-		// 	return fmt.Errorf("fail to delete from index: %v", err)
-		// }
+		// delete untracked files from index
+		if err := indexClient.DeleteUntrackedFiles(); err != nil {
+			return fmt.Errorf("fail to delete untracked files from index: %v", err)
+		}
 
 		return nil
 	},

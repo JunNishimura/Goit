@@ -109,6 +109,25 @@ func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
 	return true, idx.write()
 }
 
+func (idx *Index) DeleteUntrackedFiles() error {
+	var trackedEntries []*Entry
+	for _, entry := range idx.Entries {
+		if _, err := os.Stat(string(entry.Path)); !os.IsNotExist(err) {
+			trackedEntries = append(trackedEntries, entry)
+		}
+	}
+
+	// no need to delete
+	if len(trackedEntries) == int(idx.EntryNum) {
+		return nil
+	}
+
+	// need to update index
+	idx.Entries = trackedEntries
+	idx.EntryNum = uint32(len(idx.Entries))
+	return idx.write()
+}
+
 func (idx *Index) read() error {
 	// read index
 	b, err := ioutil.ReadFile(".goit/index")
