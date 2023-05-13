@@ -6,6 +6,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/JunNishimura/Goit/object"
@@ -34,11 +35,23 @@ var addCmd = &cobra.Command{
 		}
 
 		for _, arg := range args {
-			// make blob object
-			object, err := object.NewBlobObject(arg)
-			if err != nil {
-				return err
+			// check if arg is valid
+			f, err := os.Stat(arg)
+			if os.IsNotExist(err) {
+				return fmt.Errorf(`fatal: Cannot open '%s': No such file`, arg)
 			}
+			if f.IsDir() {
+				return fmt.Errorf(`fatal: '%s' is invalid to make blob object`, arg)
+			}
+
+			// get data from file
+			data, err := ioutil.ReadFile(arg)
+			if err != nil {
+				return fmt.Errorf("fail to read file: %v", err)
+			}
+
+			// make blob object
+			object := object.NewObject(object.BlobObject, data)
 
 			// update index
 			path := []byte(arg) //TODO: update path construction
@@ -50,14 +63,8 @@ var addCmd = &cobra.Command{
 				continue
 			}
 
-			// compress file by zlib
-			compData, err := object.CompressBlob()
-			if err != nil {
-				return fmt.Errorf("fail to compress data: %v", err)
-			}
-
-			// save file
-			object.Write(compData)
+			// write object to file
+			object.Write()
 		}
 
 		// delete untracked files from index

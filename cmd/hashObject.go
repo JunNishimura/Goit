@@ -6,6 +6,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	"github.com/JunNishimura/Goit/object"
 	"github.com/spf13/cobra"
@@ -22,12 +24,25 @@ var hashObjectCmd = &cobra.Command{
 		}
 
 		for _, arg := range args {
-			obj, err := object.NewBlobObject(arg)
-			if err != nil {
-				return err
+			// check if arg is valid
+			f, err := os.Stat(arg)
+			if os.IsNotExist(err) {
+				return fmt.Errorf(`fatal: Cannot open '%s': No such file`, arg)
+			}
+			if f.IsDir() {
+				return fmt.Errorf(`fatal: '%s' is invalid to make blob object`, arg)
 			}
 
-			fmt.Println(obj.Hash.String())
+			// get data from file
+			data, err := ioutil.ReadFile(arg)
+			if err != nil {
+				return fmt.Errorf("fail to read file: %v", err)
+			}
+
+			// make blob object
+			object := object.NewObject(object.BlobObject, data)
+
+			fmt.Printf("%s\n", object.Hash)
 		}
 
 		return nil
