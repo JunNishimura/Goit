@@ -21,8 +21,16 @@ var writeTreeCmd = &cobra.Command{
 			return errors.New("fatal: not a goit repository: .goit")
 		}
 
+		// make data from index
+		var data []byte
+		for _, entry := range indexClient.Entries {
+			data = append(data, entry.Path...)
+			data = append(data, 0x00)
+			data = append(data, entry.Hash...)
+		}
+
 		// make tree object
-		treeObject := object.NewTreeObject(indexClient)
+		treeObject := object.NewObject(object.TreeObject, data)
 
 		if err := treeObject.Write(); err != nil {
 			return fmt.Errorf("fail to write tree object: %v", err)

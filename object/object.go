@@ -3,7 +3,9 @@ package object
 import (
 	"bytes"
 	"compress/zlib"
+	"crypto/sha1"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -15,6 +17,27 @@ type Object struct {
 	Hash sha.SHA1
 	Size int
 	Data []byte
+}
+
+func NewObject(objType Type, data []byte) *Object {
+	// get size of data
+	size := len(data)
+
+	// get hash of object
+	checkSum := sha1.New()
+	content := fmt.Sprintf("%s %d\x00%s", objType, size, data)
+	io.WriteString(checkSum, content)
+	hash := checkSum.Sum(nil)
+
+	// make object
+	object := &Object{
+		Type: objType,
+		Hash: hash,
+		Size: size,
+		Data: data,
+	}
+
+	return object
 }
 
 func (o *Object) Header() []byte {
