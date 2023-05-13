@@ -142,3 +142,18 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 
 	return treeObject
 }
+
+func (o *Object) UpdateBranch() error {
+	filePath := filepath.Join(".goit", "refs", "heads", "main")
+	f, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("fail to make %s: %v", filePath, err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(o.Hash.String()); err != nil {
+		return fmt.Errorf("fail to write hash to %s: %v", filePath, err)
+	}
+
+	return nil
+}
