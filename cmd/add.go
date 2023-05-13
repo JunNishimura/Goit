@@ -140,7 +140,7 @@ var addCmd = &cobra.Command{
 			}
 
 			// update index
-			path := arg //TODO: update path construction
+			path := []byte(arg) //TODO: update path construction
 			if err := indexClient.Update(object.Hash, path); err != nil {
 				return fmt.Errorf("fail to update index: %v", err)
 			}

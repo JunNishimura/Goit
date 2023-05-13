@@ -1,8 +1,10 @@
 package index
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/JunNishimura/Goit/sha"
@@ -11,10 +13,10 @@ import (
 type Entry struct {
 	Hash       sha.SHA1
 	NameLength uint16
-	Path       string
+	Path       []byte
 }
 
-func NewEntry(hash sha.SHA1, path string) *Entry {
+func NewEntry(hash sha.SHA1, path []byte) *Entry {
 	return &Entry{
 		Hash:       hash,
 		NameLength: uint16(len(path)),
@@ -53,7 +55,7 @@ func (idx *Index) IsUpdateNeeded() (bool, error) {
 	return true, nil
 }
 
-func (idx *Index) Update(hash sha.SHA1, path string) error {
+func (idx *Index) Update(hash sha.SHA1, path []byte) error {
 	entry := NewEntry(hash, path)
 	idx.Entries = append(idx.Entries, entry)
 	idx.EntryNum = uint32(len(idx.Entries))
@@ -62,6 +64,48 @@ func (idx *Index) Update(hash sha.SHA1, path string) error {
 }
 
 func (idx *Index) read() error {
+	// read index
+	b, err := ioutil.ReadFile(".goit/index")
+	if err != nil {
+		return fmt.Errorf("fail to read index: %v", err)
+	}
+
+	// make bytes reader
+	buf := bytes.NewReader(b)
+
+	// fixed length decoding
+	err = binary.Read(buf, binary.BigEndian, &idx.Header)
+	if err != nil {
+		return fmt.Errorf("fail to read index header: %v", err)
+	}
+
+	// variable length decoding
+	for i := 0; i < int(idx.EntryNum); i++ {
+		// read hash
+		hash := make(sha.SHA1, 20)
+		err = binary.Read(buf, binary.BigEndian, &hash)
+		if err != nil {
+			return fmt.Errorf("fail to read hash from index: %v", err)
+		}
+
+		// read file name length
+		var nameLength uint16
+		err = binary.Read(buf, binary.BigEndian, &nameLength)
+		if err != nil {
+			return fmt.Errorf("fail to read file name length from index: %v", err)
+		}
+
+		// read file path
+		path := make([]byte, nameLength)
+		err = binary.Read(buf, binary.BigEndian, &path)
+		if err != nil {
+			return fmt.Errorf("fail to read path from index: %v", err)
+		}
+
+		entry := NewEntry(hash, path)
+		idx.Entries = append(idx.Entries, entry)
+	}
+
 	return nil
 }
 
@@ -83,7 +127,7 @@ func (idx *Index) write() error {
 		binary.BigEndian.PutUint16(bNameLength, entry.NameLength)
 		data = append(data, entry.Hash...)
 		data = append(data, bNameLength...)
-		data = append(data, []byte(entry.Path)...)
+		data = append(data, entry.Path...)
 	}
 	if _, err := f.Write(data); err != nil {
 		return fmt.Errorf("fail to write variable-length encoding: %v", err)
