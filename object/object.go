@@ -8,7 +8,9 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/JunNishimura/Goit/index"
 	"github.com/JunNishimura/Goit/sha"
 )
 
@@ -75,4 +77,68 @@ func (o *Object) Write() error {
 		return fmt.Errorf("fail to write to %s: %v", filePath, err)
 	}
 	return nil
+}
+
+func MakeTreeObject(entries []*index.Entry) *Object {
+	var dirName string
+	var data []byte
+	var entryBuf []*index.Entry
+	i := 0
+	for {
+		if i >= len(entries) {
+			// if the last entry is in the directory
+			if dirName != "" {
+				treeObject := MakeTreeObject(entryBuf)
+				data = append(data, []byte(dirName)...)
+				data = append(data, 0x00)
+				data = append(data, treeObject.Hash...)
+			}
+			break
+		}
+
+		entry := entries[i]
+		slashSplit := strings.SplitN(string(entry.Path), "/", 2)
+		if len(slashSplit) == 1 {
+			if dirName != "" {
+				// make tree object from entryBuf
+				treeObject := MakeTreeObject(entryBuf)
+				data = append(data, []byte(dirName)...)
+				data = append(data, 0x00)
+				data = append(data, treeObject.Hash...)
+				// clear dirName and entryBuf
+				dirName = ""
+				entryBuf = make([]*index.Entry, 0)
+			} else {
+				data = append(data, entry.Path...)
+				data = append(data, 0x00)
+				data = append(data, entry.Hash...)
+				i++
+			}
+		} else {
+			if dirName == "" {
+				dirName = slashSplit[0]
+				newEntry := index.NewEntry(entry.Hash, []byte(slashSplit[1]))
+				entryBuf = append(entryBuf, newEntry)
+				i++
+			} else if dirName != "" && dirName == slashSplit[0] {
+				// same dir with prev entry
+				newEntry := index.NewEntry(entry.Hash, []byte(slashSplit[1]))
+				entryBuf = append(entryBuf, newEntry)
+				i++
+			} else if dirName != "" && dirName != slashSplit[0] {
+				treeObject := MakeTreeObject(entryBuf)
+				data = append(data, []byte(dirName)...)
+				data = append(data, 0x00)
+				data = append(data, treeObject.Hash...)
+				// clear dirName and entryBuf
+				dirName = ""
+				entryBuf = make([]*index.Entry, 0)
+			}
+		}
+	}
+
+	// make tree object
+	treeObject := NewObject(TreeObject, data)
+
+	return treeObject
 }
