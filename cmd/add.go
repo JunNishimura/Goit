@@ -50,14 +50,8 @@ var addCmd = &cobra.Command{
 				continue
 			}
 
-			// compress file by zlib
-			compData, err := object.CompressBlob()
-			if err != nil {
-				return fmt.Errorf("fail to compress data: %v", err)
-			}
-
-			// save file
-			object.Write(compData)
+			// write object to file
+			object.Write()
 		}
 
 		// delete untracked files from index
