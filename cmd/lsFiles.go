@@ -1,0 +1,36 @@
+/*
+Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+*/
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
+
+var (
+	isShowStaged bool
+)
+
+// lsFilesCmd represents the lsFiles command
+var lsFilesCmd = &cobra.Command{
+	Use:   "ls-files",
+	Short: "print out index",
+	Long:  "this is a command to print out index",
+	Run: func(cmd *cobra.Command, args []string) {
+		for _, entry := range indexClient.Entries {
+			if isShowStaged {
+				fmt.Printf("%s    %s\n", entry.Hash, entry.Path)
+			} else {
+				fmt.Printf("%s\n", entry.Path)
+			}
+		}
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(lsFilesCmd)
+
+	lsFilesCmd.Flags().BoolVarP(&isShowStaged, "staged", "s", false, "show staged contents")
+}
