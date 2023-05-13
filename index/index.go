@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sort"
 
 	"github.com/JunNishimura/Goit/sha"
 )
@@ -59,6 +60,10 @@ func NewIndex() (*Index, error) {
 // return the index of entry if target is registered as the first return value
 // return -1 if target is not registered as the first return value
 func (idx *Index) isUpdateNeeded(hash sha.SHA1, path []byte) (int, bool) {
+	if idx.EntryNum == 0 {
+		return newEntryFlag, true
+	}
+
 	// binary search
 	left := 0
 	right := int(idx.EntryNum)
@@ -85,10 +90,6 @@ func (idx *Index) isUpdateNeeded(hash sha.SHA1, path []byte) (int, bool) {
 	return newEntryFlag, true
 }
 
-func (idx *Index) sort() {
-
-}
-
 func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
 	n, isUpdated := idx.isUpdateNeeded(hash, path)
 	if !isUpdated {
@@ -103,7 +104,7 @@ func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
 	}
 	idx.Entries = append(idx.Entries, entry)
 	idx.EntryNum = uint32(len(idx.Entries))
-	idx.sort()
+	sort.Slice(idx.Entries, func(i, j int) bool { return string(idx.Entries[i].Path) < string(idx.Entries[j].Path) })
 
 	return true, idx.write()
 }
