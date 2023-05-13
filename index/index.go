@@ -10,6 +10,10 @@ import (
 	"github.com/JunNishimura/Goit/sha"
 )
 
+const (
+	newEntryFlag = -1
+)
+
 type Entry struct {
 	Hash       sha.SHA1
 	NameLength uint16
@@ -32,7 +36,7 @@ type Header struct {
 
 type Index struct {
 	Header
-	Entries []*Entry
+	Entries []*Entry // sorted entries
 }
 
 func NewIndex() (*Index, error) {
@@ -51,16 +55,57 @@ func NewIndex() (*Index, error) {
 	return index, nil
 }
 
-func (idx *Index) IsUpdateNeeded() (bool, error) {
-	return true, nil
+// function to check if the path passed by parameter is already registered or not
+// return the index of entry if target is registered as the first return value
+// return -1 if target is not registered as the first return value
+func (idx *Index) isUpdateNeeded(hash sha.SHA1, path []byte) (int, bool) {
+	// binary search
+	left := 0
+	right := int(idx.EntryNum)
+	for {
+		middle := (left + right) / 2
+		entry := idx.Entries[middle]
+		if string(entry.Path) == string(path) && entry.Hash.String() == hash.String() {
+			return middle, false
+		}
+		if string(entry.Path) == string(path) && entry.Hash.String() != hash.String() {
+			return middle, true
+		}
+		if string(entry.Path) < string(path) {
+			left = middle
+		}
+		if string(entry.Path) > string(path) {
+			right = middle
+		}
+
+		if right-left <= 1 {
+			break
+		}
+	}
+	return newEntryFlag, true
 }
 
-func (idx *Index) Update(hash sha.SHA1, path []byte) error {
+func (idx *Index) sort() {
+
+}
+
+func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
+	n, isUpdated := idx.isUpdateNeeded(hash, path)
+	if !isUpdated {
+		return false, nil
+	}
+
+	// add new entry and update index entries
 	entry := NewEntry(hash, path)
+	if n != newEntryFlag {
+		// remove existing entry
+		idx.Entries = append(idx.Entries[:n], idx.Entries[n+1:]...)
+	}
 	idx.Entries = append(idx.Entries, entry)
 	idx.EntryNum = uint32(len(idx.Entries))
+	idx.sort()
 
-	return idx.write()
+	return true, idx.write()
 }
 
 func (idx *Index) read() error {

@@ -130,19 +130,14 @@ var addCmd = &cobra.Command{
 				return err
 			}
 
-			// check if index needs to be updated
-			updateFlag, err := indexClient.IsUpdateNeeded()
-			if err != nil {
-				return fmt.Errorf("fail to see if index needs to be updated: %v", err)
-			}
-			if !updateFlag {
-				continue
-			}
-
 			// update index
 			path := []byte(arg) //TODO: update path construction
-			if err := indexClient.Update(object.Hash, path); err != nil {
+			isUpdated, err := indexClient.Update(object.Hash, path)
+			if err != nil {
 				return fmt.Errorf("fail to update index: %v", err)
+			}
+			if !isUpdated {
+				continue
 			}
 
 			// compress file by zlib
