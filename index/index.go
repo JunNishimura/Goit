@@ -77,13 +77,13 @@ func (idx *Index) isUpdateNeeded(hash sha.SHA1, path []byte) (int, bool) {
 			return middle, true
 		}
 		if string(entry.Path) < string(path) {
-			left = middle
+			left = middle + 1
 		}
 		if string(entry.Path) > string(path) {
 			right = middle
 		}
 
-		if right-left <= 1 {
+		if right-left < 1 {
 			break
 		}
 	}
