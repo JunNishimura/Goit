@@ -166,7 +166,7 @@ func (o *Object) Write() error {
 	return nil
 }
 
-func MakeTreeObject(entries []*index.Entry) (*Object, error) {
+func WriteTreeObject(entries []*index.Entry) (*Object, error) {
 	var dirName string
 	var data []byte
 	var entryBuf []*index.Entry
@@ -175,7 +175,7 @@ func MakeTreeObject(entries []*index.Entry) (*Object, error) {
 		if i >= len(entries) {
 			// if the last entry is in the directory
 			if dirName != "" {
-				treeObject, err := MakeTreeObject(entryBuf)
+				treeObject, err := WriteTreeObject(entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -191,7 +191,7 @@ func MakeTreeObject(entries []*index.Entry) (*Object, error) {
 		if len(slashSplit) == 1 {
 			if dirName != "" {
 				// make tree object from entryBuf
-				treeObject, err := MakeTreeObject(entryBuf)
+				treeObject, err := WriteTreeObject(entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -219,7 +219,7 @@ func MakeTreeObject(entries []*index.Entry) (*Object, error) {
 				entryBuf = append(entryBuf, newEntry)
 				i++
 			} else if dirName != "" && dirName != slashSplit[0] {
-				treeObject, err := MakeTreeObject(entryBuf)
+				treeObject, err := WriteTreeObject(entryBuf)
 				if err != nil {
 					return nil, err
 				}
