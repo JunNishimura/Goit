@@ -150,8 +150,10 @@ func (o *Object) Write() error {
 
 	dirPath := filepath.Join(".goit", "objects", o.Hash.String()[:2])
 	filePath := filepath.Join(dirPath, o.Hash.String()[2:])
-	if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
-		return fmt.Errorf("fail to make %s: %v", dirPath, err)
+	if f, err := os.Stat(dirPath); os.IsNotExist(err) || !f.IsDir() {
+		if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
+			return fmt.Errorf("fail to make %s: %v", dirPath, err)
+		}
 	}
 	f, err := os.Create(filePath)
 	if err != nil {
