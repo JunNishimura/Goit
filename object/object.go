@@ -164,7 +164,7 @@ func (o *Object) Write() error {
 	return nil
 }
 
-func MakeTreeObject(entries []*index.Entry) *Object {
+func MakeTreeObject(entries []*index.Entry) (*Object, error) {
 	var dirName string
 	var data []byte
 	var entryBuf []*index.Entry
@@ -173,7 +173,10 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 		if i >= len(entries) {
 			// if the last entry is in the directory
 			if dirName != "" {
-				treeObject := MakeTreeObject(entryBuf)
+				treeObject, err := MakeTreeObject(entryBuf)
+				if err != nil {
+					return nil, err
+				}
 				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
 				data = append(data, 0x00)
 				data = append(data, treeObject.Hash...)
@@ -186,7 +189,10 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 		if len(slashSplit) == 1 {
 			if dirName != "" {
 				// make tree object from entryBuf
-				treeObject := MakeTreeObject(entryBuf)
+				treeObject, err := MakeTreeObject(entryBuf)
+				if err != nil {
+					return nil, err
+				}
 				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
 				data = append(data, 0x00)
 				data = append(data, treeObject.Hash...)
@@ -211,7 +217,10 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 				entryBuf = append(entryBuf, newEntry)
 				i++
 			} else if dirName != "" && dirName != slashSplit[0] {
-				treeObject := MakeTreeObject(entryBuf)
+				treeObject, err := MakeTreeObject(entryBuf)
+				if err != nil {
+					return nil, err
+				}
 				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
 				data = append(data, 0x00)
 				data = append(data, treeObject.Hash...)
@@ -225,5 +234,10 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 	// make tree object
 	treeObject := NewObject(TreeObject, data)
 
-	return treeObject
+	// write tree object
+	if err := treeObject.Write(); err != nil {
+		return nil, fmt.Errorf("fail to make tree object %s: %v", treeObject.Hash, err)
+	}
+
+	return treeObject, nil
 }
