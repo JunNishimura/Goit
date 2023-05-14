@@ -174,7 +174,7 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 			// if the last entry is in the directory
 			if dirName != "" {
 				treeObject := MakeTreeObject(entryBuf)
-				data = append(data, []byte(dirName)...)
+				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
 				data = append(data, 0x00)
 				data = append(data, treeObject.Hash...)
 			}
@@ -187,14 +187,14 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 			if dirName != "" {
 				// make tree object from entryBuf
 				treeObject := MakeTreeObject(entryBuf)
-				data = append(data, []byte(dirName)...)
+				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
 				data = append(data, 0x00)
 				data = append(data, treeObject.Hash...)
 				// clear dirName and entryBuf
 				dirName = ""
 				entryBuf = make([]*index.Entry, 0)
 			} else {
-				data = append(data, entry.Path...)
+				data = append(data, []byte(fmt.Sprintf("100644 %s", string(entry.Path)))...)
 				data = append(data, 0x00)
 				data = append(data, entry.Hash...)
 				i++
@@ -212,7 +212,7 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 				i++
 			} else if dirName != "" && dirName != slashSplit[0] {
 				treeObject := MakeTreeObject(entryBuf)
-				data = append(data, []byte(dirName)...)
+				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
 				data = append(data, 0x00)
 				data = append(data, treeObject.Hash...)
 				// clear dirName and entryBuf
