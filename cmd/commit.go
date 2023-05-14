@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/JunNishimura/Goit/object"
+	"github.com/JunNishimura/Goit/sha"
 	"github.com/spf13/cobra"
 )
 
@@ -61,21 +62,29 @@ var commitCmd = &cobra.Command{
 				return fmt.Errorf("fail to make new branch: %v", err)
 			}
 		} else {
-			// branchPath := filepath.Join(".goit", "refs", "heads", "main")
-			// branchBytes, err := ioutil.ReadFile(branchPath)
-			// if err != nil {
-			// 	return fmt.Errorf("fail to read %s: %v", branchPath, err)
-			// }
+			// get last commit object
+			branchPath := filepath.Join(".goit", "refs", "heads", "main")
+			hashBytes, err := ioutil.ReadFile(branchPath)
+			if err != nil {
+				return fmt.Errorf("fail to read %s: %v", branchPath, err)
+			}
+			hashString := string(hashBytes)
+			lastCommitHash, err := sha.ReadHash(hashString)
+			if err != nil {
+				return fmt.Errorf("fail to decode hash string: %v", err)
+			}
+			lastCommitObject, err := object.GetObject(lastCommitHash)
+			if err != nil {
+				return fmt.Errorf("fail to get last commit object: %v", err)
+			}
 
-			// // get last commit object
-			// lastCommitHash, err := hex.DecodeString(string(branchBytes))
-			// if err != nil {
-			// 	return fmt.Errorf("fail to decode hash string: %v", err)
-			// }
-			// lastCommitObject, err := object.GetObject(lastCommitHash)
-			// if err != nil {
-			// 	return fmt.Errorf("fail to get last commit object: %v", err)
-			// }
+			// get last commit
+			lastCommit, err := object.NewCommit(lastCommitObject)
+			if err != nil {
+				return fmt.Errorf("fail to get last commit: %v", err)
+			}
+
+			fmt.Printf("%+v", lastCommit)
 
 			// lastCommitObjPath := filepath.Join(".goit", "objects", lastCommitHash[:2], lastCommitHash[2:])
 			// f, err := os.Open(lastCommitObjPath)
