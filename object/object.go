@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,9 +43,89 @@ func NewObject(objType Type, data []byte) *Object {
 	return object
 }
 
-// func GetObject(hash sha.SHA1) (*Object, error) {
-// 	return nil, nil
-// }
+func GetObject(hash sha.SHA1) (*Object, error) {
+	hashString := hash.String()
+	objPath := filepath.Join(".goit", "objects", hashString[:2], hashString[2:])
+	objFile, err := os.Open(objPath)
+	if err != nil {
+		return nil, fmt.Errorf("fail to open %s: %v", objPath, err)
+	}
+	defer objFile.Close()
+
+	zr, err := zlib.NewReader(objFile)
+	if err != nil {
+		return nil, fmt.Errorf("fail to construct zlib.NewReader: %v", err)
+	}
+	defer zr.Close()
+
+	checkSum := sha1.New()
+	tr := io.TeeReader(zr, checkSum)
+
+	objType, size, err := readHeader(tr)
+	if err != nil {
+		return nil, fmt.Errorf("fail to read header: %v", err)
+	}
+
+	data, err := ioutil.ReadAll(tr)
+	if err != nil {
+		return nil, fmt.Errorf("fail to read object: %v", err)
+	}
+
+	if len(data) != size {
+		return nil, ErrInvalidObject
+	}
+
+	objHash := checkSum.Sum(nil)
+
+	object := &Object{
+		Type: objType,
+		Hash: objHash,
+		Size: size,
+		Data: data,
+	}
+
+	return object, nil
+}
+
+func readHeader(r io.Reader) (Type, int, error) {
+	// read until null byte
+	headerBytes := make([]byte, 0)
+	for {
+		b := make([]byte, 1)
+		_, err := r.Read(b)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return UndefinedObject, 0, err
+		}
+		if b[0] == 0 {
+			break
+		}
+		headerBytes = append(headerBytes, b[0])
+	}
+
+	// get type and size
+	headerStr := string(headerBytes)
+	headerSplit := strings.SplitN(headerStr, " ", 2)
+	if len(headerSplit) != 2 {
+		return UndefinedObject, 0, ErrInvalidObject
+	}
+
+	objTypeString := headerSplit[0]
+	sizeString := headerSplit[1]
+
+	objType, err := NewType(objTypeString)
+	if err != nil {
+		return UndefinedObject, 0, err
+	}
+	var size int
+	if _, err := fmt.Sscanf(sizeString, "%d", &size); err != nil {
+		return UndefinedObject, 0, err
+	}
+
+	return objType, size, nil
+}
 
 func (o *Object) Header() []byte {
 	return []byte(fmt.Sprintf("%s %d\x00", o.Type, o.Size))
