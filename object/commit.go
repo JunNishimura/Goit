@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/JunNishimura/Goit/index"
 	"github.com/JunNishimura/Goit/sha"
 )
 
@@ -77,4 +78,29 @@ func (c *Commit) UpdateBranch() error {
 	}
 
 	return nil
+}
+
+func (c *Commit) IsCommitNecessary(idx *index.Index) (bool, error) {
+	treeObject, err := GetObject(c.Tree)
+	if err != nil {
+		return false, fmt.Errorf("fail to get tree object: %v", err)
+	}
+
+	// get entries from tree object
+	rootDir := ""
+	paths, err := treeObject.extractFilePaths(rootDir)
+	if err != nil {
+		return false, fmt.Errorf("fail to get entries from tree object: %v", err)
+	}
+
+	// compare entries extraceted from tree object with index
+	if len(paths) != int(idx.EntryNum) {
+		return true, nil
+	}
+	for i := 0; i < len(paths); i++ {
+		if paths[i] != string(idx.Entries[i].Path) {
+			return true, nil
+		}
+	}
+	return false, nil
 }

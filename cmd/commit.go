@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/JunNishimura/Goit/object"
@@ -17,6 +18,41 @@ import (
 var (
 	message string
 )
+
+func commit() error {
+	// make and write tree object
+	treeObject, err := object.WriteTreeObject(indexClient.Entries)
+	if err != nil {
+		return err
+	}
+
+	// make and write commit object
+	var data []byte
+	branchPath := filepath.Join(".goit", "refs", "heads", "main")
+	branchBytes, err := os.ReadFile(branchPath)
+	if err != nil {
+		// no branch means that this is the initial commit
+		data = []byte(fmt.Sprintf("tree %s\n\n%s\n", treeObject.Hash, message))
+	} else {
+		parentHash := string(branchBytes)
+		data = []byte(fmt.Sprintf("tree %s\nparent %s\n\n%s\n", treeObject.Hash, parentHash, message))
+	}
+	commitObject := object.NewObject(object.CommitObject, data)
+	commit, err := object.NewCommit(commitObject)
+	if err != nil {
+		return fmt.Errorf("fail to make commit object: %v", err)
+	}
+	if err := commit.Write(); err != nil {
+		return fmt.Errorf("fail to write commit object: %v", err)
+	}
+
+	// update branch
+	if err := commit.UpdateBranch(); err != nil {
+		return fmt.Errorf("fail to make new branch: %v", err)
+	}
+
+	return nil
+}
 
 // commitCmd represents the commit command
 var commitCmd = &cobra.Command{
@@ -40,26 +76,9 @@ var commitCmd = &cobra.Command{
 				return errors.New("nothing to commit, working tree clean")
 			}
 
-			// make and write tree object
-			treeObject := object.MakeTreeObject(indexClient.Entries)
-			if err := treeObject.Write(); err != nil {
-				return fmt.Errorf("fail to write tree object: %v", err)
-			}
-
-			// make and write commit object
-			data := []byte(fmt.Sprintf("tree %s\n\n%s\n", treeObject.Hash, message))
-			commitObject := object.NewObject(object.CommitObject, data)
-			commit, err := object.NewCommit(commitObject)
-			if err != nil {
-				return fmt.Errorf("fail to make commit object: %v", err)
-			}
-			if err := commit.Write(); err != nil {
-				return fmt.Errorf("fail to write commit object: %v", err)
-			}
-
-			// make new branch
-			if err := commit.UpdateBranch(); err != nil {
-				return fmt.Errorf("fail to make new branch: %v", err)
+			// commit
+			if err := commit(); err != nil {
+				return err
 			}
 		} else {
 			// get last commit object
@@ -84,21 +103,19 @@ var commitCmd = &cobra.Command{
 				return fmt.Errorf("fail to get last commit: %v", err)
 			}
 
-			fmt.Printf("%+v", lastCommit)
+			// compare last commit with index
+			isCommitNecessary, err := lastCommit.IsCommitNecessary(indexClient)
+			if err != nil {
+				return fmt.Errorf("fail to compare last commit with index: %v", err)
+			}
+			if !isCommitNecessary {
+				return errors.New("nothing to commit")
+			}
 
-			// lastCommitObjPath := filepath.Join(".goit", "objects", lastCommitHash[:2], lastCommitHash[2:])
-			// f, err := os.Open(lastCommitObjPath)
-			// if err != nil {
-			// 	return fmt.Errorf("fail to open %s: %v", lastCommitObjPath, err)
-			// }
-			// defer f.Close()
-			// zr, err := zlib.NewReader(f)
-			// if err != nil {
-			// 	return fmt.Errorf("fail to zlib.NewReader: %v", err)
-			// }
-			// defer zr.Close()
-
-			// treeBytes, err := ioutil.ReadAll()
+			// commit
+			if err := commit(); err != nil {
+				return err
+			}
 		}
 
 		return nil
