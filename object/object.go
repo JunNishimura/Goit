@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/JunNishimura/Goit/index"
+	"github.com/JunNishimura/Goit/binary"
 	"github.com/JunNishimura/Goit/sha"
 )
 
@@ -88,25 +88,13 @@ func GetObject(hash sha.SHA1) (*Object, error) {
 }
 
 func readHeader(r io.Reader) (Type, int, error) {
-	// read until null byte
-	headerBytes := make([]byte, 0)
-	for {
-		b := make([]byte, 1)
-		_, err := r.Read(b)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return UndefinedObject, 0, err
-		}
-		if b[0] == 0 {
-			break
-		}
-		headerBytes = append(headerBytes, b[0])
+	// get header string
+	headerStr, err := binary.ReadNullTerminatedString(r)
+	if err != nil {
+		return UndefinedObject, 0, ErrInvalidObject
 	}
 
 	// get type and size
-	headerStr := string(headerBytes)
 	headerSplit := strings.SplitN(headerStr, " ", 2)
 	if len(headerSplit) != 2 {
 		return UndefinedObject, 0, ErrInvalidObject
@@ -164,82 +152,4 @@ func (o *Object) Write() error {
 		return fmt.Errorf("fail to write to %s: %v", filePath, err)
 	}
 	return nil
-}
-
-func WriteTreeObject(entries []*index.Entry) (*Object, error) {
-	var dirName string
-	var data []byte
-	var entryBuf []*index.Entry
-	i := 0
-	for {
-		if i >= len(entries) {
-			// if the last entry is in the directory
-			if dirName != "" {
-				treeObject, err := WriteTreeObject(entryBuf)
-				if err != nil {
-					return nil, err
-				}
-				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
-				data = append(data, 0x00)
-				data = append(data, treeObject.Hash...)
-			}
-			break
-		}
-
-		entry := entries[i]
-		slashSplit := strings.SplitN(string(entry.Path), "/", 2)
-		if len(slashSplit) == 1 {
-			if dirName != "" {
-				// make tree object from entryBuf
-				treeObject, err := WriteTreeObject(entryBuf)
-				if err != nil {
-					return nil, err
-				}
-				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
-				data = append(data, 0x00)
-				data = append(data, treeObject.Hash...)
-				// clear dirName and entryBuf
-				dirName = ""
-				entryBuf = make([]*index.Entry, 0)
-			} else {
-				data = append(data, []byte(fmt.Sprintf("100644 %s", string(entry.Path)))...)
-				data = append(data, 0x00)
-				data = append(data, entry.Hash...)
-				i++
-			}
-		} else {
-			if dirName == "" {
-				dirName = slashSplit[0]
-				newEntry := index.NewEntry(entry.Hash, []byte(slashSplit[1]))
-				entryBuf = append(entryBuf, newEntry)
-				i++
-			} else if dirName != "" && dirName == slashSplit[0] {
-				// same dir with prev entry
-				newEntry := index.NewEntry(entry.Hash, []byte(slashSplit[1]))
-				entryBuf = append(entryBuf, newEntry)
-				i++
-			} else if dirName != "" && dirName != slashSplit[0] {
-				treeObject, err := WriteTreeObject(entryBuf)
-				if err != nil {
-					return nil, err
-				}
-				data = append(data, []byte(fmt.Sprintf("040000 %s", dirName))...)
-				data = append(data, 0x00)
-				data = append(data, treeObject.Hash...)
-				// clear dirName and entryBuf
-				dirName = ""
-				entryBuf = make([]*index.Entry, 0)
-			}
-		}
-	}
-
-	// make tree object
-	treeObject := NewObject(TreeObject, data)
-
-	// write tree object
-	if err := treeObject.Write(); err != nil {
-		return nil, fmt.Errorf("fail to make tree object %s: %v", treeObject.Hash, err)
-	}
-
-	return treeObject, nil
 }
