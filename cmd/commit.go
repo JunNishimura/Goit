@@ -48,14 +48,48 @@ var commitCmd = &cobra.Command{
 			// make and write commit object
 			data := []byte(fmt.Sprintf("tree %s\n\n%s\n", treeObject.Hash, message))
 			commitObject := object.NewObject(object.CommitObject, data)
-			if err := commitObject.Write(); err != nil {
+			commit, err := object.NewCommit(commitObject)
+			if err != nil {
+				return fmt.Errorf("fail to make commit object: %v", err)
+			}
+			if err := commit.Write(); err != nil {
 				return fmt.Errorf("fail to write commit object: %v", err)
 			}
 
 			// make new branch
-			if err := commitObject.UpdateBranch(); err != nil {
+			if err := commit.UpdateBranch(); err != nil {
 				return fmt.Errorf("fail to make new branch: %v", err)
 			}
+		} else {
+			// branchPath := filepath.Join(".goit", "refs", "heads", "main")
+			// branchBytes, err := ioutil.ReadFile(branchPath)
+			// if err != nil {
+			// 	return fmt.Errorf("fail to read %s: %v", branchPath, err)
+			// }
+
+			// // get last commit object
+			// lastCommitHash, err := hex.DecodeString(string(branchBytes))
+			// if err != nil {
+			// 	return fmt.Errorf("fail to decode hash string: %v", err)
+			// }
+			// lastCommitObject, err := object.GetObject(lastCommitHash)
+			// if err != nil {
+			// 	return fmt.Errorf("fail to get last commit object: %v", err)
+			// }
+
+			// lastCommitObjPath := filepath.Join(".goit", "objects", lastCommitHash[:2], lastCommitHash[2:])
+			// f, err := os.Open(lastCommitObjPath)
+			// if err != nil {
+			// 	return fmt.Errorf("fail to open %s: %v", lastCommitObjPath, err)
+			// }
+			// defer f.Close()
+			// zr, err := zlib.NewReader(f)
+			// if err != nil {
+			// 	return fmt.Errorf("fail to zlib.NewReader: %v", err)
+			// }
+			// defer zr.Close()
+
+			// treeBytes, err := ioutil.ReadAll()
 		}
 
 		return nil

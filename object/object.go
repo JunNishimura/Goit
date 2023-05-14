@@ -42,6 +42,10 @@ func NewObject(objType Type, data []byte) *Object {
 	return object
 }
 
+// func GetObject(hash sha.SHA1) (*Object, error) {
+// 	return nil, nil
+// }
+
 func (o *Object) Header() []byte {
 	return []byte(fmt.Sprintf("%s %d\x00", o.Type, o.Size))
 }
@@ -141,19 +145,4 @@ func MakeTreeObject(entries []*index.Entry) *Object {
 	treeObject := NewObject(TreeObject, data)
 
 	return treeObject
-}
-
-func (o *Object) UpdateBranch() error {
-	filePath := filepath.Join(".goit", "refs", "heads", "main")
-	f, err := os.Create(filePath)
-	if err != nil {
-		return fmt.Errorf("fail to make %s: %v", filePath, err)
-	}
-	defer f.Close()
-
-	if _, err := f.WriteString(o.Hash.String()); err != nil {
-		return fmt.Errorf("fail to write hash to %s: %v", filePath, err)
-	}
-
-	return nil
 }
