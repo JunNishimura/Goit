@@ -61,7 +61,11 @@ var catFileCmd = &cobra.Command{
 		if err != nil {
 			return ErrInvalidHash
 		}
-		fmt.Printf("%v\n", obj)
+
+		// show the object type
+		if typeFlag {
+			fmt.Printf("%s\n", obj.Type)
+		}
 
 		return nil
 	},
