@@ -158,3 +158,30 @@ func (to *Object) extractFilePaths(rootDir string) ([]string, error) {
 	}
 	return paths, nil
 }
+
+func (to *Object) ConvertDataToString() (string, error) {
+	var lines []string
+	buf := bytes.NewReader(to.Data)
+	for {
+		lineString, err := binary.ReadNullTerminatedString(buf)
+		if err != nil {
+			return "", err
+		}
+		if lineString[:6] == "100644" || lineString[:6] == "040000" {
+			lines = append(lines, lineString)
+		} else {
+			byteHash := []byte(lineString[:20])
+			hashString := hex.EncodeToString(byteHash)
+			if len(lineString) > 20 {
+				lines = append(lines, hashString+lineString[20:])
+			} else {
+				lines = append(lines, hashString)
+				break
+			}
+		}
+	}
+
+	dataString := strings.Join(lines, "\n")
+
+	return dataString, nil
+}
