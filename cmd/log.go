@@ -5,7 +5,10 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -13,28 +16,37 @@ import (
 // logCmd represents the log command
 var logCmd = &cobra.Command{
 	Use:   "log",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "print commit log",
+	Long:  "this is a command to print commit log",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if !IsGoitInitialized() {
+			return errors.New("fatal: not a goit repository: .goit")
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("log called")
+		// see if committed before
+		dirName := filepath.Join(".goit", "refs", "heads")
+		files, err := ioutil.ReadDir(dirName)
+		if err != nil {
+			return fmt.Errorf("fail to read dir %s: %v", dirName, err)
+		}
+		if len(files) == 0 {
+			return fmt.Errorf("fatal: your current branch 'main' does not have any commits yet")
+		}
+
+		// get last commit hash
+		branchPath := filepath.Join(dirName, "main")
+		lastCommitHashBytes, err := ioutil.ReadFile(branchPath)
+		if err != nil {
+			return fmt.Errorf("fail to read %s: %v", branchPath, err)
+		}
+		lastCommitHashString := string(lastCommitHashBytes)
+		fmt.Println(lastCommitHashString)
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(logCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// logCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// logCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
