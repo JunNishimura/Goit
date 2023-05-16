@@ -1,6 +1,5 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -11,6 +10,10 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	maxCount int
 )
 
 // logCmd represents the log command
@@ -49,4 +52,5 @@ var logCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(logCmd)
 
+	logCmd.Flags().IntVarP(&maxCount, "max-count", "n", 5, "max count of logs to print")
 }
