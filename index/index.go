@@ -179,6 +179,7 @@ func (idx *Index) write() error {
 	if err != nil {
 		return fmt.Errorf("fail to create .goit/index: %v", err)
 	}
+	defer f.Close()
 
 	// fixed length encoding
 	if err := binary.Write(f, binary.BigEndian, &idx.Header); err != nil {
