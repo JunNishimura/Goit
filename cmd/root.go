@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/JunNishimura/Goit/index"
 	"github.com/JunNishimura/Goit/store"
 	"github.com/spf13/cobra"
 )
 
 var (
 	conf        *store.Config
-	indexClient *index.Index
+	indexClient *store.Index
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -41,7 +40,7 @@ func init() {
 	conf = cnf
 
 	// index setting
-	index, err := index.NewIndex()
+	index, err := store.NewIndex()
 	if err != nil {
 		fmt.Printf("fail to NewIndex: %v", err)
 		return

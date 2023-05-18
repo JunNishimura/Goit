@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/JunNishimura/Goit/index"
 	"github.com/JunNishimura/Goit/sha"
+	"github.com/JunNishimura/Goit/store"
 )
 
 type Commit struct {
@@ -80,7 +80,7 @@ func (c *Commit) UpdateBranch() error {
 	return nil
 }
 
-func (c *Commit) IsCommitNecessary(idx *index.Index) (bool, error) {
+func (c *Commit) IsCommitNecessary(idx *store.Index) (bool, error) {
 	treeObject, err := GetObject(c.Tree)
 	if err != nil {
 		return false, fmt.Errorf("fail to get tree object: %v", err)
