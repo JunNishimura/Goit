@@ -19,7 +19,7 @@ var lsFilesCmd = &cobra.Command{
 	Short: "print out index",
 	Long:  "this is a command to print out index",
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, entry := range indexClient.Entries {
+		for _, entry := range client.Idx.Entries {
 			if isShowStaged {
 				fmt.Printf("%s    %s\n", entry.Hash, entry.Path)
 			} else {

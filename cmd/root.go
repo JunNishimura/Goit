@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	conf        *store.Config
-	indexClient *store.Index
+	client *store.Client
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -31,21 +30,12 @@ func Execute() {
 }
 
 func init() {
-	// config setting
-	cnf, err := store.NewConfig()
+	// get client
+	tmpClient, err := store.NewClient()
 	if err != nil {
-		fmt.Printf("fail to config setting: %v", err)
-		return
+		fmt.Println(err)
 	}
-	conf = cnf
-
-	// index setting
-	index, err := store.NewIndex()
-	if err != nil {
-		fmt.Printf("fail to NewIndex: %v", err)
-		return
-	}
-	indexClient = index
+	client = tmpClient
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
