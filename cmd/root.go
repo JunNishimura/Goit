@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/JunNishimura/Goit/config"
 	"github.com/JunNishimura/Goit/index"
+	"github.com/JunNishimura/Goit/store"
 	"github.com/spf13/cobra"
 )
 
 var (
-	conf        *config.Config
+	conf        *store.Config
 	indexClient *index.Index
 )
 
@@ -33,7 +33,7 @@ func Execute() {
 
 func init() {
 	// config setting
-	cnf, err := config.NewConfig()
+	cnf, err := store.NewConfig()
 	if err != nil {
 		fmt.Printf("fail to config setting: %v", err)
 		return
