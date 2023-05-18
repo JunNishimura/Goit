@@ -64,9 +64,9 @@ func load() (*Config, error) {
 			ident = text[1 : len(text)-1]
 			config.Map[ident] = make(KV)
 		} else {
-			splitText := strings.Split(strings.Join(strings.Fields(text), ""), "=")
-			key := splitText[0]
-			value := splitText[1]
+			splitText := strings.Split(strings.Replace(text, "\t", "", -1), "=")
+			key := strings.TrimSpace(splitText[0])
+			value := strings.TrimSpace(splitText[1])
 			config.Map[ident][key] = value
 		}
 	}
