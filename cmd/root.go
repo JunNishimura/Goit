@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/JunNishimura/Goit/config"
 	"github.com/JunNishimura/Goit/index"
 	"github.com/spf13/cobra"
 )
 
 var (
+	conf        *config.Config
 	indexClient *index.Index
 )
 
@@ -30,6 +32,15 @@ func Execute() {
 }
 
 func init() {
+	// config setting
+	cnf, err := config.NewConfig()
+	if err != nil {
+		fmt.Printf("fail to config setting: %v", err)
+		return
+	}
+	conf = cnf
+
+	// index setting
 	index, err := index.NewIndex()
 	if err != nil {
 		fmt.Printf("fail to NewIndex: %v", err)
