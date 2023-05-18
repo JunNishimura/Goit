@@ -21,7 +21,7 @@ var (
 
 func commit() error {
 	// make and write tree object
-	treeObject, err := object.WriteTreeObject(indexClient.Entries)
+	treeObject, err := object.WriteTreeObject(client.Idx.Entries)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ var commitCmd = &cobra.Command{
 		}
 
 		if len(files) == 0 { // no commit before
-			if indexClient.EntryNum == 0 {
+			if client.Idx.EntryNum == 0 {
 				return errors.New("nothing to commit, working tree clean")
 			}
 
@@ -104,7 +104,7 @@ var commitCmd = &cobra.Command{
 			}
 
 			// compare last commit with index
-			isCommitNecessary, err := lastCommit.IsCommitNecessary(indexClient)
+			isCommitNecessary, err := lastCommit.IsCommitNecessary(client.Idx)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %v", err)
 			}

@@ -45,10 +45,10 @@ var configCmd = &cobra.Command{
 		identifier := dotSplit[0]
 		key := dotSplit[1]
 		value := args[1]
-		conf.Add(identifier, key, value)
+		client.Conf.Add(identifier, key, value)
 
 		// write to config
-		if err := conf.Write(); err != nil {
+		if err := client.Conf.Write(); err != nil {
 			return fmt.Errorf("fail to write config: %v", err)
 		}
 

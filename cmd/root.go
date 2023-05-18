@@ -7,14 +7,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/JunNishimura/Goit/config"
-	"github.com/JunNishimura/Goit/index"
+	"github.com/JunNishimura/Goit/store"
 	"github.com/spf13/cobra"
 )
 
 var (
-	conf        *config.Config
-	indexClient *index.Index
+	client *store.Client
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -32,21 +30,12 @@ func Execute() {
 }
 
 func init() {
-	// config setting
-	cnf, err := config.NewConfig()
+	// get client
+	tmpClient, err := store.NewClient()
 	if err != nil {
-		fmt.Printf("fail to config setting: %v", err)
-		return
+		fmt.Println(err)
 	}
-	conf = cnf
-
-	// index setting
-	index, err := index.NewIndex()
-	if err != nil {
-		fmt.Printf("fail to NewIndex: %v", err)
-		return
-	}
-	indexClient = index
+	client = tmpClient
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
