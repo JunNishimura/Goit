@@ -30,12 +30,12 @@ func (c *Config) read() error {
 	return nil
 }
 
-func (c *Config) Add(identifier, key, value string) {
-	if _, ok := c.Map[identifier]; ok {
-		c.Map[identifier][key] = value
+func (c *Config) Add(ident, key, value string) {
+	if _, ok := c.Map[ident]; ok {
+		c.Map[ident][key] = value
 	} else {
-		c.Map[identifier] = make(KV)
-		c.Map[identifier][key] = value
+		c.Map[ident] = make(KV)
+		c.Map[ident][key] = value
 	}
 }
 
