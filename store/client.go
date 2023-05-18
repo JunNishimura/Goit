@@ -1,8 +1,8 @@
 package store
 
 type Client struct {
-	*Config
-	*Index
+	Conf    *Config
+	Idx     *Index
 	rootDir string
 }
 
@@ -18,8 +18,8 @@ func NewClient() (*Client, error) {
 	rootDir := "" // TODO: implement getRootDir function
 
 	client := &Client{
-		Config:  config,
-		Index:   index,
+		Conf:    config,
+		Idx:     index,
 		rootDir: rootDir,
 	}
 
