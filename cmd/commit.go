@@ -16,7 +16,19 @@ import (
 )
 
 var (
-	message string
+	message               string
+	ErrUserNotSetOnConfig = errors.New(`
+			
+*** Please tell me who you are.
+
+Run
+
+ goit config user.email "you@example.com"
+ goit config user.name "Your name"
+
+to set your account's default identity.
+
+	`)
 )
 
 func commit() error {
@@ -62,6 +74,10 @@ var commitCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !IsGoitInitialized() {
 			return errors.New("fatal: not a goit repository: .goit")
+		}
+
+		if !client.Conf.IsUserSet() {
+			return ErrUserNotSetOnConfig
 		}
 
 		// see if committed before

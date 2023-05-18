@@ -74,6 +74,20 @@ func load() (*Config, error) {
 	return config, err
 }
 
+func (c *Config) IsUserSet() bool {
+	kv, ok := c.Map["user"]
+	if !ok {
+		return false
+	}
+	if _, ok := kv["name"]; !ok {
+		return false
+	}
+	if _, ok := kv["email"]; !ok {
+		return false
+	}
+	return true
+}
+
 func (c *Config) Add(ident, key, value string) {
 	if _, ok := c.Map[ident]; ok {
 		c.Map[ident][key] = value
