@@ -7,16 +7,42 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/JunNishimura/Goit/sha"
 	"github.com/JunNishimura/Goit/store"
 )
 
+type Sign struct {
+	Name      string
+	Email     string
+	Timestamp time.Time
+}
+
+func (s Sign) String() string {
+	unixTime := s.Timestamp.Unix()
+	_, offsetSec := s.Timestamp.Zone()
+	offsetHour := offsetSec / 3600
+	offsetMinute := (offsetSec - offsetHour*3600) / 60
+	offset := fmt.Sprintf("+%02d%02d", offsetHour, offsetMinute)
+	return fmt.Sprintf("%s <%s> %s %s", s.Name, s.Email, fmt.Sprint(unixTime), offset)
+}
+
+func NewSign(name, email string) *Sign {
+	return &Sign{
+		Name:      name,
+		Email:     email,
+		Timestamp: time.Now(),
+	}
+}
+
 type Commit struct {
 	*Object
-	Tree    sha.SHA1
-	Parents []sha.SHA1
-	Message string
+	Tree      sha.SHA1
+	Parents   []sha.SHA1
+	Author    Sign
+	Committer Sign
+	Message   string
 }
 
 func NewCommit(o *Object) (*Commit, error) {
