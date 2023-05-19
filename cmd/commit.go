@@ -16,7 +16,19 @@ import (
 )
 
 var (
-	message string
+	message               string
+	ErrUserNotSetOnConfig = errors.New(`
+			
+*** Please tell me who you are.
+
+Run
+
+ goit config user.email "you@example.com"
+ goit config user.name "Your name"
+
+to set your account's default identity.
+
+	`)
 )
 
 func commit() error {
@@ -30,12 +42,14 @@ func commit() error {
 	var data []byte
 	branchPath := filepath.Join(".goit", "refs", "heads", "main")
 	branchBytes, err := os.ReadFile(branchPath)
+	author := object.NewSign(client.Conf.Map["user"]["name"], client.Conf.Map["user"]["email"])
+	committer := author
 	if err != nil {
 		// no branch means that this is the initial commit
-		data = []byte(fmt.Sprintf("tree %s\n\n%s\n", treeObject.Hash, message))
+		data = []byte(fmt.Sprintf("tree %s\nauthor %s\ncommitter %s\n\n%s\n", treeObject.Hash, author, committer, message))
 	} else {
 		parentHash := string(branchBytes)
-		data = []byte(fmt.Sprintf("tree %s\nparent %s\n\n%s\n", treeObject.Hash, parentHash, message))
+		data = []byte(fmt.Sprintf("tree %s\nparent %s\nauthor %s\ncommitter %s\n\n%s\n", treeObject.Hash, parentHash, author, committer, message))
 	}
 	commitObject := object.NewObject(object.CommitObject, data)
 	commit, err := object.NewCommit(commitObject)
@@ -62,6 +76,10 @@ var commitCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !IsGoitInitialized() {
 			return errors.New("fatal: not a goit repository: .goit")
+		}
+
+		if !client.Conf.IsUserSet() {
+			return ErrUserNotSetOnConfig
 		}
 
 		// see if committed before
