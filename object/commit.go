@@ -23,8 +23,14 @@ func (s Sign) String() string {
 	unixTime := s.Timestamp.Unix()
 	_, offsetSec := s.Timestamp.Zone()
 	offsetHour := offsetSec / 3600
-	offsetMinute := (offsetSec - offsetHour*3600) / 60
-	offset := fmt.Sprintf("+%02d%02d", offsetHour, offsetMinute)
+	offsetMinute := (offsetSec / 60) % 60
+	var posNegSign string
+	if offsetSec >= 0 {
+		posNegSign = "+"
+	} else {
+		posNegSign = "-"
+	}
+	offset := fmt.Sprintf("%s%02d%02d", posNegSign, offsetHour, offsetMinute)
 	return fmt.Sprintf("%s <%s> %s %s", s.Name, s.Email, fmt.Sprint(unixTime), offset)
 }
 
