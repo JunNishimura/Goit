@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/JunNishimura/Goit/binary"
-	"github.com/JunNishimura/Goit/index"
 	"github.com/JunNishimura/Goit/sha"
+	index "github.com/JunNishimura/Goit/store"
 )
 
 func WriteTreeObject(entries []*index.Entry) (*Object, error) {

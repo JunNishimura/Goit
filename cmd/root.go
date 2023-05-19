@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/JunNishimura/Goit/index"
+	"github.com/JunNishimura/Goit/store"
 	"github.com/spf13/cobra"
 )
 
 var (
-	indexClient *index.Index
+	client *store.Client
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -30,12 +30,12 @@ func Execute() {
 }
 
 func init() {
-	index, err := index.NewIndex()
+	// get client
+	tmpClient, err := store.NewClient()
 	if err != nil {
-		fmt.Printf("fail to NewIndex: %v", err)
-		return
+		fmt.Println(err)
 	}
-	indexClient = index
+	client = tmpClient
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

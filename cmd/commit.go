@@ -16,12 +16,24 @@ import (
 )
 
 var (
-	message string
+	message               string
+	ErrUserNotSetOnConfig = errors.New(`
+			
+*** Please tell me who you are.
+
+Run
+
+ goit config user.email "you@example.com"
+ goit config user.name "Your name"
+
+to set your account's default identity.
+
+	`)
 )
 
 func commit() error {
 	// make and write tree object
-	treeObject, err := object.WriteTreeObject(indexClient.Entries)
+	treeObject, err := object.WriteTreeObject(client.Idx.Entries)
 	if err != nil {
 		return err
 	}
@@ -30,12 +42,14 @@ func commit() error {
 	var data []byte
 	branchPath := filepath.Join(".goit", "refs", "heads", "main")
 	branchBytes, err := os.ReadFile(branchPath)
+	author := object.NewSign(client.Conf.Map["user"]["name"], client.Conf.Map["user"]["email"])
+	committer := author
 	if err != nil {
 		// no branch means that this is the initial commit
-		data = []byte(fmt.Sprintf("tree %s\n\n%s\n", treeObject.Hash, message))
+		data = []byte(fmt.Sprintf("tree %s\nauthor %s\ncommitter %s\n\n%s\n", treeObject.Hash, author, committer, message))
 	} else {
 		parentHash := string(branchBytes)
-		data = []byte(fmt.Sprintf("tree %s\nparent %s\n\n%s\n", treeObject.Hash, parentHash, message))
+		data = []byte(fmt.Sprintf("tree %s\nparent %s\nauthor %s\ncommitter %s\n\n%s\n", treeObject.Hash, parentHash, author, committer, message))
 	}
 	commitObject := object.NewObject(object.CommitObject, data)
 	commit, err := object.NewCommit(commitObject)
@@ -64,6 +78,10 @@ var commitCmd = &cobra.Command{
 			return errors.New("fatal: not a goit repository: .goit")
 		}
 
+		if !client.Conf.IsUserSet() {
+			return ErrUserNotSetOnConfig
+		}
+
 		// see if committed before
 		dirName := filepath.Join(".goit", "refs", "heads")
 		files, err := ioutil.ReadDir(dirName)
@@ -72,7 +90,7 @@ var commitCmd = &cobra.Command{
 		}
 
 		if len(files) == 0 { // no commit before
-			if indexClient.EntryNum == 0 {
+			if client.Idx.EntryNum == 0 {
 				return errors.New("nothing to commit, working tree clean")
 			}
 
@@ -104,7 +122,7 @@ var commitCmd = &cobra.Command{
 			}
 
 			// compare last commit with index
-			isCommitNecessary, err := lastCommit.IsCommitNecessary(indexClient)
+			isCommitNecessary, err := lastCommit.IsCommitNecessary(client.Idx)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %v", err)
 			}

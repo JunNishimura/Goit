@@ -29,6 +29,12 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("fail to make %s directory: %v", goitDir, err)
 		}
 
+		// make .goit/config file
+		configFile := filepath.Join(goitDir, "config")
+		if _, err := os.Create(configFile); err != nil {
+			return fmt.Errorf("fail to make %s file: %v", configFile, err)
+		}
+
 		// make .goit/objects directory
 		objectsDir := filepath.Join(goitDir, "objects")
 		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {

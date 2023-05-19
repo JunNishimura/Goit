@@ -6,17 +6,57 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
-	"github.com/JunNishimura/Goit/index"
 	"github.com/JunNishimura/Goit/sha"
+	"github.com/JunNishimura/Goit/store"
 )
+
+var (
+	emailRegexpString     = "([a-zA-Z0-9_.+-]+@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\\.)+[a-zA-Z]{2,})"
+	timestampRegexpString = "([1-9][0-9]* [+-][0-9]{4})"
+	signRegexp            = regexp.MustCompile("^[^<]* <" + emailRegexpString + "> " + timestampRegexpString + "$")
+)
+
+type Sign struct {
+	Name      string
+	Email     string
+	Timestamp time.Time
+}
+
+func (s Sign) String() string {
+	unixTime := s.Timestamp.Unix()
+	_, offsetSec := s.Timestamp.Zone()
+	offsetHour := offsetSec / 3600
+	offsetMinute := (offsetSec / 60) % 60
+	var posNegSign string
+	if offsetSec >= 0 {
+		posNegSign = "+"
+	} else {
+		posNegSign = "-"
+	}
+	offset := fmt.Sprintf("%s%02d%02d", posNegSign, offsetHour, offsetMinute)
+	return fmt.Sprintf("%s <%s> %s %s", s.Name, s.Email, fmt.Sprint(unixTime), offset)
+}
+
+func NewSign(name, email string) *Sign {
+	return &Sign{
+		Name:      name,
+		Email:     email,
+		Timestamp: time.Now(),
+	}
+}
 
 type Commit struct {
 	*Object
-	Tree    sha.SHA1
-	Parents []sha.SHA1
-	Message string
+	Tree      sha.SHA1
+	Parents   []sha.SHA1
+	Author    Sign
+	Committer Sign
+	Message   string
 }
 
 func NewCommit(o *Object) (*Commit, error) {
@@ -53,6 +93,18 @@ func NewCommit(o *Object) (*Commit, error) {
 				return nil, err
 			}
 			commit.Parents = append(commit.Parents, hash)
+		case "author":
+			sign, err := readSign(body)
+			if err != nil {
+				return nil, err
+			}
+			commit.Author = sign
+		case "committer":
+			sign, err := readSign(body)
+			if err != nil {
+				return nil, err
+			}
+			commit.Committer = sign
 		}
 	}
 
@@ -80,7 +132,7 @@ func (c *Commit) UpdateBranch() error {
 	return nil
 }
 
-func (c *Commit) IsCommitNecessary(idx *index.Index) (bool, error) {
+func (c *Commit) IsCommitNecessary(idx *store.Index) (bool, error) {
 	treeObject, err := GetObject(c.Tree)
 	if err != nil {
 		return false, fmt.Errorf("fail to get tree object: %v", err)
@@ -103,4 +155,42 @@ func (c *Commit) IsCommitNecessary(idx *index.Index) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func readSign(signString string) (Sign, error) {
+	if ok := signRegexp.MatchString(signString); !ok {
+		return Sign{}, ErrInvalidCommitObject
+	}
+	sign1 := strings.SplitN(signString, " <", 2)
+	name := sign1[0]
+	sign2 := strings.SplitN(sign1[1], "> ", 2)
+	email := sign2[0]
+	sign3 := strings.SplitN(sign2[1], " ", 2)
+	unixTimeString := sign3[0]
+	offsetString := sign3[1]
+
+	unixTime, err := strconv.ParseInt(unixTimeString, 10, 64)
+	if err != nil {
+		return Sign{}, fmt.Errorf("%w : %s", ErrInvalidCommitObject, err)
+	}
+	var offsetHour, offsetMinute int
+	switch offsetString[:1] {
+	case "+":
+		if _, err := fmt.Sscanf(offsetString, "+%02d%02d", &offsetHour, &offsetMinute); err != nil {
+			return Sign{}, fmt.Errorf("%w : %s", ErrInvalidCommitObject, err)
+		}
+	case "-":
+		if _, err := fmt.Sscanf(offsetString, "-%02d%02d", &offsetHour, &offsetMinute); err != nil {
+			return Sign{}, fmt.Errorf("%w : %s", ErrInvalidCommitObject, err)
+		}
+	}
+	location := time.FixedZone(" ", 3600*offsetHour+60*offsetMinute)
+	timestamp := time.Unix(unixTime, 0).In(location)
+	sign := Sign{
+		Name:      name,
+		Email:     email,
+		Timestamp: timestamp,
+	}
+
+	return sign, nil
 }
