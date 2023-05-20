@@ -97,11 +97,13 @@ var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "commit",
 	Long:  "this is a command to commit",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if !IsGoitInitialized() {
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if !isGoitInitialized() {
 			return errors.New("fatal: not a goit repository: .goit")
 		}
-
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if !client.Conf.IsUserSet() {
 			return ErrUserNotSetOnConfig
 		}

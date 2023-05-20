@@ -17,12 +17,13 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "initialize Goit",
 	Long:  "This is a command to initialize Goit.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// check goit initizlied
-		if IsGoitInitialized() {
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if isGoitInitialized() {
 			return errors.New("goit is already initialized")
 		}
-
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// make .goit directory
 		goitDir := filepath.Join(".goit")
 		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
