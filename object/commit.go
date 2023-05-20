@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/JunNishimura/Goit/sha"
-	"github.com/JunNishimura/Goit/store"
 )
 
 var (
@@ -128,30 +127,6 @@ func (c *Commit) UpdateBranch(branchPath string) error {
 	}
 
 	return nil
-}
-
-func (c *Commit) IsCommitNecessary(rootGoitDir string, idx *store.Index) (bool, error) {
-	treeObject, err := GetObject(rootGoitDir, c.Tree)
-	if err != nil {
-		return false, fmt.Errorf("fail to get tree object: %v", err)
-	}
-
-	// get entries from tree object
-	paths, err := treeObject.extractFilePaths(rootGoitDir, "")
-	if err != nil {
-		return false, fmt.Errorf("fail to get entries from tree object: %v", err)
-	}
-
-	// compare entries extraceted from tree object with index
-	if len(paths) != int(idx.EntryNum) {
-		return true, nil
-	}
-	for i := 0; i < len(paths); i++ {
-		if paths[i] != string(idx.Entries[i].Path) {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func readSign(signString string) (Sign, error) {

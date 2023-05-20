@@ -68,6 +68,30 @@ func commit() error {
 	return nil
 }
 
+func IsCommitNecessary(commitObj *object.Commit) (bool, error) {
+	treeObject, err := object.GetObject(client.RootGoitPath, commitObj.Tree)
+	if err != nil {
+		return false, fmt.Errorf("fail to get tree object: %v", err)
+	}
+
+	// get entries from tree object
+	paths, err := treeObject.ExtractFilePaths(client.RootGoitPath, "")
+	if err != nil {
+		return false, fmt.Errorf("fail to get entries from tree object: %v", err)
+	}
+
+	// compare entries extraceted from tree object with index
+	if len(paths) != int(client.Idx.EntryNum) {
+		return true, nil
+	}
+	for i := 0; i < len(paths); i++ {
+		if paths[i] != string(client.Idx.Entries[i].Path) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // commitCmd represents the commit command
 var commitCmd = &cobra.Command{
 	Use:   "commit",
@@ -122,7 +146,7 @@ var commitCmd = &cobra.Command{
 			}
 
 			// compare last commit with index
-			isCommitNecessary, err := lastCommit.IsCommitNecessary(client.RootGoitPath, client.Idx)
+			isCommitNecessary, err := IsCommitNecessary(lastCommit)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %v", err)
 			}

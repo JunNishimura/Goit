@@ -90,7 +90,7 @@ func WriteTreeObject(rootGoitPath string, entries []*index.Entry) (*Object, erro
 	return treeObject, nil
 }
 
-func (to *Object) extractFilePaths(rootGoitDir, rootDir string) ([]string, error) {
+func (to *Object) ExtractFilePaths(rootGoitDir, rootDir string) ([]string, error) {
 	var paths []string
 	var dirName string
 
@@ -124,7 +124,7 @@ func (to *Object) extractFilePaths(rootGoitDir, rootDir string) ([]string, error
 				return nil, err
 			}
 			path := filepath.Join(rootDir, dirName)
-			getPaths, err := treeObject.extractFilePaths(rootGoitDir, path)
+			getPaths, err := treeObject.ExtractFilePaths(rootGoitDir, path)
 			if err != nil {
 				return nil, err
 			}
