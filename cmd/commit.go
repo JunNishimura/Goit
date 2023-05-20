@@ -68,7 +68,7 @@ func commit() error {
 	return nil
 }
 
-func IsCommitNecessary(commitObj *object.Commit) (bool, error) {
+func isCommitNecessary(commitObj *object.Commit) (bool, error) {
 	treeObject, err := object.GetObject(client.RootGoitPath, commitObj.Tree)
 	if err != nil {
 		return false, fmt.Errorf("fail to get tree object: %v", err)
@@ -146,7 +146,7 @@ var commitCmd = &cobra.Command{
 			}
 
 			// compare last commit with index
-			isCommitNecessary, err := IsCommitNecessary(lastCommit)
+			isCommitNecessary, err := isCommitNecessary(lastCommit)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %v", err)
 			}
