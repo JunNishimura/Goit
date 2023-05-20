@@ -27,7 +27,7 @@ var logCmd = &cobra.Command{
 		}
 
 		// see if committed before
-		dirName := filepath.Join(".goit", "refs", "heads")
+		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")
 		files, err := ioutil.ReadDir(dirName)
 		if err != nil {
 			return fmt.Errorf("fail to read dir %s: %v", dirName, err)
