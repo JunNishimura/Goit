@@ -5,14 +5,12 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/JunNishimura/Goit/sha"
-	"github.com/JunNishimura/Goit/store"
 )
 
 var (
@@ -117,44 +115,18 @@ func NewCommit(o *Object) (*Commit, error) {
 	return commit, nil
 }
 
-func (c *Commit) UpdateBranch() error {
-	filePath := filepath.Join(".goit", "refs", "heads", "main")
-	f, err := os.Create(filePath)
+func (c *Commit) UpdateBranch(branchPath string) error {
+	f, err := os.Create(branchPath)
 	if err != nil {
-		return fmt.Errorf("fail to make %s: %v", filePath, err)
+		return fmt.Errorf("fail to make %s: %v", branchPath, err)
 	}
 	defer f.Close()
 
 	if _, err := f.WriteString(c.Hash.String()); err != nil {
-		return fmt.Errorf("fail to write hash to %s: %v", filePath, err)
+		return fmt.Errorf("fail to write hash to %s: %v", branchPath, err)
 	}
 
 	return nil
-}
-
-func (c *Commit) IsCommitNecessary(idx *store.Index) (bool, error) {
-	treeObject, err := GetObject(c.Tree)
-	if err != nil {
-		return false, fmt.Errorf("fail to get tree object: %v", err)
-	}
-
-	// get entries from tree object
-	rootDir := ""
-	paths, err := treeObject.extractFilePaths(rootDir)
-	if err != nil {
-		return false, fmt.Errorf("fail to get entries from tree object: %v", err)
-	}
-
-	// compare entries extraceted from tree object with index
-	if len(paths) != int(idx.EntryNum) {
-		return true, nil
-	}
-	for i := 0; i < len(paths); i++ {
-		if paths[i] != string(idx.Entries[i].Path) {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func readSign(signString string) (Sign, error) {

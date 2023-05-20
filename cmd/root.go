@@ -42,5 +42,5 @@ func init() {
 
 func IsGoitInitialized() bool {
 	_, err := os.Stat(".goit")
-	return !os.IsNotExist(err)
+	return !os.IsNotExist(err) && client.RootGoitPath != ""
 }

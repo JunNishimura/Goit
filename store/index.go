@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/JunNishimura/Goit/sha"
@@ -13,6 +14,10 @@ import (
 
 const (
 	newEntryFlag = -1
+)
+
+var (
+	indexPath string
 )
 
 type Entry struct {
@@ -40,7 +45,7 @@ type Index struct {
 	Entries []*Entry // sorted entries
 }
 
-func NewIndex() (*Index, error) {
+func NewIndex(rootGoitPath string) (*Index, error) {
 	index := &Index{
 		Header: Header{
 			Signature: [4]byte{'D', 'I', 'R', 'C'},
@@ -48,7 +53,8 @@ func NewIndex() (*Index, error) {
 			EntryNum:  uint32(0),
 		},
 	}
-	if _, err := os.Stat(".goit/index"); !os.IsNotExist(err) {
+	indexPath = filepath.Join(rootGoitPath, "index")
+	if _, err := os.Stat(indexPath); !os.IsNotExist(err) {
 		if err := index.read(); err != nil {
 			return nil, fmt.Errorf("fail to read index: %v", err)
 		}
@@ -106,7 +112,11 @@ func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
 	idx.EntryNum = uint32(len(idx.Entries))
 	sort.Slice(idx.Entries, func(i, j int) bool { return string(idx.Entries[i].Path) < string(idx.Entries[j].Path) })
 
-	return true, idx.write()
+	if err := idx.write(); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (idx *Index) DeleteUntrackedFiles() error {
@@ -130,7 +140,7 @@ func (idx *Index) DeleteUntrackedFiles() error {
 
 func (idx *Index) read() error {
 	// read index
-	b, err := ioutil.ReadFile(".goit/index")
+	b, err := ioutil.ReadFile(indexPath)
 	if err != nil {
 		return fmt.Errorf("fail to read index: %v", err)
 	}
@@ -175,7 +185,7 @@ func (idx *Index) read() error {
 }
 
 func (idx *Index) write() error {
-	f, err := os.Create(".goit/index")
+	f, err := os.Create(indexPath)
 	if err != nil {
 		return fmt.Errorf("fail to create .goit/index: %v", err)
 	}
