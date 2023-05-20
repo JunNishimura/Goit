@@ -115,6 +115,23 @@ func NewCommit(o *Object) (*Commit, error) {
 	return commit, nil
 }
 
+func (c *Commit) String() string {
+	var commitString string
+
+	authorSignString := c.Author.String()
+	sign1 := strings.SplitN(authorSignString, " <", 2)
+	author := sign1[0]
+	sign2 := strings.SplitN(sign1[1], "> ", 2)
+	email := sign2[0]
+
+	commitString += fmt.Sprintf("commit %s\n", c.Hash)
+	commitString += fmt.Sprintf("Author: %s <%s>\n", author, email)
+	commitString += fmt.Sprintf("Date: %s\n", c.Author.Timestamp)
+	commitString += fmt.Sprintf("\n\t%s\n", c.Message)
+
+	return commitString
+}
+
 func (c *Commit) UpdateBranch(branchPath string) error {
 	f, err := os.Create(branchPath)
 	if err != nil {

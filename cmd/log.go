@@ -1,0 +1,109 @@
+/*
+Copyright © 2023 NAME HERE <EMAIL ADDRESS>
+*/
+package cmd
+
+import (
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+
+	"github.com/JunNishimura/Goit/object"
+	"github.com/JunNishimura/Goit/sha"
+	"github.com/spf13/cobra"
+)
+
+var (
+	maxCount int
+)
+
+type WalkFunc func(commit *object.Commit) error
+
+func walkHistory(hash sha.SHA1, walkFunc WalkFunc) error {
+	queue := []sha.SHA1{hash}
+	visitMap := map[string]struct{}{}
+
+	loopCounter := 0
+	for len(queue) > 0 {
+		loopCounter++
+		if loopCounter > maxCount {
+			break
+		}
+
+		currentHash := queue[0]
+		if _, ok := visitMap[currentHash.String()]; ok {
+			queue = queue[1:]
+			continue
+		}
+		visitMap[currentHash.String()] = struct{}{}
+
+		commitObject, err := object.GetObject(client.RootGoitPath, currentHash)
+		if err != nil {
+			return err
+		}
+
+		commit, err := object.NewCommit(commitObject)
+		if err != nil {
+			return err
+		}
+
+		if err := walkFunc(commit); err != nil {
+			return err
+		}
+
+		queue = append(queue[1:], commit.Parents...)
+	}
+
+	return nil
+}
+
+// logCmd represents the log command
+var logCmd = &cobra.Command{
+	Use:   "log",
+	Short: "print commit log",
+	Long:  "this is a command to print commit log",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if !IsGoitInitialized() {
+			return errors.New("fatal: not a goit repository: .goit")
+		}
+
+		// see if committed before
+		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")
+		files, err := ioutil.ReadDir(dirName)
+		if err != nil {
+			return fmt.Errorf("fail to read dir %s: %v", dirName, err)
+		}
+		if len(files) == 0 {
+			return fmt.Errorf("fatal: your current branch 'main' does not have any commits yet")
+		}
+
+		// get last commit hash
+		branchPath := filepath.Join(dirName, "main")
+		lastCommitHashBytes, err := ioutil.ReadFile(branchPath)
+		if err != nil {
+			return fmt.Errorf("fail to read %s: %v", branchPath, err)
+		}
+		lastCommitHashString := string(lastCommitHashBytes)
+		lastCommitHash, err := sha.ReadHash(lastCommitHashString)
+		if err != nil {
+			return fmt.Errorf("fail to read hash: %v", err)
+		}
+
+		// print log
+		if err := walkHistory(lastCommitHash, func(commit *object.Commit) error {
+			fmt.Println(commit)
+			return nil
+		}); err != nil {
+			return fmt.Errorf("fail to log: %v", err)
+		}
+
+		return nil
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(logCmd)
+
+	logCmd.Flags().IntVarP(&maxCount, "max-count", "n", 5, "max count of logs to print")
+}
