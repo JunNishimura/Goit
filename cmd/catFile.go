@@ -59,7 +59,7 @@ var catFileCmd = &cobra.Command{
 		if err != nil {
 			return ErrInvalidHash
 		}
-		obj, err := object.GetObject(hash)
+		obj, err := object.GetObject(client.RootGoitPath, hash)
 		if err != nil {
 			return ErrInvalidHash
 		}

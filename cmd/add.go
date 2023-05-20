@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/JunNishimura/Goit/object"
 	"github.com/spf13/cobra"
@@ -28,23 +30,15 @@ var addCmd = &cobra.Command{
 			return errors.New("nothing specified, nothing added")
 		}
 		for _, arg := range args {
-			_, err := os.Stat(arg)
-			if os.IsNotExist(err) {
+			if _, err := os.Stat(arg); os.IsNotExist(err) {
 				return fmt.Errorf(`path "%s" did not match any files`, arg)
 			}
 		}
 
 		for _, arg := range args {
-			// check if arg is valid
-			f, err := os.Stat(arg)
-			if os.IsNotExist(err) {
-				return fmt.Errorf(`fatal: Cannot open '%s': No such file`, arg)
-			}
-			if f.IsDir() {
-				return fmt.Errorf(`fatal: '%s' is invalid to make blob object`, arg)
-			}
-
 			// get data from file
+			arg = filepath.Clean(arg)               // remove unnecessary slash
+			arg = strings.ReplaceAll(arg, `\`, "/") // replace backslash with slash
 			data, err := ioutil.ReadFile(arg)
 			if err != nil {
 				return fmt.Errorf("fail to read file: %v", err)
@@ -54,7 +48,7 @@ var addCmd = &cobra.Command{
 			object := object.NewObject(object.BlobObject, data)
 
 			// update index
-			path := []byte(arg) //TODO: update path construction
+			path := []byte(arg)
 			isUpdated, err := client.Idx.Update(object.Hash, path)
 			if err != nil {
 				return fmt.Errorf("fail to update index: %v", err)
@@ -64,7 +58,7 @@ var addCmd = &cobra.Command{
 			}
 
 			// write object to file
-			object.Write()
+			object.Write(client.RootGoitPath)
 		}
 
 		// delete untracked files from index

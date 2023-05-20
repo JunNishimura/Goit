@@ -43,9 +43,9 @@ func NewObject(objType Type, data []byte) *Object {
 	return object
 }
 
-func GetObject(hash sha.SHA1) (*Object, error) {
+func GetObject(rootGoitPath string, hash sha.SHA1) (*Object, error) {
 	hashString := hash.String()
-	objPath := filepath.Join(".goit", "objects", hashString[:2], hashString[2:])
+	objPath := filepath.Join(rootGoitPath, "objects", hashString[:2], hashString[2:])
 	objFile, err := os.Open(objPath)
 	if err != nil {
 		return nil, fmt.Errorf("fail to open %s: %v", objPath, err)
@@ -130,13 +130,13 @@ func (o *Object) compress() (bytes.Buffer, error) {
 	return b, nil
 }
 
-func (o *Object) Write() error {
+func (o *Object) Write(rootGoitPath string) error {
 	buf, err := o.compress()
 	if err != nil {
 		return err
 	}
 
-	dirPath := filepath.Join(".goit", "objects", o.Hash.String()[:2])
+	dirPath := filepath.Join(rootGoitPath, "objects", o.Hash.String()[:2])
 	filePath := filepath.Join(dirPath, o.Hash.String()[2:])
 	if f, err := os.Stat(dirPath); os.IsNotExist(err) || !f.IsDir() {
 		if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
