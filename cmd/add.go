@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/JunNishimura/Goit/object"
 	"github.com/spf13/cobra"
@@ -35,6 +37,8 @@ var addCmd = &cobra.Command{
 
 		for _, arg := range args {
 			// get data from file
+			arg = filepath.Clean(arg)               // remove unnecessary slash
+			arg = strings.ReplaceAll(arg, `\`, "/") // replace backslash with slash
 			data, err := ioutil.ReadFile(arg)
 			if err != nil {
 				return fmt.Errorf("fail to read file: %v", err)
@@ -44,7 +48,7 @@ var addCmd = &cobra.Command{
 			object := object.NewObject(object.BlobObject, data)
 
 			// update index
-			path := []byte(arg) //TODO: update path construction
+			path := []byte(arg)
 			isUpdated, err := client.Idx.Update(object.Hash, path)
 			if err != nil {
 				return fmt.Errorf("fail to update index: %v", err)
