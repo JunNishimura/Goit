@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/JunNishimura/Goit/binary"
@@ -123,7 +122,12 @@ func (to *Object) ExtractFilePaths(rootGoitDir, rootDir string) ([]string, error
 			if err != nil {
 				return nil, err
 			}
-			path := filepath.Join(rootDir, dirName)
+			var path string
+			if rootDir == "" {
+				path = dirName
+			} else {
+				path = fmt.Sprintf("%s/%s", rootDir, dirName)
+			}
 			getPaths, err := treeObject.ExtractFilePaths(rootGoitDir, path)
 			if err != nil {
 				return nil, err
@@ -148,7 +152,12 @@ func (to *Object) ExtractFilePaths(rootGoitDir, rootDir string) ([]string, error
 			if fileMode == "040000" {
 				dirName = fileName
 			} else if fileMode == "100644" {
-				path := filepath.Join(rootDir, fileName)
+				var path string
+				if rootDir == "" {
+					path = fileName
+				} else {
+					path = fmt.Sprintf("%s/%s", rootDir, fileName)
+				}
 				paths = append(paths, path)
 			}
 		}
