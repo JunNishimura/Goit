@@ -48,7 +48,7 @@ var configCmd = &cobra.Command{
 		client.Conf.Add(identifier, key, value)
 
 		// write to config
-		if err := client.Conf.Write(); err != nil {
+		if err := client.Conf.Write(client.RootGoitPath); err != nil {
 			return fmt.Errorf("fail to write config: %v", err)
 		}
 

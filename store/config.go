@@ -96,8 +96,8 @@ func (c *Config) Add(ident, key, value string) {
 	}
 }
 
-func (c *Config) Write() error {
-	configPath := filepath.Join(".goit", "config")
+func (c *Config) Write(rootGoitPath string) error {
+	configPath := filepath.Join(rootGoitPath, "config")
 	f, err := os.Create(configPath)
 	if err != nil {
 		return err
