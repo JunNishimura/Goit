@@ -1,5 +1,7 @@
 package store
 
+import "github.com/JunNishimura/Goit/file"
+
 type Client struct {
 	Conf    *Config
 	Idx     *Index
@@ -15,7 +17,7 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	rootDir := "" // TODO: implement getRootDir function
+	rootDir, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
 
 	client := &Client{
 		Conf:    config,
