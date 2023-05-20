@@ -5,11 +5,12 @@ import "github.com/JunNishimura/Goit/file"
 type Client struct {
 	Conf    *Config
 	Idx     *Index
-	rootDir string
+	RootDir string
 }
 
 func NewClient() (*Client, error) {
-	config, err := NewConfig()
+	rootDir, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
+	config, err := NewConfig(rootDir)
 	if err != nil {
 		return nil, err
 	}
@@ -17,12 +18,11 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	rootDir, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
 
 	client := &Client{
 		Conf:    config,
 		Idx:     index,
-		rootDir: rootDir,
+		RootDir: rootDir,
 	}
 
 	return client, nil

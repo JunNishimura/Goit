@@ -33,14 +33,14 @@ to set your account's default identity.
 
 func commit() error {
 	// make and write tree object
-	treeObject, err := object.WriteTreeObject(client.Idx.Entries)
+	treeObject, err := object.WriteTreeObject(client.RootDir, client.Idx.Entries)
 	if err != nil {
 		return err
 	}
 
 	// make and write commit object
 	var data []byte
-	branchPath := filepath.Join(".goit", "refs", "heads", "main")
+	branchPath := filepath.Join(client.RootDir, "refs", "heads", "main")
 	branchBytes, err := os.ReadFile(branchPath)
 	author := object.NewSign(client.Conf.Map["user"]["name"], client.Conf.Map["user"]["email"])
 	committer := author
@@ -56,12 +56,12 @@ func commit() error {
 	if err != nil {
 		return fmt.Errorf("fail to make commit object: %v", err)
 	}
-	if err := commit.Write(); err != nil {
+	if err := commit.Write(client.RootDir); err != nil {
 		return fmt.Errorf("fail to write commit object: %v", err)
 	}
 
 	// update branch
-	if err := commit.UpdateBranch(); err != nil {
+	if err := commit.UpdateBranch(branchPath); err != nil {
 		return fmt.Errorf("fail to make new branch: %v", err)
 	}
 
@@ -83,7 +83,7 @@ var commitCmd = &cobra.Command{
 		}
 
 		// see if committed before
-		dirName := filepath.Join(".goit", "refs", "heads")
+		dirName := filepath.Join(client.RootDir, "refs", "heads")
 		files, err := ioutil.ReadDir(dirName)
 		if err != nil {
 			return fmt.Errorf("fail to read dir %s: %v", dirName, err)
@@ -100,7 +100,7 @@ var commitCmd = &cobra.Command{
 			}
 		} else {
 			// get last commit object
-			branchPath := filepath.Join(".goit", "refs", "heads", "main")
+			branchPath := filepath.Join(client.RootDir, "refs", "heads", "main")
 			hashBytes, err := ioutil.ReadFile(branchPath)
 			if err != nil {
 				return fmt.Errorf("fail to read %s: %v", branchPath, err)
@@ -110,7 +110,7 @@ var commitCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("fail to decode hash string: %v", err)
 			}
-			lastCommitObject, err := object.GetObject(lastCommitHash)
+			lastCommitObject, err := object.GetObject(client.RootDir, lastCommitHash)
 			if err != nil {
 				return fmt.Errorf("fail to get last commit object: %v", err)
 			}
@@ -122,7 +122,7 @@ var commitCmd = &cobra.Command{
 			}
 
 			// compare last commit with index
-			isCommitNecessary, err := lastCommit.IsCommitNecessary(client.Idx)
+			isCommitNecessary, err := lastCommit.IsCommitNecessary(client.RootDir, client.Idx)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %v", err)
 			}

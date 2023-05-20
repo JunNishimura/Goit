@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/JunNishimura/Goit/binary"
@@ -11,7 +12,7 @@ import (
 	index "github.com/JunNishimura/Goit/store"
 )
 
-func WriteTreeObject(entries []*index.Entry) (*Object, error) {
+func WriteTreeObject(rootGoitDir string, entries []*index.Entry) (*Object, error) {
 	var dirName string
 	var data []byte
 	var entryBuf []*index.Entry
@@ -20,7 +21,7 @@ func WriteTreeObject(entries []*index.Entry) (*Object, error) {
 		if i >= len(entries) {
 			// if the last entry is in the directory
 			if dirName != "" {
-				treeObject, err := WriteTreeObject(entryBuf)
+				treeObject, err := WriteTreeObject(rootGoitDir, entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -36,7 +37,7 @@ func WriteTreeObject(entries []*index.Entry) (*Object, error) {
 		if len(slashSplit) == 1 {
 			if dirName != "" {
 				// make tree object from entryBuf
-				treeObject, err := WriteTreeObject(entryBuf)
+				treeObject, err := WriteTreeObject(rootGoitDir, entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -64,7 +65,7 @@ func WriteTreeObject(entries []*index.Entry) (*Object, error) {
 				entryBuf = append(entryBuf, newEntry)
 				i++
 			} else if dirName != "" && dirName != slashSplit[0] {
-				treeObject, err := WriteTreeObject(entryBuf)
+				treeObject, err := WriteTreeObject(rootGoitDir, entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -82,14 +83,14 @@ func WriteTreeObject(entries []*index.Entry) (*Object, error) {
 	treeObject := NewObject(TreeObject, data)
 
 	// write tree object
-	if err := treeObject.Write(); err != nil {
+	if err := treeObject.Write(rootGoitDir); err != nil {
 		return nil, fmt.Errorf("fail to make tree object %s: %v", treeObject.Hash, err)
 	}
 
 	return treeObject, nil
 }
 
-func (to *Object) extractFilePaths(rootDir string) ([]string, error) {
+func (to *Object) extractFilePaths(rootGoitDir, rootDir string) ([]string, error) {
 	var paths []string
 	var dirName string
 
@@ -118,11 +119,12 @@ func (to *Object) extractFilePaths(rootDir string) ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			treeObject, err := GetObject(hash)
+			treeObject, err := GetObject(rootGoitDir, hash)
 			if err != nil {
 				return nil, err
 			}
-			getPaths, err := treeObject.extractFilePaths(dirName)
+			path := filepath.Join(rootDir, dirName)
+			getPaths, err := treeObject.extractFilePaths(rootGoitDir, path)
 			if err != nil {
 				return nil, err
 			}
@@ -146,12 +148,7 @@ func (to *Object) extractFilePaths(rootDir string) ([]string, error) {
 			if fileMode == "040000" {
 				dirName = fileName
 			} else if fileMode == "100644" {
-				var path string
-				if rootDir != "" {
-					path = fmt.Sprintf("%s/%s", rootDir, fileName)
-				} else {
-					path = fileName
-				}
+				path := filepath.Join(rootDir, fileName)
 				paths = append(paths, path)
 			}
 		}

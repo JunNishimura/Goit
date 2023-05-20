@@ -23,11 +23,11 @@ type Config struct {
 	Map map[string]KV
 }
 
-func NewConfig() (*Config, error) {
+func NewConfig(rootGoitDir string) (*Config, error) {
 	var config *Config
-	configPath := filepath.Join(".goit", "config")
+	configPath := filepath.Join(rootGoitDir, "config")
 	if _, err := os.Stat(configPath); !os.IsNotExist(err) {
-		config, err = load()
+		config, err = load(configPath)
 		if err != nil {
 			return nil, err
 		}
@@ -43,10 +43,9 @@ func newConfig() *Config {
 	}
 }
 
-func load() (*Config, error) {
+func load(configPath string) (*Config, error) {
 	config := newConfig()
 
-	configPath := filepath.Join(".goit", "config")
 	b, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, err

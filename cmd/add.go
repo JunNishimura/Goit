@@ -64,7 +64,7 @@ var addCmd = &cobra.Command{
 			}
 
 			// write object to file
-			object.Write()
+			object.Write(client.RootDir)
 		}
 
 		// delete untracked files from index
