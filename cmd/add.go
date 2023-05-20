@@ -28,22 +28,12 @@ var addCmd = &cobra.Command{
 			return errors.New("nothing specified, nothing added")
 		}
 		for _, arg := range args {
-			_, err := os.Stat(arg)
-			if os.IsNotExist(err) {
+			if _, err := os.Stat(arg); os.IsNotExist(err) {
 				return fmt.Errorf(`path "%s" did not match any files`, arg)
 			}
 		}
 
 		for _, arg := range args {
-			// check if arg is valid
-			f, err := os.Stat(arg)
-			if os.IsNotExist(err) {
-				return fmt.Errorf(`fatal: Cannot open '%s': No such file`, arg)
-			}
-			if f.IsDir() {
-				return fmt.Errorf(`fatal: '%s' is invalid to make blob object`, arg)
-			}
-
 			// get data from file
 			data, err := ioutil.ReadFile(arg)
 			if err != nil {
