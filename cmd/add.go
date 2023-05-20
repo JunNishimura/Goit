@@ -20,11 +20,13 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "register changes to index",
 	Long:  "This is a command to register changes to index.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if !IsGoitInitialized() {
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if !isGoitInitialized() {
 			return errors.New("fatal: not a goit repository: .goit")
 		}
-
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check if args are valid
 		if len(args) == 0 {
 			return errors.New("nothing specified, nothing added")

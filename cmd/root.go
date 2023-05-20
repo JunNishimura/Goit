@@ -40,7 +40,7 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func IsGoitInitialized() bool {
-	_, err := os.Stat(".goit")
+func isGoitInitialized() bool {
+	_, err := os.Stat(client.RootGoitPath)
 	return !os.IsNotExist(err) && client.RootGoitPath != ""
 }

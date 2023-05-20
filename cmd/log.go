@@ -63,11 +63,13 @@ var logCmd = &cobra.Command{
 	Use:   "log",
 	Short: "print commit log",
 	Long:  "this is a command to print commit log",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if !IsGoitInitialized() {
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if !isGoitInitialized() {
 			return errors.New("fatal: not a goit repository: .goit")
 		}
-
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// see if committed before
 		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")
 		files, err := ioutil.ReadDir(dirName)

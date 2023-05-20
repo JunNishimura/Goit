@@ -18,11 +18,13 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "config setting",
 	Long:  "this is a command to set config",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if !IsGoitInitialized() {
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if !isGoitInitialized() {
 			return errors.New("fatal: not a goit repository: .goit")
 		}
-
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
 		// check the existence of config file
 		configPath := filepath.Join(client.RootGoitPath, "config")
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
