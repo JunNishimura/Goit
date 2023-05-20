@@ -106,7 +106,11 @@ func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
 	idx.EntryNum = uint32(len(idx.Entries))
 	sort.Slice(idx.Entries, func(i, j int) bool { return string(idx.Entries[i].Path) < string(idx.Entries[j].Path) })
 
-	return true, idx.write()
+	if err := idx.write(); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (idx *Index) DeleteUntrackedFiles() error {
