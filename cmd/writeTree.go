@@ -22,7 +22,7 @@ var writeTreeCmd = &cobra.Command{
 		}
 
 		// make and write treeObject from index
-		rootTreeObject, err := object.WriteTreeObject(client.RootDir, client.Idx.Entries)
+		rootTreeObject, err := object.WriteTreeObject(client.RootGoitPath, client.Idx.Entries)
 		if err != nil {
 			return err
 		}

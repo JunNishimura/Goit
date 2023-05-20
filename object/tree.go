@@ -12,7 +12,7 @@ import (
 	index "github.com/JunNishimura/Goit/store"
 )
 
-func WriteTreeObject(rootGoitDir string, entries []*index.Entry) (*Object, error) {
+func WriteTreeObject(rootGoitPath string, entries []*index.Entry) (*Object, error) {
 	var dirName string
 	var data []byte
 	var entryBuf []*index.Entry
@@ -21,7 +21,7 @@ func WriteTreeObject(rootGoitDir string, entries []*index.Entry) (*Object, error
 		if i >= len(entries) {
 			// if the last entry is in the directory
 			if dirName != "" {
-				treeObject, err := WriteTreeObject(rootGoitDir, entryBuf)
+				treeObject, err := WriteTreeObject(rootGoitPath, entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -37,7 +37,7 @@ func WriteTreeObject(rootGoitDir string, entries []*index.Entry) (*Object, error
 		if len(slashSplit) == 1 {
 			if dirName != "" {
 				// make tree object from entryBuf
-				treeObject, err := WriteTreeObject(rootGoitDir, entryBuf)
+				treeObject, err := WriteTreeObject(rootGoitPath, entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -65,7 +65,7 @@ func WriteTreeObject(rootGoitDir string, entries []*index.Entry) (*Object, error
 				entryBuf = append(entryBuf, newEntry)
 				i++
 			} else if dirName != "" && dirName != slashSplit[0] {
-				treeObject, err := WriteTreeObject(rootGoitDir, entryBuf)
+				treeObject, err := WriteTreeObject(rootGoitPath, entryBuf)
 				if err != nil {
 					return nil, err
 				}
@@ -83,7 +83,7 @@ func WriteTreeObject(rootGoitDir string, entries []*index.Entry) (*Object, error
 	treeObject := NewObject(TreeObject, data)
 
 	// write tree object
-	if err := treeObject.Write(rootGoitDir); err != nil {
+	if err := treeObject.Write(rootGoitPath); err != nil {
 		return nil, fmt.Errorf("fail to make tree object %s: %v", treeObject.Hash, err)
 	}
 

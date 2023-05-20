@@ -3,14 +3,14 @@ package store
 import "github.com/JunNishimura/Goit/file"
 
 type Client struct {
-	Conf    *Config
-	Idx     *Index
-	RootDir string
+	Conf         *Config
+	Idx          *Index
+	RootGoitPath string
 }
 
 func NewClient() (*Client, error) {
-	rootDir, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
-	config, err := NewConfig(rootDir)
+	rootGoitPath, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
+	config, err := NewConfig(rootGoitPath)
 	if err != nil {
 		return nil, err
 	}
@@ -20,9 +20,9 @@ func NewClient() (*Client, error) {
 	}
 
 	client := &Client{
-		Conf:    config,
-		Idx:     index,
-		RootDir: rootDir,
+		Conf:         config,
+		Idx:          index,
+		RootGoitPath: rootGoitPath,
 	}
 
 	return client, nil

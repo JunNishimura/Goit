@@ -24,7 +24,7 @@ var configCmd = &cobra.Command{
 		}
 
 		// check the existence of config file
-		configPath := filepath.Join(client.RootDir, "config")
+		configPath := filepath.Join(client.RootGoitPath, "config")
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
 			// if there is no config file, make it
 			if _, err := os.Create(configPath); err != nil {
