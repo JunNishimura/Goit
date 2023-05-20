@@ -14,7 +14,7 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	index, err := NewIndex()
+	index, err := NewIndex(rootGoitPath)
 	if err != nil {
 		return nil, err
 	}
