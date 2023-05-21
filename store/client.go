@@ -6,6 +6,7 @@ type Client struct {
 	Conf         *Config
 	Idx          *Index
 	RootGoitPath string
+	Head
 }
 
 func NewClient() (*Client, error) {
@@ -18,11 +19,16 @@ func NewClient() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	head, err := NewHead(rootGoitPath)
+	if err != nil {
+		return nil, err
+	}
 
 	client := &Client{
 		Conf:         config,
 		Idx:          index,
 		RootGoitPath: rootGoitPath,
+		Head:         head,
 	}
 
 	return client, nil

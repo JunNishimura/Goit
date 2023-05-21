@@ -25,7 +25,11 @@ var initCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// make .goit directory
-		goitDir := filepath.Join(".goit")
+		curPath, err := os.Getwd()
+		if err != nil {
+			return errors.New("fail to get current path")
+		}
+		goitDir := filepath.Join(curPath, ".goit")
 		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
 			return fmt.Errorf("%w: %s", ErrIOHandling, goitDir)
 		}
@@ -34,6 +38,18 @@ var initCmd = &cobra.Command{
 		configFile := filepath.Join(goitDir, "config")
 		if _, err := os.Create(configFile); err != nil {
 			return fmt.Errorf("%w: %s", ErrIOHandling, configFile)
+		}
+
+		// make .goit/HEAD file and write main branch
+		headFile := filepath.Join(goitDir, "HEAD")
+		f, err := os.Create(headFile)
+		if err != nil {
+			return fmt.Errorf("%w: %s", ErrIOHandling, headFile)
+		}
+		defer f.Close()
+		// set 'main' as default branch
+		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+			return fmt.Errorf("%w: %s", ErrIOHandling, headFile)
 		}
 
 		// make .goit/objects directory
@@ -59,6 +75,9 @@ var initCmd = &cobra.Command{
 		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
 			return fmt.Errorf("%w: %s", ErrIOHandling, tagsDir)
 		}
+
+		// print out message for initialization success
+		fmt.Printf("Initialized empty Goit repository in %s\n", goitDir)
 
 		return nil
 	},
