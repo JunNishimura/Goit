@@ -89,7 +89,7 @@ func WriteTreeObject(rootGoitPath string, entries []*index.Entry) (*Object, erro
 	return treeObject, nil
 }
 
-func (to *Object) ExtractFilePaths(rootGoitDir, rootDir string) ([]string, error) {
+func (to *Object) ExtractFilePaths(rootGoitPath, rootDir string) ([]string, error) {
 	var paths []string
 	var dirName string
 
@@ -118,7 +118,7 @@ func (to *Object) ExtractFilePaths(rootGoitDir, rootDir string) ([]string, error
 			if err != nil {
 				return nil, err
 			}
-			treeObject, err := GetObject(rootGoitDir, hash)
+			treeObject, err := GetObject(rootGoitPath, hash)
 			if err != nil {
 				return nil, err
 			}
@@ -128,7 +128,7 @@ func (to *Object) ExtractFilePaths(rootGoitDir, rootDir string) ([]string, error
 			} else {
 				path = fmt.Sprintf("%s/%s", rootDir, dirName)
 			}
-			getPaths, err := treeObject.ExtractFilePaths(rootGoitDir, path)
+			getPaths, err := treeObject.ExtractFilePaths(rootGoitPath, path)
 			if err != nil {
 				return nil, err
 			}
