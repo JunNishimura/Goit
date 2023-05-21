@@ -25,8 +25,8 @@ func (t Type) String() string {
 	}
 }
 
-func NewType(typeStr string) (Type, error) {
-	switch typeStr {
+func NewType(typeString string) (Type, error) {
+	switch typeString {
 	case "blob":
 		return BlobObject, nil
 	case "tree":
