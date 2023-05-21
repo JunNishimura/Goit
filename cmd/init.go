@@ -25,7 +25,11 @@ var initCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// make .goit directory
-		goitDir := filepath.Join(".goit")
+		curPath, err := os.Getwd()
+		if err != nil {
+			return errors.New("fail to get current path")
+		}
+		goitDir := filepath.Join(curPath, ".goit")
 		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
 			return fmt.Errorf("%w: %s", ErrIOHandling, goitDir)
 		}
@@ -71,6 +75,9 @@ var initCmd = &cobra.Command{
 		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
 			return fmt.Errorf("%w: %s", ErrIOHandling, tagsDir)
 		}
+
+		// print out message for initialization success
+		fmt.Printf("Initialized empty Goit repository in %s\n", goitDir)
 
 		return nil
 	},
