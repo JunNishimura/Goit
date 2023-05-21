@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrGoitRootNotFound = errors.New(".goit directory not found")
+	ErrGoitRootNotFound = errors.New("not a goit repository (or any of the parent directories): .goit")
 )
 
 func FindGoitRoot(path string) (string, error) {
