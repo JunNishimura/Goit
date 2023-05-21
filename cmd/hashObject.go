@@ -17,6 +17,12 @@ var hashObjectCmd = &cobra.Command{
 	Use:   "hash-object",
 	Short: "calculate the hash of the file",
 	Long:  "calculate the hash of the file",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for _, arg := range args {
 			// check if arg is valid

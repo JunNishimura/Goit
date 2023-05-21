@@ -15,6 +15,12 @@ var writeTreeCmd = &cobra.Command{
 	Use:   "write-tree",
 	Short: "write tree object from index",
 	Long:  "this is a command to write tree object from index",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// make and write treeObject from index
 		rootTreeObject, err := object.WriteTreeObject(client.RootGoitPath, client.Idx.Entries)

@@ -62,6 +62,12 @@ var logCmd = &cobra.Command{
 	Use:   "log",
 	Short: "print commit log",
 	Long:  "this is a command to print commit log",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// see if committed before
 		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")

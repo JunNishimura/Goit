@@ -20,6 +20,12 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "register changes to index",
 	Long:  "This is a command to register changes to index.",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// check if args are valid
 		if len(args) == 0 {
