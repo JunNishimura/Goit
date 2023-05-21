@@ -1,40 +1,60 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
+func revParse(refNames ...string) error {
+	for _, refName := range refNames {
+		if strings.ToLower(refName) == "head" {
+			refPath := filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
+			hashBytes, err := ioutil.ReadFile(refPath)
+			if err != nil {
+				return fmt.Errorf(`fatal: ambiguous argument '%s': unknown revision or path not in the working tree`, refName)
+			}
+			hashString := string(hashBytes)
+			fmt.Println(hashString)
+		} else {
+			refPath := filepath.Join(client.RootGoitPath, "refs", "heads", refName)
+			hashBytes, err := ioutil.ReadFile(refPath)
+			if err != nil {
+				return fmt.Errorf(`fatal: ambiguous argument '%s': unknown revision or path not in the working tree`, refName)
+			}
+			hashString := string(hashBytes)
+			fmt.Println(hashString)
+		}
+	}
+	return nil
+}
+
 // revParseCmd represents the revParse command
 var revParseCmd = &cobra.Command{
-	Use:   "revParse",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:   "rev-parse",
+	Short: "pick out and massage parameters",
+	Long:  "pick out and massage parameters",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := revParse(args...); err != nil {
+			return err
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("revParse called")
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(revParseCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// revParseCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// revParseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
