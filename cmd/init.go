@@ -36,6 +36,18 @@ var initCmd = &cobra.Command{
 			return fmt.Errorf("%w: %s", ErrIOHandling, configFile)
 		}
 
+		// make .goit/HEAD file and write main branch
+		headFile := filepath.Join(goitDir, "HEAD")
+		f, err := os.Create(headFile)
+		if err != nil {
+			return fmt.Errorf("%w: %s", ErrIOHandling, headFile)
+		}
+		defer f.Close()
+		// set 'main' as default branch
+		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+			return fmt.Errorf("%w: %s", ErrIOHandling, headFile)
+		}
+
 		// make .goit/objects directory
 		objectsDir := filepath.Join(goitDir, "objects")
 		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
