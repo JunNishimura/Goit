@@ -18,6 +18,12 @@ var lsFilesCmd = &cobra.Command{
 	Use:   "ls-files",
 	Short: "print out index",
 	Long:  "this is a command to print out index",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, entry := range client.Idx.Entries {
 			if isShowStaged {

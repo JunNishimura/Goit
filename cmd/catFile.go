@@ -26,6 +26,12 @@ var catFileCmd = &cobra.Command{
 	Use:   "cat-file",
 	Short: "cat goit object",
 	Long:  "this is a command to show the goit object",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// get flags
 		typeFlag, err := cmd.Flags().GetBool("type")

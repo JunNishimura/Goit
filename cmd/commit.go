@@ -97,6 +97,12 @@ var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "commit",
 	Long:  "this is a command to commit",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !client.Conf.IsUserSet() {
 			return ErrUserNotSetOnConfig

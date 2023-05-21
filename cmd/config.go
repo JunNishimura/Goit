@@ -17,6 +17,12 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "config setting",
 	Long:  "this is a command to set config",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// check the existence of config file
 		configPath := filepath.Join(client.RootGoitPath, "config")
