@@ -29,7 +29,7 @@ var configCmd = &cobra.Command{
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
 			// if there is no config file, make it
 			if _, err := os.Create(configPath); err != nil {
-				return fmt.Errorf("fail to make %s file: %v", configPath, err)
+				return fmt.Errorf("%w: %s", ErrIOHandling, configPath)
 			}
 		}
 
@@ -50,7 +50,7 @@ var configCmd = &cobra.Command{
 
 		// write to config
 		if err := client.Conf.Write(client.RootGoitPath); err != nil {
-			return fmt.Errorf("fail to write config: %v", err)
+			return fmt.Errorf("fail to write config: %w", err)
 		}
 
 		return nil

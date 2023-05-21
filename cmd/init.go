@@ -27,37 +27,37 @@ var initCmd = &cobra.Command{
 		// make .goit directory
 		goitDir := filepath.Join(".goit")
 		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", goitDir, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, goitDir)
 		}
 
 		// make .goit/config file
 		configFile := filepath.Join(goitDir, "config")
 		if _, err := os.Create(configFile); err != nil {
-			return fmt.Errorf("fail to make %s file: %v", configFile, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, configFile)
 		}
 
 		// make .goit/objects directory
 		objectsDir := filepath.Join(goitDir, "objects")
 		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", objectsDir, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, objectsDir)
 		}
 
 		// make .goit/refs directory
 		refsDir := filepath.Join(goitDir, "refs")
 		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", refsDir, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, refsDir)
 		}
 
 		// make .goit/refs/heads directory
 		headsDir := filepath.Join(refsDir, "heads")
 		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", headsDir, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, headsDir)
 		}
 
 		// make .goit/refs/tags directory
 		tagsDir := filepath.Join(refsDir, "tags")
 		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s directory: %v", tagsDir, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, tagsDir)
 		}
 
 		return nil

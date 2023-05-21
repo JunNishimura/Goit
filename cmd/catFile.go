@@ -5,20 +5,12 @@ package cmd
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/JunNishimura/Goit/object"
 	"github.com/JunNishimura/Goit/sha"
 	"github.com/spf13/cobra"
-)
-
-var (
-	ErrIncompatibleFlag = errors.New("error: incompatible pair of flags")
-	ErrNotSpecifiedHash = errors.New("error: no specified object hash")
-	ErrTooManyArgs      = errors.New("error: to many arguments")
-	ErrInvalidHash      = errors.New("error: not a valid object hash")
 )
 
 // catFileCmd represents the catFile command
@@ -36,11 +28,11 @@ var catFileCmd = &cobra.Command{
 		// get flags
 		typeFlag, err := cmd.Flags().GetBool("type")
 		if err != nil {
-			return fmt.Errorf("fail to get type flag: %v", err)
+			return fmt.Errorf("fail to get type flag: %w", err)
 		}
 		printFlag, err := cmd.Flags().GetBool("print")
 		if err != nil {
-			return fmt.Errorf("fail to get print flag: %v", err)
+			return fmt.Errorf("fail to get print flag: %w", err)
 		}
 
 		// flag check
@@ -77,7 +69,7 @@ var catFileCmd = &cobra.Command{
 				// hash is written in hexadecimal in tree object
 				dataString, err := obj.ConvertDataToString()
 				if err != nil {
-					return fmt.Errorf("fail to convert tree data to string: %v", err)
+					return fmt.Errorf("fail to convert tree data to string: %w", err)
 				}
 
 				// format output
