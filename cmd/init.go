@@ -18,7 +18,7 @@ var initCmd = &cobra.Command{
 	Short: "initialize Goit",
 	Long:  "This is a command to initialize Goit.",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if isGoitInitialized() {
+		if client.RootGoitPath != "" {
 			return errors.New("goit is already initialized")
 		}
 		return nil

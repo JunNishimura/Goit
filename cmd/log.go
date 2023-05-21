@@ -4,7 +4,6 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -63,12 +62,6 @@ var logCmd = &cobra.Command{
 	Use:   "log",
 	Short: "print commit log",
 	Long:  "this is a command to print commit log",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if !isGoitInitialized() {
-			return errors.New("fatal: not a goit repository: .goit")
-		}
-		return nil
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// see if committed before
 		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")

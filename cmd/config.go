@@ -4,7 +4,6 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,12 +17,6 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "config setting",
 	Long:  "this is a command to set config",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if !isGoitInitialized() {
-			return errors.New("fatal: not a goit repository: .goit")
-		}
-		return nil
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// check the existence of config file
 		configPath := filepath.Join(client.RootGoitPath, "config")

@@ -34,13 +34,9 @@ func init() {
 	tmpClient, err := store.NewClient()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	client = tmpClient
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-func isGoitInitialized() bool {
-	_, err := os.Stat(client.RootGoitPath)
-	return !os.IsNotExist(err) && client.RootGoitPath != ""
 }
