@@ -14,23 +14,18 @@ import (
 
 func revParse(refNames ...string) error {
 	for _, refName := range refNames {
+		var refPath string
 		if strings.ToLower(refName) == "head" {
-			refPath := filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
-			hashBytes, err := ioutil.ReadFile(refPath)
-			if err != nil {
-				return fmt.Errorf(`fatal: ambiguous argument '%s': unknown revision or path not in the working tree`, refName)
-			}
-			hashString := string(hashBytes)
-			fmt.Println(hashString)
+			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
 		} else {
-			refPath := filepath.Join(client.RootGoitPath, "refs", "heads", refName)
-			hashBytes, err := ioutil.ReadFile(refPath)
-			if err != nil {
-				return fmt.Errorf(`fatal: ambiguous argument '%s': unknown revision or path not in the working tree`, refName)
-			}
-			hashString := string(hashBytes)
-			fmt.Println(hashString)
+			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", refName)
 		}
+		hashBytes, err := ioutil.ReadFile(refPath)
+		if err != nil {
+			return fmt.Errorf(`fatal: ambiguous argument '%s': unknown revision or path not in the working tree`, refName)
+		}
+		hashString := string(hashBytes)
+		fmt.Println(hashString)
 	}
 	return nil
 }
