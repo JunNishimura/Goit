@@ -62,7 +62,7 @@ func commit() error {
 
 	// update branch
 	if err := commit.UpdateBranch(branchPath); err != nil {
-		return fmt.Errorf("fail to make new branch: %v", err)
+		return fmt.Errorf("fail to update %s: %w", branchPath, err)
 	}
 
 	return nil

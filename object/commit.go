@@ -3,6 +3,7 @@ package object
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -17,6 +18,7 @@ var (
 	emailRegexpString     = "([a-zA-Z0-9_.+-]+@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\\.)+[a-zA-Z]{2,})"
 	timestampRegexpString = "([1-9][0-9]* [+-][0-9]{4})"
 	signRegexp            = regexp.MustCompile("^[^<]* <" + emailRegexpString + "> " + timestampRegexpString + "$")
+	ErrIOHandling         = errors.New("IO handling error")
 )
 
 type Sign struct {
@@ -135,12 +137,12 @@ func (c *Commit) String() string {
 func (c *Commit) UpdateBranch(branchPath string) error {
 	f, err := os.Create(branchPath)
 	if err != nil {
-		return fmt.Errorf("fail to make %s: %v", branchPath, err)
+		return fmt.Errorf("%w: %s", ErrIOHandling, err)
 	}
 	defer f.Close()
 
 	if _, err := f.WriteString(c.Hash.String()); err != nil {
-		return fmt.Errorf("fail to write hash to %s: %v", branchPath, err)
+		return fmt.Errorf("%w: %s", ErrIOHandling, err)
 	}
 
 	return nil
@@ -160,17 +162,17 @@ func readSign(signString string) (Sign, error) {
 
 	unixTime, err := strconv.ParseInt(unixTimeString, 10, 64)
 	if err != nil {
-		return Sign{}, fmt.Errorf("%w : %s", ErrInvalidCommitObject, err)
+		return Sign{}, fmt.Errorf("%w: %s", ErrInvalidCommitObject, err)
 	}
 	var offsetHour, offsetMinute int
 	switch offsetString[:1] {
 	case "+":
 		if _, err := fmt.Sscanf(offsetString, "+%02d%02d", &offsetHour, &offsetMinute); err != nil {
-			return Sign{}, fmt.Errorf("%w : %s", ErrInvalidCommitObject, err)
+			return Sign{}, fmt.Errorf("%w: %s", ErrInvalidCommitObject, err)
 		}
 	case "-":
 		if _, err := fmt.Sscanf(offsetString, "-%02d%02d", &offsetHour, &offsetMinute); err != nil {
-			return Sign{}, fmt.Errorf("%w : %s", ErrInvalidCommitObject, err)
+			return Sign{}, fmt.Errorf("%w: %s", ErrInvalidCommitObject, err)
 		}
 	}
 	location := time.FixedZone(" ", 3600*offsetHour+60*offsetMinute)
