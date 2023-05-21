@@ -3,7 +3,6 @@ package object
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -18,7 +17,6 @@ var (
 	emailRegexpString     = "([a-zA-Z0-9_.+-]+@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\\.)+[a-zA-Z]{2,})"
 	timestampRegexpString = "([1-9][0-9]* [+-][0-9]{4})"
 	signRegexp            = regexp.MustCompile("^[^<]* <" + emailRegexpString + "> " + timestampRegexpString + "$")
-	ErrIOHandling         = errors.New("IO handling error")
 )
 
 type Sign struct {
