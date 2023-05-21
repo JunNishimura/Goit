@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/JunNishimura/Goit/binary"
-	"github.com/JunNishimura/Goit/sha"
+	"github.com/JunNishimura/Goit/internal/binary"
+	"github.com/JunNishimura/Goit/internal/sha"
 )
 
 type Object struct {

@@ -1,6 +1,6 @@
 package store
 
-import "github.com/JunNishimura/Goit/file"
+import "github.com/JunNishimura/Goit/internal/file"
 
 type Client struct {
 	Conf         *Config

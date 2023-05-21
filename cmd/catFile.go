@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/JunNishimura/Goit/object"
-	"github.com/JunNishimura/Goit/sha"
+	"github.com/JunNishimura/Goit/internal/object"
+	"github.com/JunNishimura/Goit/internal/sha"
 	"github.com/spf13/cobra"
 )
 

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JunNishimura/Goit/sha"
+	"github.com/JunNishimura/Goit/internal/sha"
 )
 
 var (

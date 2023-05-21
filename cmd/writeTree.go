@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/JunNishimura/Goit/object"
+	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/spf13/cobra"
 )
 

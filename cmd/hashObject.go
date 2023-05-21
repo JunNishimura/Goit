@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/JunNishimura/Goit/object"
+	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/spf13/cobra"
 )
 
