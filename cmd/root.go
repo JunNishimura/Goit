@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/JunNishimura/Goit/store"
+	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
 

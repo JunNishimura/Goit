@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/JunNishimura/Goit/binary"
-	"github.com/JunNishimura/Goit/sha"
-	index "github.com/JunNishimura/Goit/store"
+	"github.com/JunNishimura/Goit/internal/binary"
+	"github.com/JunNishimura/Goit/internal/sha"
+	index "github.com/JunNishimura/Goit/internal/store"
 )
 
 func WriteTreeObject(rootGoitPath string, entries []*index.Entry) (*Object, error) {
