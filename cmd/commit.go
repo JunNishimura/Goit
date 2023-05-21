@@ -29,6 +29,7 @@ Run
 to set your account's default identity.
 
 	`)
+	ErrNothingToCommit = errors.New("nothing to commit, working tree clean")
 )
 
 func commit() error {
@@ -54,15 +55,15 @@ func commit() error {
 	commitObject := object.NewObject(object.CommitObject, data)
 	commit, err := object.NewCommit(commitObject)
 	if err != nil {
-		return fmt.Errorf("fail to make commit object: %v", err)
+		return fmt.Errorf("fail to make commit object: %w", err)
 	}
 	if err := commit.Write(client.RootGoitPath); err != nil {
-		return fmt.Errorf("fail to write commit object: %v", err)
+		return fmt.Errorf("fail to write commit object: %w", err)
 	}
 
 	// update branch
 	if err := commit.UpdateBranch(branchPath); err != nil {
-		return fmt.Errorf("fail to make new branch: %v", err)
+		return fmt.Errorf("fail to update %s: %w", branchPath, err)
 	}
 
 	return nil
@@ -71,13 +72,13 @@ func commit() error {
 func isCommitNecessary(commitObj *object.Commit) (bool, error) {
 	treeObject, err := object.GetObject(client.RootGoitPath, commitObj.Tree)
 	if err != nil {
-		return false, fmt.Errorf("fail to get tree object: %v", err)
+		return false, fmt.Errorf("fail to get tree object: %w", err)
 	}
 
 	// get entries from tree object
 	paths, err := treeObject.ExtractFilePaths(client.RootGoitPath, "")
 	if err != nil {
-		return false, fmt.Errorf("fail to get entries from tree object: %v", err)
+		return false, fmt.Errorf("fail to get filepath from tree object: %w", err)
 	}
 
 	// compare entries extraceted from tree object with index
@@ -112,12 +113,12 @@ var commitCmd = &cobra.Command{
 		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")
 		files, err := ioutil.ReadDir(dirName)
 		if err != nil {
-			return fmt.Errorf("fail to read dir %s: %v", dirName, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, dirName)
 		}
 
 		if len(files) == 0 { // no commit before
 			if client.Idx.EntryNum == 0 {
-				return errors.New("nothing to commit, working tree clean")
+				return ErrNothingToCommit
 			}
 
 			// commit
@@ -129,36 +130,36 @@ var commitCmd = &cobra.Command{
 			branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", "main")
 			hashBytes, err := ioutil.ReadFile(branchPath)
 			if err != nil {
-				return fmt.Errorf("fail to read %s: %v", branchPath, err)
+				return fmt.Errorf("%w: %s", ErrIOHandling, branchPath)
 			}
 			hashString := string(hashBytes)
 			lastCommitHash, err := sha.ReadHash(hashString)
 			if err != nil {
-				return fmt.Errorf("fail to decode hash string: %v", err)
+				return fmt.Errorf("fail to decode hash string: %w", err)
 			}
 			lastCommitObject, err := object.GetObject(client.RootGoitPath, lastCommitHash)
 			if err != nil {
-				return fmt.Errorf("fail to get last commit object: %v", err)
+				return fmt.Errorf("fail to get last commit object: %w", err)
 			}
 
 			// get last commit
 			lastCommit, err := object.NewCommit(lastCommitObject)
 			if err != nil {
-				return fmt.Errorf("fail to get last commit: %v", err)
+				return fmt.Errorf("fail to get last commit: %w", err)
 			}
 
 			// compare last commit with index
 			isCommitNecessary, err := isCommitNecessary(lastCommit)
 			if err != nil {
-				return fmt.Errorf("fail to compare last commit with index: %v", err)
+				return fmt.Errorf("fail to compare last commit with index: %w", err)
 			}
 			if !isCommitNecessary {
-				return errors.New("nothing to commit")
+				return ErrNothingToCommit
 			}
 
 			// commit
 			if err := commit(); err != nil {
-				return err
+				return fmt.Errorf("fail to commit: %w", err)
 			}
 		}
 

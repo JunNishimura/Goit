@@ -43,7 +43,7 @@ var addCmd = &cobra.Command{
 			arg = strings.ReplaceAll(arg, `\`, "/") // replace backslash with slash
 			data, err := ioutil.ReadFile(arg)
 			if err != nil {
-				return fmt.Errorf("fail to read file: %v", err)
+				return fmt.Errorf("%w: %s", ErrIOHandling, arg)
 			}
 
 			// make blob object
@@ -53,7 +53,7 @@ var addCmd = &cobra.Command{
 			path := []byte(arg)
 			isUpdated, err := client.Idx.Update(object.Hash, path)
 			if err != nil {
-				return fmt.Errorf("fail to update index: %v", err)
+				return fmt.Errorf("fail to update index: %w", err)
 			}
 			if !isUpdated {
 				continue
@@ -65,7 +65,7 @@ var addCmd = &cobra.Command{
 
 		// delete untracked files from index
 		if err := client.Idx.DeleteUntrackedFiles(); err != nil {
-			return fmt.Errorf("fail to delete untracked files from index: %v", err)
+			return fmt.Errorf("fail to delete untracked files from index: %w", err)
 		}
 
 		return nil

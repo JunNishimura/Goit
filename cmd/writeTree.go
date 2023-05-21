@@ -25,7 +25,7 @@ var writeTreeCmd = &cobra.Command{
 		// make and write treeObject from index
 		rootTreeObject, err := object.WriteTreeObject(client.RootGoitPath, client.Idx.Entries)
 		if err != nil {
-			return err
+			return fmt.Errorf("fail to write tree object: %w", err)
 		}
 
 		// print out tree object hash

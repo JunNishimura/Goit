@@ -48,13 +48,13 @@ func GetObject(rootGoitPath string, hash sha.SHA1) (*Object, error) {
 	objPath := filepath.Join(rootGoitPath, "objects", hashString[:2], hashString[2:])
 	objFile, err := os.Open(objPath)
 	if err != nil {
-		return nil, fmt.Errorf("fail to open %s: %v", objPath, err)
+		return nil, fmt.Errorf("%w: %s", ErrIOHandling, objPath)
 	}
 	defer objFile.Close()
 
 	zr, err := zlib.NewReader(objFile)
 	if err != nil {
-		return nil, fmt.Errorf("fail to construct zlib.NewReader: %v", err)
+		return nil, fmt.Errorf("fail to construct zlib.NewReader: %w", err)
 	}
 	defer zr.Close()
 
@@ -63,12 +63,12 @@ func GetObject(rootGoitPath string, hash sha.SHA1) (*Object, error) {
 
 	objType, size, err := readHeader(tr)
 	if err != nil {
-		return nil, fmt.Errorf("fail to read header: %v", err)
+		return nil, fmt.Errorf("fail to read header: %w", err)
 	}
 
 	data, err := ioutil.ReadAll(tr)
 	if err != nil {
-		return nil, fmt.Errorf("fail to read object: %v", err)
+		return nil, ErrIOHandling
 	}
 
 	if len(data) != size {
@@ -140,16 +140,16 @@ func (o *Object) Write(rootGoitPath string) error {
 	filePath := filepath.Join(dirPath, o.Hash.String()[2:])
 	if f, err := os.Stat(dirPath); os.IsNotExist(err) || !f.IsDir() {
 		if err := os.Mkdir(dirPath, os.ModePerm); err != nil {
-			return fmt.Errorf("fail to make %s: %v", dirPath, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, dirPath)
 		}
 	}
 	f, err := os.Create(filePath)
 	if err != nil {
-		return fmt.Errorf("fail to make %s: %v", filePath, err)
+		return fmt.Errorf("%w: %s", ErrIOHandling, filePath)
 	}
 	defer f.Close()
 	if _, err := f.Write(buf.Bytes()); err != nil {
-		return fmt.Errorf("fail to write to %s: %v", filePath, err)
+		return fmt.Errorf("%w: %s", ErrIOHandling, filePath)
 	}
 	return nil
 }

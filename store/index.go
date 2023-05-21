@@ -56,7 +56,7 @@ func NewIndex(rootGoitPath string) (*Index, error) {
 	indexPath = filepath.Join(rootGoitPath, "index")
 	if _, err := os.Stat(indexPath); !os.IsNotExist(err) {
 		if err := index.read(); err != nil {
-			return nil, fmt.Errorf("fail to read index: %v", err)
+			return nil, fmt.Errorf("fail to read index: %w", err)
 		}
 	}
 	return index, nil
@@ -142,7 +142,7 @@ func (idx *Index) read() error {
 	// read index
 	b, err := ioutil.ReadFile(indexPath)
 	if err != nil {
-		return fmt.Errorf("fail to read index: %v", err)
+		return fmt.Errorf("fail to read index: %w", err)
 	}
 
 	// make bytes reader
@@ -151,7 +151,7 @@ func (idx *Index) read() error {
 	// fixed length decoding
 	err = binary.Read(buf, binary.BigEndian, &idx.Header)
 	if err != nil {
-		return fmt.Errorf("fail to read index header: %v", err)
+		return fmt.Errorf("fail to read index header: %w", err)
 	}
 
 	// variable length decoding
@@ -160,21 +160,21 @@ func (idx *Index) read() error {
 		hash := make(sha.SHA1, 20)
 		err = binary.Read(buf, binary.BigEndian, &hash)
 		if err != nil {
-			return fmt.Errorf("fail to read hash from index: %v", err)
+			return fmt.Errorf("fail to read hash from index: %w", err)
 		}
 
 		// read file name length
 		var nameLength uint16
 		err = binary.Read(buf, binary.BigEndian, &nameLength)
 		if err != nil {
-			return fmt.Errorf("fail to read file name length from index: %v", err)
+			return fmt.Errorf("fail to read file name length from index: %w", err)
 		}
 
 		// read file path
 		path := make([]byte, nameLength)
 		err = binary.Read(buf, binary.BigEndian, &path)
 		if err != nil {
-			return fmt.Errorf("fail to read path from index: %v", err)
+			return fmt.Errorf("fail to read path from index: %w", err)
 		}
 
 		entry := NewEntry(hash, path)
@@ -187,13 +187,13 @@ func (idx *Index) read() error {
 func (idx *Index) write() error {
 	f, err := os.Create(indexPath)
 	if err != nil {
-		return fmt.Errorf("fail to create .goit/index: %v", err)
+		return fmt.Errorf("fail to create .goit/index: %w", err)
 	}
 	defer f.Close()
 
 	// fixed length encoding
 	if err := binary.Write(f, binary.BigEndian, &idx.Header); err != nil {
-		return fmt.Errorf("fail to write fixed-length encoding: %v", err)
+		return fmt.Errorf("fail to write fixed-length encoding: %w", err)
 	}
 
 	// variable length encoding
@@ -206,7 +206,7 @@ func (idx *Index) write() error {
 		data = append(data, entry.Path...)
 	}
 	if _, err := f.Write(data); err != nil {
-		return fmt.Errorf("fail to write variable-length encoding: %v", err)
+		return fmt.Errorf("fail to write variable-length encoding: %w", err)
 	}
 
 	return nil

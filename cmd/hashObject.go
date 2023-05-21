@@ -37,7 +37,7 @@ var hashObjectCmd = &cobra.Command{
 			// get data from file
 			data, err := ioutil.ReadFile(arg)
 			if err != nil {
-				return fmt.Errorf("fail to read file: %v", err)
+				return fmt.Errorf("%w: %s", ErrIOHandling, arg)
 			}
 
 			// make blob object

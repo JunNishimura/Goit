@@ -73,7 +73,7 @@ var logCmd = &cobra.Command{
 		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")
 		files, err := ioutil.ReadDir(dirName)
 		if err != nil {
-			return fmt.Errorf("fail to read dir %s: %v", dirName, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, dirName)
 		}
 		if len(files) == 0 {
 			return fmt.Errorf("fatal: your current branch 'main' does not have any commits yet")
@@ -83,12 +83,12 @@ var logCmd = &cobra.Command{
 		branchPath := filepath.Join(dirName, "main")
 		lastCommitHashBytes, err := ioutil.ReadFile(branchPath)
 		if err != nil {
-			return fmt.Errorf("fail to read %s: %v", branchPath, err)
+			return fmt.Errorf("%w: %s", ErrIOHandling, branchPath)
 		}
 		lastCommitHashString := string(lastCommitHashBytes)
 		lastCommitHash, err := sha.ReadHash(lastCommitHashString)
 		if err != nil {
-			return fmt.Errorf("fail to read hash: %v", err)
+			return fmt.Errorf("fail to read hash: %w", err)
 		}
 
 		// print log
@@ -96,7 +96,7 @@ var logCmd = &cobra.Command{
 			fmt.Println(commit)
 			return nil
 		}); err != nil {
-			return fmt.Errorf("fail to log: %v", err)
+			return fmt.Errorf("fail to log: %w", err)
 		}
 
 		return nil
