@@ -89,9 +89,10 @@ func WriteTreeObject(rootGoitPath string, entries []*index.Entry) (*Object, erro
 	return treeObject, nil
 }
 
-func (to *Object) ExtractFilePaths(rootGoitPath, rootDir string) ([]string, error) {
-	var paths []string
+func (to *Object) ExtractEntries(rootGoitPath, rootDir string) ([]*index.Entry, error) {
+	var entries []*index.Entry
 	var dirName string
+	var filePath string
 
 	buf := bytes.NewReader(to.Data)
 	for {
@@ -128,12 +129,23 @@ func (to *Object) ExtractFilePaths(rootGoitPath, rootDir string) ([]string, erro
 			} else {
 				path = fmt.Sprintf("%s/%s", rootDir, dirName)
 			}
-			getPaths, err := treeObject.ExtractFilePaths(rootGoitPath, path)
+			getEntries, err := treeObject.ExtractEntries(rootGoitPath, path)
 			if err != nil {
 				return nil, err
 			}
-			paths = append(paths, getPaths...)
+			entries = append(entries, getEntries...)
 			dirName = ""
+		}
+
+		if filePath != "" {
+			hashString := hex.EncodeToString([]byte(lineSplit[0]))
+			hash, err := sha.ReadHash(hashString)
+			if err != nil {
+				return nil, err
+			}
+			entry := index.NewEntry(hash, []byte(filePath))
+			entries = append(entries, entry)
+			filePath = ""
 		}
 
 		if len(lineSplit) == 1 { // last line
@@ -152,17 +164,15 @@ func (to *Object) ExtractFilePaths(rootGoitPath, rootDir string) ([]string, erro
 			if fileMode == "040000" {
 				dirName = fileName
 			} else if fileMode == "100644" {
-				var path string
 				if rootDir == "" {
-					path = fileName
+					filePath = fileName
 				} else {
-					path = fmt.Sprintf("%s/%s", rootDir, fileName)
+					filePath = fmt.Sprintf("%s/%s", rootDir, fileName)
 				}
-				paths = append(paths, path)
 			}
 		}
 	}
-	return paths, nil
+	return entries, nil
 }
 
 func (to *Object) ConvertDataToString() (string, error) {

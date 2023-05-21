@@ -76,17 +76,20 @@ func isCommitNecessary(commitObj *object.Commit) (bool, error) {
 	}
 
 	// get entries from tree object
-	paths, err := treeObject.ExtractFilePaths(client.RootGoitPath, "")
+	entries, err := treeObject.ExtractEntries(client.RootGoitPath, "")
 	if err != nil {
 		return false, fmt.Errorf("fail to get filepath from tree object: %w", err)
 	}
 
 	// compare entries extraceted from tree object with index
-	if len(paths) != int(client.Idx.EntryNum) {
+	if len(entries) != int(client.Idx.EntryNum) {
 		return true, nil
 	}
-	for i := 0; i < len(paths); i++ {
-		if paths[i] != string(client.Idx.Entries[i].Path) {
+	for i := 0; i < len(entries); i++ {
+		if string(entries[i].Path) != string(client.Idx.Entries[i].Path) {
+			return true, nil
+		}
+		if entries[i].Hash.String() != client.Idx.Entries[i].Hash.String() {
 			return true, nil
 		}
 	}
