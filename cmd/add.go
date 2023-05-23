@@ -63,7 +63,9 @@ var addCmd = &cobra.Command{
 			}
 
 			// write object to file
-			object.Write(client.RootGoitPath)
+			if err := object.Write(client.RootGoitPath); err != nil {
+				return fmt.Errorf("fail to write object: %w", err)
+			}
 		}
 
 		// delete untracked files from index
