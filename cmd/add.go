@@ -6,7 +6,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,13 +40,16 @@ var addCmd = &cobra.Command{
 			// get data from file
 			arg = filepath.Clean(arg)               // remove unnecessary slash
 			arg = strings.ReplaceAll(arg, `\`, "/") // replace backslash with slash
-			data, err := ioutil.ReadFile(arg)
+			data, err := os.ReadFile(arg)
 			if err != nil {
 				return fmt.Errorf("%w: %s", ErrIOHandling, arg)
 			}
 
 			// make blob object
-			object := object.NewObject(object.BlobObject, data)
+			object, err := object.NewObject(object.BlobObject, data)
+			if err != nil {
+				return fmt.Errorf("fail to get new object: %w", err)
+			}
 
 			// update index
 			path := []byte(arg)
@@ -60,7 +62,9 @@ var addCmd = &cobra.Command{
 			}
 
 			// write object to file
-			object.Write(client.RootGoitPath)
+			if err := object.Write(client.RootGoitPath); err != nil {
+				return fmt.Errorf("fail to write object: %w", err)
+			}
 		}
 
 		// delete untracked files from index

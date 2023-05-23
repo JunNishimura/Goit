@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -140,7 +139,7 @@ func (idx *Index) DeleteUntrackedFiles() error {
 
 func (idx *Index) read() error {
 	// read index
-	b, err := ioutil.ReadFile(indexPath)
+	b, err := os.ReadFile(indexPath)
 	if err != nil {
 		return fmt.Errorf("fail to read index: %w", err)
 	}

@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -20,7 +20,7 @@ func revParse(refNames ...string) error {
 		} else {
 			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", refName)
 		}
-		hashBytes, err := ioutil.ReadFile(refPath)
+		hashBytes, err := os.ReadFile(refPath)
 		if err != nil {
 			return fmt.Errorf(`fatal: ambiguous argument '%s': unknown revision or path not in the working tree`, refName)
 		}
