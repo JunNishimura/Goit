@@ -79,7 +79,10 @@ func WriteTreeObject(rootGoitPath string, entries []*index.Entry) (*Object, erro
 	}
 
 	// make tree object
-	treeObject := NewObject(TreeObject, data)
+	treeObject, err := NewObject(TreeObject, data)
+	if err != nil {
+		return nil, err
+	}
 
 	// write tree object
 	if err := treeObject.Write(rootGoitPath); err != nil {

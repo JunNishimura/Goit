@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/JunNishimura/Goit/internal/object"
@@ -35,13 +34,16 @@ var hashObjectCmd = &cobra.Command{
 			}
 
 			// get data from file
-			data, err := ioutil.ReadFile(arg)
+			data, err := os.ReadFile(arg)
 			if err != nil {
 				return fmt.Errorf("%w: %s", ErrIOHandling, arg)
 			}
 
 			// make blob object
-			object := object.NewObject(object.BlobObject, data)
+			object, err := object.NewObject(object.BlobObject, data)
+			if err != nil {
+				return fmt.Errorf("fail to get new object: %w", err)
+			}
 
 			fmt.Printf("%s\n", object.Hash)
 		}

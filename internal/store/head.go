@@ -3,7 +3,6 @@ package store
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -19,7 +18,7 @@ var (
 func NewHead(rootGoitPath string) (Head, error) {
 	headPath := filepath.Join(rootGoitPath, "HEAD")
 	if _, err := os.Stat(headPath); !os.IsNotExist(err) {
-		headByte, err := ioutil.ReadFile(headPath)
+		headByte, err := os.ReadFile(headPath)
 		if err != nil {
 			return "", fmt.Errorf("fail to read file: %s", headPath)
 		}
