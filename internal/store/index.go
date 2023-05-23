@@ -15,10 +15,6 @@ const (
 	newEntryFlag = -1
 )
 
-var (
-	indexPath string
-)
-
 type Entry struct {
 	Hash       sha.SHA1
 	NameLength uint16
@@ -52,9 +48,9 @@ func NewIndex(rootGoitPath string) (*Index, error) {
 			EntryNum:  uint32(0),
 		},
 	}
-	indexPath = filepath.Join(rootGoitPath, "index")
+	indexPath := filepath.Join(rootGoitPath, "index")
 	if _, err := os.Stat(indexPath); !os.IsNotExist(err) {
-		if err := index.read(); err != nil {
+		if err := index.read(indexPath); err != nil {
 			return nil, fmt.Errorf("fail to read index: %w", err)
 		}
 	}
@@ -95,7 +91,7 @@ func (idx *Index) isUpdateNeeded(hash sha.SHA1, path []byte) (int, bool) {
 	return newEntryFlag, true
 }
 
-func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
+func (idx *Index) Update(indexPath string, hash sha.SHA1, path []byte) (bool, error) {
 	n, isUpdated := idx.isUpdateNeeded(hash, path)
 	if !isUpdated {
 		return false, nil
@@ -111,14 +107,14 @@ func (idx *Index) Update(hash sha.SHA1, path []byte) (bool, error) {
 	idx.EntryNum = uint32(len(idx.Entries))
 	sort.Slice(idx.Entries, func(i, j int) bool { return string(idx.Entries[i].Path) < string(idx.Entries[j].Path) })
 
-	if err := idx.write(); err != nil {
+	if err := idx.write(indexPath); err != nil {
 		return false, err
 	}
 
 	return true, nil
 }
 
-func (idx *Index) DeleteUntrackedFiles() error {
+func (idx *Index) DeleteUntrackedFiles(indexPath string) error {
 	var trackedEntries []*Entry
 	for _, entry := range idx.Entries {
 		if _, err := os.Stat(string(entry.Path)); !os.IsNotExist(err) {
@@ -134,10 +130,14 @@ func (idx *Index) DeleteUntrackedFiles() error {
 	// need to update index
 	idx.Entries = trackedEntries
 	idx.EntryNum = uint32(len(idx.Entries))
-	return idx.write()
+	if err := idx.write(indexPath); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (idx *Index) read() error {
+func (idx *Index) read(indexPath string) error {
 	// read index
 	b, err := os.ReadFile(indexPath)
 	if err != nil {
@@ -183,7 +183,7 @@ func (idx *Index) read() error {
 	return nil
 }
 
-func (idx *Index) write() error {
+func (idx *Index) write(indexPath string) error {
 	f, err := os.Create(indexPath)
 	if err != nil {
 		return fmt.Errorf("fail to create .goit/index: %w", err)
