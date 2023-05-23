@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	testUtil "github.com/JunNishimura/Goit/internal/internal/util"
 )
 
 func TestFindGoitRoot(t *testing.T) {
@@ -36,7 +38,7 @@ func TestFindGoitRoot(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			goitPath := filepath.Join(tt.args.path, ".goit")
-			os.Mkdir(goitPath, os.ModePerm)
+			testUtil.GoitInit()
 			defer func() {
 				os.RemoveAll(goitPath)
 			}()
