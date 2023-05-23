@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/JunNishimura/Goit/internal/object"
@@ -35,7 +34,7 @@ var hashObjectCmd = &cobra.Command{
 			}
 
 			// get data from file
-			data, err := ioutil.ReadFile(arg)
+			data, err := os.ReadFile(arg)
 			if err != nil {
 				return fmt.Errorf("%w: %s", ErrIOHandling, arg)
 			}

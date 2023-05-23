@@ -6,7 +6,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,7 +68,7 @@ func GetObject(rootGoitPath string, hash sha.SHA1) (*Object, error) {
 		return nil, fmt.Errorf("fail to read header: %w", err)
 	}
 
-	data, err := ioutil.ReadAll(tr)
+	data, err := io.ReadAll(tr)
 	if err != nil {
 		return nil, ErrIOHandling
 	}

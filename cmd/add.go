@@ -6,7 +6,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,7 +40,7 @@ var addCmd = &cobra.Command{
 			// get data from file
 			arg = filepath.Clean(arg)               // remove unnecessary slash
 			arg = strings.ReplaceAll(arg, `\`, "/") // replace backslash with slash
-			data, err := ioutil.ReadFile(arg)
+			data, err := os.ReadFile(arg)
 			if err != nil {
 				return fmt.Errorf("%w: %s", ErrIOHandling, arg)
 			}

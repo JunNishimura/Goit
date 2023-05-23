@@ -6,7 +6,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -117,7 +116,7 @@ var commitCmd = &cobra.Command{
 
 		// see if committed before
 		dirName := filepath.Join(client.RootGoitPath, "refs", "heads")
-		files, err := ioutil.ReadDir(dirName)
+		files, err := os.ReadDir(dirName)
 		if err != nil {
 			return fmt.Errorf("%w: %s", ErrIOHandling, dirName)
 		}
@@ -134,7 +133,7 @@ var commitCmd = &cobra.Command{
 		} else {
 			// get last commit object
 			branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", "main")
-			hashBytes, err := ioutil.ReadFile(branchPath)
+			hashBytes, err := os.ReadFile(branchPath)
 			if err != nil {
 				return fmt.Errorf("%w: %s", ErrIOHandling, branchPath)
 			}
