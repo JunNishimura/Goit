@@ -38,7 +38,10 @@ func TestFindGoitRoot(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			goitPath := filepath.Join(tt.args.path, ".goit")
-			testUtil.GoitInit()
+			err := testUtil.GoitInit()
+			if err != nil {
+				t.Logf("fail to initialize goit")
+			}
 			defer func() {
 				os.RemoveAll(goitPath)
 			}()
