@@ -41,7 +41,10 @@ var hashObjectCmd = &cobra.Command{
 			}
 
 			// make blob object
-			object := object.NewObject(object.BlobObject, data)
+			object, err := object.NewObject(object.BlobObject, data)
+			if err != nil {
+				return fmt.Errorf("fail to get new object: %w", err)
+			}
 
 			fmt.Printf("%s\n", object.Hash)
 		}

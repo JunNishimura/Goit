@@ -52,7 +52,10 @@ func commit() error {
 		parentHash := string(branchBytes)
 		data = []byte(fmt.Sprintf("tree %s\nparent %s\nauthor %s\ncommitter %s\n\n%s\n", treeObject.Hash, parentHash, author, committer, message))
 	}
-	commitObject := object.NewObject(object.CommitObject, data)
+	commitObject, err := object.NewObject(object.CommitObject, data)
+	if err != nil {
+		return fmt.Errorf("fail to get new object: %w", err)
+	}
 	commit, err := object.NewCommit(commitObject)
 	if err != nil {
 		return fmt.Errorf("fail to make commit object: %w", err)

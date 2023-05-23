@@ -22,14 +22,17 @@ type Object struct {
 	Data []byte
 }
 
-func NewObject(objType Type, data []byte) *Object {
+func NewObject(objType Type, data []byte) (*Object, error) {
 	// get size of data
 	size := len(data)
 
 	// get hash of object
 	checkSum := sha1.New()
 	content := fmt.Sprintf("%s %d\x00%s", objType, size, data)
-	io.WriteString(checkSum, content)
+	_, err := io.WriteString(checkSum, content)
+	if err != nil {
+		return nil, err
+	}
 	hash := checkSum.Sum(nil)
 
 	// make object
@@ -40,7 +43,7 @@ func NewObject(objType Type, data []byte) *Object {
 		Data: data,
 	}
 
-	return object
+	return object, nil
 }
 
 func GetObject(rootGoitPath string, hash sha.SHA1) (*Object, error) {
