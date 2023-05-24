@@ -9,8 +9,8 @@ type Client struct {
 	Head
 }
 
-func NewClient() (*Client, error) {
-	rootGoitPath, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
+func NewClient(path string) (*Client, error) {
+	rootGoitPath, _ := file.FindGoitRoot(path) // ignore the error since the error is not important
 	config, err := NewConfig(rootGoitPath)
 	if err != nil {
 		return nil, err

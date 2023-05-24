@@ -31,7 +31,7 @@ func Execute() {
 
 func init() {
 	// get client
-	tmpClient, err := store.NewClient()
+	tmpClient, err := store.NewClient(".")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
