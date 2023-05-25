@@ -3,6 +3,7 @@ package object
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -96,23 +97,38 @@ func (to *Object) ExtractEntries(rootGoitPath, rootDir string) ([]*index.Entry, 
 	var entries []*index.Entry
 	var dirName string
 	var filePath string
+	isFirstLine := true
 
 	buf := bytes.NewReader(to.Data)
 	for {
-		lineString, err := binary.ReadNullTerminatedString(buf)
-		if err != nil {
-			return nil, err
-		}
 		var lineSplit []string
-		if lineString[:6] == "100644" || lineString[:6] == "040000" {
+		if isFirstLine {
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return nil, err
+			}
 			lineSplit = strings.Split(lineString, " ")
+			isFirstLine = false
 		} else {
-			// "20" is space in hex
-			// need to be careful to split
-			// "20" can be included in hash
-			lineSplit = []string{lineString[:20]} // extract hash string
-			if len(lineString) > 20 {
-				lineSplit = append(lineSplit, strings.Split(lineString[20:], " ")...)
+			// read 20 bytes sha1 hash
+			hashBytes := make([]byte, 20)
+			n, err := buf.Read(hashBytes)
+			if err != nil {
+				return nil, err
+			}
+			if n != 20 {
+				return nil, errors.New("fail to read hash")
+			}
+
+			// read filemode and path
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return nil, err
+			}
+
+			lineSplit = []string{string(hashBytes)}
+			if lineString != "" {
+				lineSplit = append(lineSplit, strings.Split(lineString, " ")...)
 			}
 		}
 
@@ -180,22 +196,42 @@ func (to *Object) ExtractEntries(rootGoitPath, rootDir string) ([]*index.Entry, 
 
 func (to *Object) ConvertDataToString() (string, error) {
 	var lines []string
+	isFirstLine := true
+
 	buf := bytes.NewReader(to.Data)
 	for {
-		lineString, err := binary.ReadNullTerminatedString(buf)
-		if err != nil {
-			return "", err
-		}
-		if lineString[:6] == "100644" || lineString[:6] == "040000" {
+		if isFirstLine {
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return "", err
+			}
+			if lineString == "" {
+				return "", nil
+			}
 			lines = append(lines, lineString)
+			isFirstLine = false
 		} else {
-			byteHash := []byte(lineString[:20])
-			hashString := hex.EncodeToString(byteHash)
-			if len(lineString) > 20 {
-				lines = append(lines, hashString+lineString[20:])
-			} else {
-				lines = append(lines, hashString)
+			// read hash
+			hashBytes := make([]byte, 20)
+			n, err := buf.Read(hashBytes)
+			if err != nil {
+				return "", err
+			}
+			if n != 20 {
+				return "", errors.New("fail to read hash bytes")
+			}
+			hashString := hex.EncodeToString(hashBytes)
+			lines = append(lines, hashString)
+
+			// read filemode and path
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return "", err
+			}
+			if lineString == "" {
 				break
+			} else {
+				lines = append(lines, lineString)
 			}
 		}
 	}

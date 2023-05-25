@@ -13,7 +13,6 @@ type Head string
 
 var (
 	headRegexp     = regexp.MustCompile("ref: refs/heads/.+")
-	ErrNoHeadFile  = errors.New("error: no HEAD file")
 	ErrInvalidHead = errors.New("error: invalid HEAD format")
 )
 
@@ -34,5 +33,5 @@ func NewHead(rootGoitPath string) (Head, error) {
 		return Head(branch), nil
 	}
 
-	return "", ErrNoHeadFile
+	return "", nil
 }
