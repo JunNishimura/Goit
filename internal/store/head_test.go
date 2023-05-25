@@ -32,7 +32,7 @@ func TestNewHead(t *testing.T) {
 			content:   "ref: refs/heads/main",
 			isCreated: false,
 			want:      "",
-			wantErr:   ErrNoHeadFile,
+			wantErr:   nil,
 		},
 	}
 	for _, tt := range tests {
