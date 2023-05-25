@@ -131,6 +131,12 @@ var commitCmd = &cobra.Command{
 				return err
 			}
 		} else {
+			// check if files are deleted
+			indexPath := filepath.Join(client.RootGoitPath, "index")
+			if err := client.Idx.DeleteUntrackedFiles(indexPath); err != nil {
+				return fmt.Errorf("fail to delete untracked files: %w", err)
+			}
+
 			// get last commit object
 			branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", "main")
 			hashBytes, err := os.ReadFile(branchPath)

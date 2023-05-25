@@ -205,6 +205,9 @@ func (to *Object) ConvertDataToString() (string, error) {
 			if err != nil {
 				return "", err
 			}
+			if lineString == "" {
+				return "", nil
+			}
 			lines = append(lines, lineString)
 			isFirstLine = false
 		} else {
