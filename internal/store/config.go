@@ -56,7 +56,7 @@ func load(configPath string) (*Config, error) {
 	for scanner.Scan() {
 		text := scanner.Text()
 		if isIdent := identRegexp.MatchString(text); isIdent {
-			if len(text) < 2 {
+			if len(text) <= 2 {
 				return nil, ErrInvalidIdentifier
 			}
 			ident = text[1 : len(text)-1]

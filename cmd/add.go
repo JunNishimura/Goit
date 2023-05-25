@@ -53,7 +53,8 @@ var addCmd = &cobra.Command{
 
 			// update index
 			path := []byte(arg)
-			isUpdated, err := client.Idx.Update(object.Hash, path)
+			indexPath := filepath.Join(client.RootGoitPath, "index")
+			isUpdated, err := client.Idx.Update(indexPath, object.Hash, path)
 			if err != nil {
 				return fmt.Errorf("fail to update index: %w", err)
 			}
@@ -68,7 +69,8 @@ var addCmd = &cobra.Command{
 		}
 
 		// delete untracked files from index
-		if err := client.Idx.DeleteUntrackedFiles(); err != nil {
+		indexPath := filepath.Join(client.RootGoitPath, "index")
+		if err := client.Idx.DeleteUntrackedFiles(indexPath); err != nil {
 			return fmt.Errorf("fail to delete untracked files from index: %w", err)
 		}
 

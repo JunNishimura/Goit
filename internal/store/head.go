@@ -12,7 +12,9 @@ import (
 type Head string
 
 var (
-	headRegexp = regexp.MustCompile("ref: refs/heads/.+")
+	headRegexp     = regexp.MustCompile("ref: refs/heads/.+")
+	ErrNoHeadFile  = errors.New("error: no HEAD file")
+	ErrInvalidHead = errors.New("error: invalid HEAD format")
 )
 
 func NewHead(rootGoitPath string) (Head, error) {
@@ -24,7 +26,7 @@ func NewHead(rootGoitPath string) (Head, error) {
 		}
 		headString := string(headByte)
 		if ok := headRegexp.MatchString(headString); !ok {
-			return "", errors.New("invalid HEAD")
+			return "", ErrInvalidHead
 		}
 		headSplit := strings.Split(headString, ": ")
 		slashSplit := strings.Split(headSplit[1], "/")
@@ -32,5 +34,5 @@ func NewHead(rootGoitPath string) (Head, error) {
 		return Head(branch), nil
 	}
 
-	return "main", nil
+	return "", ErrNoHeadFile
 }

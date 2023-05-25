@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/JunNishimura/Goit/internal/file"
 	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -31,12 +32,23 @@ func Execute() {
 
 func init() {
 	// get client
-	tmpClient, err := store.NewClient()
+	rootGoitPath, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
+	config, err := store.NewConfig(rootGoitPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	client = tmpClient
+	index, err := store.NewIndex(rootGoitPath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	head, err := store.NewHead(rootGoitPath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	client = store.NewClient(config, index, head, rootGoitPath)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
