@@ -196,22 +196,39 @@ func (to *Object) ExtractEntries(rootGoitPath, rootDir string) ([]*index.Entry, 
 
 func (to *Object) ConvertDataToString() (string, error) {
 	var lines []string
+	isFirstLine := true
+
 	buf := bytes.NewReader(to.Data)
 	for {
-		lineString, err := binary.ReadNullTerminatedString(buf)
-		if err != nil {
-			return "", err
-		}
-		if lineString[:6] == "100644" || lineString[:6] == "040000" {
+		if isFirstLine {
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return "", err
+			}
 			lines = append(lines, lineString)
+			isFirstLine = false
 		} else {
-			byteHash := []byte(lineString[:20])
-			hashString := hex.EncodeToString(byteHash)
-			if len(lineString) > 20 {
-				lines = append(lines, hashString+lineString[20:])
-			} else {
-				lines = append(lines, hashString)
+			// read hash
+			hashBytes := make([]byte, 20)
+			n, err := buf.Read(hashBytes)
+			if err != nil {
+				return "", err
+			}
+			if n != 20 {
+				return "", errors.New("fail to read hash bytes")
+			}
+			hashString := hex.EncodeToString(hashBytes)
+			lines = append(lines, hashString)
+
+			// read filemode and path
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return "", err
+			}
+			if lineString == "" {
 				break
+			} else {
+				lines = append(lines, lineString)
 			}
 		}
 	}
