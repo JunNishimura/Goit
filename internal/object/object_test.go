@@ -234,3 +234,28 @@ func TestReadHeader(t *testing.T) {
 		})
 	}
 }
+
+func TestHeader(t *testing.T) {
+	tests := []struct {
+		name    string
+		objType Type
+		data    []byte
+		want    []byte
+	}{
+		{
+			name:    "success",
+			objType: BlobObject,
+			data:    []byte("Hello, World"),
+			want:    []byte("blob 12\x00"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj, _ := NewObject(tt.objType, tt.data)
+			b := obj.Header()
+			if !reflect.DeepEqual(b, tt.want) {
+				t.Errorf("got = %v, want = %v", b, tt.want)
+			}
+		})
+	}
+}
