@@ -3,9 +3,11 @@ package object
 import (
 	"encoding/hex"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/JunNishimura/Goit/internal/sha"
@@ -164,6 +166,70 @@ func TestGetObject(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("got = %v, want = %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestReadHeader(t *testing.T) {
+	type args struct {
+		r io.Reader
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantType Type
+		wantSize int
+		wantErr  error
+	}{
+		{
+			name: "success",
+			args: args{
+				r: strings.NewReader("blob 12\x00Hello, World"),
+			},
+			wantType: BlobObject,
+			wantSize: 12,
+			wantErr:  nil,
+		},
+		{
+			name: "fail: empty header",
+			args: args{
+				r: strings.NewReader(""),
+			},
+			wantType: UndefinedObject,
+			wantSize: 0,
+			wantErr:  ErrInvalidObject,
+		},
+		{
+			name: "fail: invalid object type",
+			args: args{
+				r: strings.NewReader("blub 12\x00Hello, World"),
+			},
+			wantType: UndefinedObject,
+			wantSize: 0,
+			wantErr:  ErrInvalidObject,
+		},
+		{
+			name: "fail: invalid size",
+			args: args{
+				r: strings.NewReader("blob xx\x00Hello, World"),
+			},
+			wantType: UndefinedObject,
+			wantSize: 0,
+			wantErr:  ErrInvalidObject,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getType, n, err := readHeader(tt.args.r)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+			if getType != tt.wantType {
+				t.Errorf("got = %v, want = %v", getType, tt.wantType)
+			}
+			if n != tt.wantSize {
+				t.Errorf("got = %d, want = %d", n, tt.wantSize)
 			}
 		})
 	}
