@@ -10,9 +10,52 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/JunNishimura/Goit/internal/file"
 	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/spf13/cobra"
 )
+
+func add(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrIOHandling, path)
+	}
+
+	// make blob object
+	object, err := object.NewObject(object.BlobObject, data)
+	if err != nil {
+		return fmt.Errorf("fail to get new object: %w", err)
+	}
+
+	// get relative path
+	curPath, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	relPath, err := filepath.Rel(curPath, path)
+	if err != nil {
+		return err
+	}
+	cleanedRelPath := strings.ReplaceAll(relPath, `\`, "/") // replace backslash with slash
+	byteRelPath := []byte(cleanedRelPath)
+
+	// update index
+	indexPath := filepath.Join(client.RootGoitPath, "index")
+	isUpdated, err := client.Idx.Update(indexPath, object.Hash, byteRelPath)
+	if err != nil {
+		return fmt.Errorf("fail to update index: %w", err)
+	}
+	if !isUpdated {
+		return nil
+	}
+
+	// write object to file
+	if err := object.Write(client.RootGoitPath); err != nil {
+		return fmt.Errorf("fail to write object: %w", err)
+	}
+
+	return nil
+}
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
@@ -38,34 +81,26 @@ var addCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		for _, arg := range args {
-			// get data from file
-			arg = filepath.Clean(arg)               // remove unnecessary slash
-			arg = strings.ReplaceAll(arg, `\`, "/") // replace backslash with slash
-			data, err := os.ReadFile(arg)
+			path, err := filepath.Abs(arg)
 			if err != nil {
-				return fmt.Errorf("%w: %s", ErrIOHandling, arg)
+				return fmt.Errorf("fail to convert abs path: %s", arg)
 			}
 
-			// make blob object
-			object, err := object.NewObject(object.BlobObject, data)
-			if err != nil {
-				return fmt.Errorf("fail to get new object: %w", err)
-			}
-
-			// update index
-			path := []byte(arg)
-			indexPath := filepath.Join(client.RootGoitPath, "index")
-			isUpdated, err := client.Idx.Update(indexPath, object.Hash, path)
-			if err != nil {
-				return fmt.Errorf("fail to update index: %w", err)
-			}
-			if !isUpdated {
-				continue
-			}
-
-			// write object to file
-			if err := object.Write(client.RootGoitPath); err != nil {
-				return fmt.Errorf("fail to write object: %w", err)
+			// directory
+			if f, err := os.Stat(arg); !os.IsNotExist(err) && f.IsDir() {
+				filePaths, err := file.GetFilePathsUnderDirectory(path)
+				if err != nil {
+					return fmt.Errorf("fail to get file path under directory: %w", err)
+				}
+				for _, filePath := range filePaths {
+					if err := add(filePath); err != nil {
+						return err
+					}
+				}
+			} else {
+				if err := add(path); err != nil {
+					return err
+				}
 			}
 		}
 

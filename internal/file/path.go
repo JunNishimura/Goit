@@ -26,3 +26,25 @@ func FindGoitRoot(path string) (string, error) {
 	}
 	return FindGoitRoot(parentPath)
 }
+
+func GetFilePathsUnderDirectory(path string) ([]string, error) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var filePaths []string
+	for _, file := range files {
+		if file.IsDir() {
+			getFilePaths, err := GetFilePathsUnderDirectory(filepath.Join(path, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			filePaths = append(filePaths, getFilePaths...)
+		} else {
+			filePaths = append(filePaths, filepath.Join(path, file.Name()))
+		}
+	}
+
+	return filePaths, nil
+}

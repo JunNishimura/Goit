@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -93,6 +95,62 @@ func TestFindGoitRoot(t *testing.T) {
 			}
 			if goitRootPath != wantPath {
 				t.Errorf("got = %v, want = %v", goitRootPath, wantPath)
+			}
+		})
+	}
+}
+
+func TestGetFilePathsUnderDirectory(t *testing.T) {
+	tests := []struct {
+		name    string
+		want    []string
+		wantErr error
+	}{
+		{
+			name:    "success",
+			want:    []string{"test.txt", "test2.txt", "dir/test1.txt", "dir/test2.txt"},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			f, err := os.Create(filepath.Join(tmpDir, "test.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			f, err = os.Create(filepath.Join(tmpDir, "test2.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			if err := os.Mkdir(filepath.Join(tmpDir, "dir"), os.ModePerm); err != nil {
+				t.Log(err)
+			}
+			f, err = os.Create(filepath.Join(tmpDir, "dir/test1.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			f, err = os.Create(filepath.Join(tmpDir, "dir/test2.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+
+			got, err := GetFilePathsUnderDirectory(tmpDir)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+			var filePaths []string
+			for _, path := range tt.want {
+				filePaths = append(filePaths, filepath.Join(tmpDir, path))
+			}
+			sort.Slice(got, func(i, j int) bool { return got[i] < got[j] })
+			sort.Slice(filePaths, func(i, j int) bool { return filePaths[i] < filePaths[j] })
+			if !reflect.DeepEqual(got, filePaths) {
+				t.Errorf("got = %v, want = %v", got, filePaths)
 			}
 		})
 	}
