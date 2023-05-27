@@ -43,7 +43,7 @@ func commit() error {
 	var data []byte
 	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", "main")
 	branchBytes, err := os.ReadFile(branchPath)
-	author := object.NewSign(client.Conf.Map["user"]["name"], client.Conf.Map["user"]["email"])
+	author := object.NewSign(client.Conf.GetUserName(), client.Conf.GetEmail())
 	committer := author
 	if err != nil {
 		// no branch means that this is the initial commit
