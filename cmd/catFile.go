@@ -16,16 +16,6 @@ var catFileCmd = &cobra.Command{
 	Use:   "cat-file",
 	Short: "cat goit object",
 	Long:  "this is a command to show the goit object",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
-			return ErrNotSpecifiedHash
-		}
-		if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
-			return ErrTooManyArgs
-		}
-
-		return nil
-	},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if client.RootGoitPath == "" {
 			return ErrGoitNotInitialized
@@ -33,6 +23,14 @@ var catFileCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// args validation check
+		if len(args) == 0 {
+			return ErrNotSpecifiedHash
+		}
+		if len(args) > 1 {
+			return ErrTooManyArgs
+		}
+
 		// get flags
 		typeFlag, err := cmd.Flags().GetBool("type")
 		if err != nil {

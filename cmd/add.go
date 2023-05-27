@@ -62,17 +62,6 @@ var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "register changes to index",
 	Long:  "This is a command to register changes to index.",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if err := cobra.MinimumNArgs(1)(cmd, args); err != nil {
-			return errors.New("nothing specified, nothing added")
-		}
-		for _, arg := range args {
-			if _, err := os.Stat(arg); os.IsNotExist(err) {
-				return fmt.Errorf(`path "%s" did not match any files`, arg)
-			}
-		}
-		return nil
-	},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if client.RootGoitPath == "" {
 			return ErrGoitNotInitialized
@@ -80,6 +69,16 @@ var addCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// args validation check
+		if len(args) == 0 {
+			return errors.New("nothing specified, nothing added")
+		}
+		for _, arg := range args {
+			if _, err := os.Stat(arg); os.IsNotExist(err) {
+				return fmt.Errorf(`path "%s" did not match any files`, arg)
+			}
+		}
+
 		for _, arg := range args {
 			path, err := filepath.Abs(arg)
 			if err != nil {
