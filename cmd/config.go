@@ -33,12 +33,32 @@ var configCmd = &cobra.Command{
 			return ErrInvalidArgs
 		}
 
-		// check the existence of config file
-		configPath := filepath.Join(client.RootGoitPath, "config")
-		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		// get global flag
+		isGlobal, err := cmd.Flags().GetBool("global")
+		if err != nil {
+			return fmt.Errorf("fail to get global falg: %w", err)
+		}
+
+		// check the existence of global config file
+		var globalConfigPath string
+		if isGlobal {
+			userHomePath, err := os.UserHomeDir()
+			if err != nil {
+				return fmt.Errorf("fail to get user home dir: %w", err)
+			}
+			globalConfigPath = filepath.Join(userHomePath, ".goitconfig")
+			if _, err := os.Stat(globalConfigPath); os.IsNotExist(err) {
+				if _, err := os.Create(globalConfigPath); err != nil {
+					return fmt.Errorf("%w: %s", ErrIOHandling, globalConfigPath)
+				}
+			}
+		}
+		// check the existence of local config file
+		localConfigPath := filepath.Join(client.RootGoitPath, "config")
+		if _, err := os.Stat(localConfigPath); os.IsNotExist(err) {
 			// if there is no config file, make it
-			if _, err := os.Create(configPath); err != nil {
-				return fmt.Errorf("%w: %s", ErrIOHandling, configPath)
+			if _, err := os.Create(localConfigPath); err != nil {
+				return fmt.Errorf("%w: %s", ErrIOHandling, localConfigPath)
 			}
 		}
 
@@ -46,10 +66,10 @@ var configCmd = &cobra.Command{
 		identifier := dotSplit[0]
 		key := dotSplit[1]
 		value := args[1]
-		client.Conf.Add(identifier, key, value)
+		client.Conf.Add(identifier, key, value, isGlobal)
 
 		// write to config
-		if err := client.Conf.Write(client.RootGoitPath); err != nil {
+		if err := client.Conf.Write(localConfigPath, globalConfigPath); err != nil {
 			return fmt.Errorf("fail to write config: %w", err)
 		}
 
@@ -59,4 +79,6 @@ var configCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(configCmd)
+
+	configCmd.Flags().Bool("global", false, "add global setting")
 }
