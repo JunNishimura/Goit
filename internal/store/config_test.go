@@ -366,7 +366,8 @@ func TestWrite(t *testing.T) {
 	type test struct {
 		name    string
 		content map[string]KV
-		want    string
+		want1   string
+		want2   string
 		wantErr error
 	}
 	tests := []*test{
@@ -379,7 +380,8 @@ func TestWrite(t *testing.T) {
 			return &test{
 				name:    "success",
 				content: m,
-				want:    "[user]\n\tname = Test Taro\n\temail = test@example.com\n",
+				want1:   "[user]\n\tname = Test Taro\n\temail = test@example.com\n",
+				want2:   "[user]\n\temail = test@example.com\n\tname = Test Taro\n",
 				wantErr: nil,
 			}
 		}(),
@@ -448,8 +450,8 @@ func TestWrite(t *testing.T) {
 			t.Log(err)
 		}
 		content := string(contentBytes)
-		if content != tt.want {
-			t.Errorf("got = %s, want = %s", content, tt.want)
+		if content != tt.want1 && content != tt.want2 {
+			t.Errorf("got = %s, want1 = %s, want2 = %s", content, tt.want1, tt.want2)
 		}
 	}
 }
