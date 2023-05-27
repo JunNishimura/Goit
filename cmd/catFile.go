@@ -4,9 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"strings"
 
 	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/JunNishimura/Goit/internal/sha"
@@ -68,45 +66,16 @@ var catFileCmd = &cobra.Command{
 		// print object content
 		if printFlag {
 			if obj.Type == object.TreeObject {
-				// hash is written in hexadecimal in tree object
-				dataString, err := obj.ConvertDataToString()
+				// need to print out in the different way since hash is written as hexideciaml in data of tree object
+				// convert tree object to tree and print out
+				tree, err := object.NewTree(client.RootGoitPath, obj)
 				if err != nil {
-					return fmt.Errorf("fail to convert tree data to string: %w", err)
+					return fmt.Errorf("fail to get new tree: %w", err)
 				}
-
-				// format output
-				var lines []string
-				var prevFileMode, prevFileName string
-				scanner := bufio.NewScanner(strings.NewReader(dataString))
-				for scanner.Scan() {
-					line := scanner.Text()
-					if line[:6] == "100644" || line[:6] == "040000" { // first line
-						lineSplit := strings.Split(line, " ")
-						prevFileMode = lineSplit[0]
-						prevFileName = lineSplit[1]
-					} else {
-						var objType string
-						if prevFileMode == "100644" {
-							objType = "blob"
-						} else if prevFileMode == "040000" {
-							objType = "tree"
-						}
-						hashString := line[:40]
-						lines = append(lines, fmt.Sprintf("%s %s %s    %s", prevFileMode, objType, hashString, prevFileName))
-						if len(line) > 40 {
-							lineSplit := strings.Split(line[40:], " ")
-							prevFileMode = lineSplit[0]
-							prevFileName = lineSplit[1]
-						}
-					}
-				}
-
-				formattedOutput := strings.Join(lines, "\n")
-				fmt.Println(formattedOutput)
-
+				fmt.Printf("%s\n", tree)
 			} else {
 				// hash is written as string
-				fmt.Printf("%s", obj.Data)
+				fmt.Printf("%s\n", obj.Data)
 			}
 		}
 

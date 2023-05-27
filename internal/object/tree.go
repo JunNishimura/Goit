@@ -65,6 +65,13 @@ func walkTree(rootGoitPath string, object *Object) ([]*node, error) {
 				return nil, err
 			}
 			lineSplit = strings.Split(lineString, " ")
+
+			mode := lineSplit[0]
+			if mode == "040000" {
+				isDir = true
+			}
+			nodeName = lineSplit[1]
+
 			isFirstLine = false
 		} else {
 			// get 20 bytes to read hash
@@ -89,10 +96,7 @@ func walkTree(rootGoitPath string, object *Object) ([]*node, error) {
 			if lineString != "" {
 				lineSplit = append(lineSplit, strings.Split(lineString, " ")...)
 			}
-		}
 
-		if !isFirstLine {
-			hashString := lineSplit[0]
 			hash, err := sha.ReadHash(hashString)
 			if err != nil {
 				return nil, err
@@ -106,11 +110,11 @@ func walkTree(rootGoitPath string, object *Object) ([]*node, error) {
 				if treeObject.Type != TreeObject {
 					return nil, ErrInvalidTreeObject
 				}
-				getChildren, err := walkTree(rootGoitPath, treeObject)
+				gotChildren, err := walkTree(rootGoitPath, treeObject)
 				if err != nil {
 					return nil, err
 				}
-				children = getChildren
+				children = gotChildren
 				isDir = false
 			}
 			node := &node{
@@ -119,22 +123,17 @@ func walkTree(rootGoitPath string, object *Object) ([]*node, error) {
 				children: children,
 			}
 			nodes = append(nodes, node)
-		}
 
-		if len(lineSplit) == 1 { // last line
-			break
-		}
+			// last line
+			if len(lineSplit) == 1 {
+				break
+			}
 
-		var mode string
-		if len(lineSplit) == 2 {
-			mode = lineSplit[0]
-			nodeName = lineSplit[1]
-		} else if len(lineSplit) == 3 {
-			mode = lineSplit[1]
+			mode := lineSplit[1]
+			if mode == "040000" {
+				isDir = true
+			}
 			nodeName = lineSplit[2]
-		}
-		if mode == "040000" {
-			isDir = true
 		}
 	}
 
@@ -242,49 +241,19 @@ func (to *Object) ExtractEntries(rootGoitPath, rootDir string) ([]*index.Entry, 
 	return entries, nil
 }
 
-func (to *Object) ConvertDataToString() (string, error) {
+func (t *tree) String() string {
 	var lines []string
-	isFirstLine := true
 
-	buf := bytes.NewReader(to.Data)
-	for {
-		if isFirstLine {
-			lineString, err := binary.ReadNullTerminatedString(buf)
-			if err != nil {
-				return "", err
-			}
-			if lineString == "" {
-				return "", nil
-			}
-			lines = append(lines, lineString)
-			isFirstLine = false
+	for _, childNode := range t.children {
+		var line string
+		if len(childNode.children) == 0 {
+			line = fmt.Sprintf("100644 blob %s\t%s", childNode.hash, childNode.name)
 		} else {
-			// read hash
-			hashBytes := make([]byte, 20)
-			n, err := buf.Read(hashBytes)
-			if err != nil {
-				return "", err
-			}
-			if n != 20 {
-				return "", errors.New("fail to read hash bytes")
-			}
-			hashString := hex.EncodeToString(hashBytes)
-			lines = append(lines, hashString)
-
-			// read filemode and path
-			lineString, err := binary.ReadNullTerminatedString(buf)
-			if err != nil {
-				return "", err
-			}
-			if lineString == "" {
-				break
-			} else {
-				lines = append(lines, lineString)
-			}
+			line = fmt.Sprintf("040000 tree %s\t%s", childNode.hash, childNode.name)
 		}
+		lines = append(lines, line)
 	}
 
-	dataString := strings.Join(lines, "\n")
-
-	return dataString, nil
+	message := strings.Join(lines, "\n")
+	return message
 }
