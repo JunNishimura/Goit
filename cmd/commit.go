@@ -11,6 +11,7 @@ import (
 
 	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/JunNishimura/Goit/internal/sha"
+	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
 
@@ -71,31 +72,82 @@ func commit() error {
 	return nil
 }
 
+func getEntriesFromTree(rootName string, nodes []*object.Node) ([]*store.Entry, error) {
+	var entries []*store.Entry
+
+	for _, node := range nodes {
+		if len(node.Children) == 0 {
+			var entryName string
+			if rootName == "" {
+				entryName = node.Name
+			} else {
+				entryName = fmt.Sprintf("%s/%s", rootName, node.Name)
+			}
+			newEntry := &store.Entry{
+				Hash:       node.Hash,
+				NameLength: uint16(len(entryName)),
+				Path:       []byte(entryName),
+			}
+			entries = append(entries, newEntry)
+		} else {
+			var newRootName string
+			if rootName == "" {
+				newRootName = node.Name
+			} else {
+				newRootName = fmt.Sprintf("%s/%s", rootName, node.Name)
+			}
+			childEntries, err := getEntriesFromTree(newRootName, node.Children)
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, childEntries...)
+		}
+	}
+
+	return entries, nil
+}
+
+func isIndexDifferentFromTree(index *store.Index, tree *object.Tree) (bool, error) {
+	rootName := ""
+	gotEntries, err := getEntriesFromTree(rootName, tree.Children)
+	if err != nil {
+		return false, err
+	}
+
+	if len(gotEntries) != int(index.EntryNum) {
+		return true, nil
+	}
+	for i := 0; i < len(gotEntries); i++ {
+		if string(gotEntries[i].Path) != string(index.Entries[i].Path) {
+			return true, nil
+		}
+		if gotEntries[i].Hash.String() != index.Entries[i].Hash.String() {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func isCommitNecessary(commitObj *object.Commit) (bool, error) {
+	// get tree object
 	treeObject, err := object.GetObject(client.RootGoitPath, commitObj.Tree)
 	if err != nil {
 		return false, fmt.Errorf("fail to get tree object: %w", err)
 	}
 
-	// get entries from tree object
-	entries, err := treeObject.ExtractEntries(client.RootGoitPath, "")
+	// get tree
+	tree, err := object.NewTree(client.RootGoitPath, treeObject)
 	if err != nil {
-		return false, fmt.Errorf("fail to get filepath from tree object: %w", err)
+		return false, fmt.Errorf("fail to get tree: %w", err)
 	}
 
-	// compare entries extraceted from tree object with index
-	if len(entries) != int(client.Idx.EntryNum) {
-		return true, nil
+	// compare index with tree
+	isDiff, err := isIndexDifferentFromTree(client.Idx, tree)
+	if err != nil {
+		return false, fmt.Errorf("fail to compare index with tree: %w", err)
 	}
-	for i := 0; i < len(entries); i++ {
-		if string(entries[i].Path) != string(client.Idx.Entries[i].Path) {
-			return true, nil
-		}
-		if entries[i].Hash.String() != client.Idx.Entries[i].Hash.String() {
-			return true, nil
-		}
-	}
-	return false, nil
+
+	return isDiff, nil
 }
 
 // commitCmd represents the commit command
