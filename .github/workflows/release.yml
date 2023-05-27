@@ -13,8 +13,6 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: check actor
         if: github.actor != 'JunNishimura'
