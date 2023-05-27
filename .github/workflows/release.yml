@@ -13,6 +13,8 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: check actor
         if: github.actor != 'JunNishimura'
@@ -34,18 +36,22 @@ jobs:
           echo "failed ${{ steps.test_result.outputs.failedCheckStates }}"
           exit 1
       - name: checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: bump-up semantic version
         uses: kyoh86/git-vertag-action@v1.1
         with:
           method: "${{ github.event.inputs.method }}"
       - name: setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.19
+          go-version-file: go.mod
+          cache: true
       - name: run goreleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAP_GITUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
         with:
           args: release --rm-dist
