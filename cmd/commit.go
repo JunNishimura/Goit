@@ -33,7 +33,7 @@ to set your account's default identity.
 
 func commit() error {
 	// make and write tree object
-	treeObject, err := object.WriteTreeObject(client.RootGoitPath, client.Idx.Entries)
+	treeObject, err := writeTreeObject(client.RootGoitPath, client.Idx.Entries)
 	if err != nil {
 		return err
 	}
