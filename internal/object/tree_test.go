@@ -46,12 +46,27 @@ func TestNewTree(t *testing.T) {
 				wantErr: nil,
 			}
 		}(),
+		func() *test {
+			object, _ := NewObject(BlobObject, []byte("blob 12\x00Hello, World"))
+
+			return &test{
+				name: "fail: invalid tree object",
+				args: args{
+					object: object,
+				},
+				want:    nil,
+				wantErr: ErrInvalidTreeObject,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewTree("", tt.args.object)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+			if tt.want == nil {
+				return
 			}
 			if !reflect.DeepEqual(got.object, tt.want.object) {
 				t.Errorf("got = %v, want = %v", got.object, tt.want.object)
