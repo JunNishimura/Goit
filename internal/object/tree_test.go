@@ -90,3 +90,44 @@ func TestNewTree(t *testing.T) {
 		})
 	}
 }
+
+func TestString(t *testing.T) {
+	type args struct {
+		object *Object
+	}
+	type test struct {
+		name    string
+		args    args
+		want    string
+		wantErr error
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("1856e9be02756984c385482a07e42f42efd5d2f3")
+
+			var data []byte
+			data = append(data, []byte("100644 test.txt")...)
+			data = append(data, 0x00)
+			data = append(data, hash...)
+
+			object, _ := NewObject(TreeObject, data)
+
+			return &test{
+				name: "success",
+				args: args{
+					object: object,
+				},
+				want:    "100644 blob 1856e9be02756984c385482a07e42f42efd5d2f3	test.txt",
+				wantErr: nil,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree, _ := NewTree("", tt.args.object)
+			if tree.String() != tt.want {
+				t.Errorf("got = %s, want = %s", tree, tt.want)
+			}
+		})
+	}
+}
