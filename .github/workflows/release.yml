@@ -1,0 +1,51 @@
+name: release cli to the GitHub Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      method:
+        description: |
+          Which number to increment in the semantic versioning.
+          Set 'major', 'minor', or 'patch'.
+        required: true
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: check actor
+        if: github.actor != 'JunNishimura'
+        run: exit 1
+      - name: check branch
+        if: github.ref != 'refs/heads/main'
+        run: exit 1
+      - name: wait tests
+        id: test_result
+        uses: Sibz/await-status-action@v1.0.1
+        with:
+          contexts: test-status
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          timeout: 30
+      - name: check test result
+        if: steps.test_result.outputs.result != 'success'
+        run: |
+          echo "failed ${{ steps.test_result.outputs.failedCheckNames }}"
+          echo "failed ${{ steps.test_result.outputs.failedCheckStates }}"
+          exit 1
+      - name: checkout sources
+        uses: actions/checkout@v2
+      - name: bump-up semantic version
+        uses: kyoh86/git-vertag-action@v1.1
+        with:
+          method: "${{ github.event.inputs.method }}"
+      - name: setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.19
+      - name: run goreleaser
+        uses: goreleaser/goreleaser-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: release --rm-dist
