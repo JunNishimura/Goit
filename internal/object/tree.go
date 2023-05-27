@@ -12,6 +12,135 @@ import (
 	index "github.com/JunNishimura/Goit/internal/store"
 )
 
+type node struct {
+	hash     sha.SHA1
+	name     string
+	children []*node
+}
+
+type tree struct {
+	object   *Object
+	children []*node
+}
+
+func NewTree(rootGoitPath string, object *Object) (*tree, error) {
+	if object.Type != TreeObject {
+		return nil, ErrInvalidTreeObject
+	}
+	t := newTree(object)
+	if err := t.load(rootGoitPath); err != nil {
+		return nil, ErrInvalidTreeObject
+	}
+	return t, nil
+}
+
+func newTree(object *Object) *tree {
+	return &tree{
+		object:   object,
+		children: []*node{},
+	}
+}
+
+func (t *tree) load(rootGoitPath string) error {
+	children, err := walkTree(rootGoitPath, t.object)
+	if err != nil {
+		return err
+	}
+	t.children = children
+	return nil
+}
+
+func walkTree(rootGoitPath string, object *Object) ([]*node, error) {
+	var nodes []*node
+	var isDir bool
+	var nodeName string
+	isFirstLine := true
+
+	buf := bytes.NewReader(object.Data)
+	for {
+		var lineSplit []string
+		if isFirstLine {
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return nil, err
+			}
+			lineSplit = strings.Split(lineString, " ")
+			isFirstLine = false
+		} else {
+			// get 20 bytes to read hash
+			hashBytes := make([]byte, 20)
+			n, err := buf.Read(hashBytes)
+			if err != nil {
+				return nil, err
+			}
+			if n != 20 {
+				return nil, errors.New("fail to read hash")
+			}
+
+			// read filemode and filename
+			lineString, err := binary.ReadNullTerminatedString(buf)
+			if err != nil {
+				return nil, err
+			}
+
+			// append lineSplit
+			hashString := hex.EncodeToString(hashBytes)
+			lineSplit = []string{hashString}
+			if lineString != "" {
+				lineSplit = append(lineSplit, strings.Split(lineString, " ")...)
+			}
+		}
+
+		if !isFirstLine {
+			hashString := lineSplit[0]
+			hash, err := sha.ReadHash(hashString)
+			if err != nil {
+				return nil, err
+			}
+			var children []*node
+			if isDir {
+				treeObject, err := GetObject(rootGoitPath, hash)
+				if err != nil {
+					return nil, err
+				}
+				if treeObject.Type != TreeObject {
+					return nil, ErrInvalidTreeObject
+				}
+				getChildren, err := walkTree(rootGoitPath, treeObject)
+				if err != nil {
+					return nil, err
+				}
+				children = getChildren
+				isDir = false
+			}
+			node := &node{
+				hash:     hash,
+				name:     nodeName,
+				children: children,
+			}
+			nodes = append(nodes, node)
+		}
+
+		if len(lineSplit) == 1 { // last line
+			break
+		}
+
+		var mode string
+		if len(lineSplit) == 2 {
+			mode = lineSplit[0]
+			nodeName = lineSplit[1]
+		} else if len(lineSplit) == 3 {
+			mode = lineSplit[1]
+			nodeName = lineSplit[2]
+		}
+		if mode == "040000" {
+			isDir = true
+		}
+	}
+
+	return nodes, nil
+}
+
 func WriteTreeObject(rootGoitPath string, entries []*index.Entry) (*Object, error) {
 	var dirName string
 	var data []byte
