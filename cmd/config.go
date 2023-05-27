@@ -17,16 +17,6 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "config setting",
 	Long:  "this is a command to set config",
-	Args: func(cmd *cobra.Command, args []string) error {
-		if err := cobra.ExactArgs(2)(cmd, args); err != nil {
-			return ErrInvalidArgs
-		}
-		dotSplit := strings.Split(args[0], ".")
-		if len(dotSplit) != 2 {
-			return ErrInvalidArgs
-		}
-		return nil
-	},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if client.RootGoitPath == "" {
 			return ErrGoitNotInitialized
@@ -34,6 +24,15 @@ var configCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// args validation check
+		if len(args) != 2 {
+			return ErrInvalidArgs
+		}
+		dotSplit := strings.Split(args[0], ".")
+		if len(dotSplit) != 2 {
+			return ErrInvalidArgs
+		}
+
 		// check the existence of config file
 		configPath := filepath.Join(client.RootGoitPath, "config")
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
@@ -44,7 +43,6 @@ var configCmd = &cobra.Command{
 		}
 
 		// add to config
-		dotSplit := strings.Split(args[0], ".")
 		identifier := dotSplit[0]
 		key := dotSplit[1]
 		value := args[1]
