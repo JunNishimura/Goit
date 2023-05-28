@@ -57,6 +57,33 @@ func NewIndex(rootGoitPath string) (*Index, error) {
 	return index, nil
 }
 
+func (idx *Index) IsPathStaged(path []byte) bool {
+	if idx.EntryNum == 0 {
+		return false
+	}
+
+	// binary search
+	left := 0
+	right := int(idx.EntryNum)
+	for {
+		middle := (left + right) / 2
+		entry := idx.Entries[middle]
+		if string(entry.Path) == string(path) {
+			return true
+		} else if string(entry.Path) < string(path) {
+			left = middle + 1
+		} else {
+			right = middle
+		}
+
+		if right-left < 1 {
+			break
+		}
+	}
+
+	return false
+}
+
 // function to check if the path passed by parameter is already registered or not
 // return the index of entry if target is registered as the first return value
 // return -1 if target is not registered as the first return value
