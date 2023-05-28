@@ -1,40 +1,67 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/JunNishimura/Goit/internal/sha"
 	"github.com/spf13/cobra"
 )
 
+func updateReference(refPath string, hash sha.SHA1) error {
+	f, err := os.Create(refPath)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrIOHandling, refPath)
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(hash.String())
+	if err != nil {
+		return fmt.Errorf("fail to write hash(%s) to %s", hash.String(), refPath)
+	}
+
+	return nil
+}
+
 // updateRefCmd represents the updateRef command
 var updateRefCmd = &cobra.Command{
-	Use:   "updateRef",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:   "update-ref",
+	Short: "update reference",
+	Long:  "update reference",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) != 2 {
+			return ErrInvalidArgs
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("updateRef called")
+		// get reference path
+		refPath := filepath.Join(client.RootGoitPath, args[0])
+
+		// hash validation
+		hashString := args[1]
+		if len(hashString) != 40 {
+			return ErrInvalidHash
+		}
+		hashPath := filepath.Join(client.RootGoitPath, "objects", hashString[:2], hashString[2:])
+		if _, err := os.Stat(hashPath); os.IsNotExist(err) {
+			return fmt.Errorf("fatal: trying to write ref '%s' with nonexistent object %s", refPath, hashString)
+		}
+		hash, err := sha.ReadHash(hashString)
+		if err != nil {
+			return ErrInvalidHash
+		}
+
+		if err := updateReference(refPath, hash); err != nil {
+			return fmt.Errorf("fail to update reference %s: %w", refPath, err)
+		}
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(updateRefCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// updateRefCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// updateRefCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
