@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/JunNishimura/Goit/internal/file"
+	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/spf13/cobra"
 )
 
@@ -54,6 +57,64 @@ var restoreCmd = &cobra.Command{
 			if _, err := os.Stat(branchPath); os.IsNotExist(err) {
 				return errors.New("fatal: could not resolve HEAD")
 			}
+
+			// check if args are registered in index
+			for _, arg := range args {
+				argAbsPath, err := filepath.Abs(arg)
+				if err != nil {
+					return fmt.Errorf("fail to get arg abs path: %w", err)
+				}
+				f, err := os.Stat(argAbsPath)
+				if err != nil {
+					return fmt.Errorf("%w: %s", ErrIOHandling, argAbsPath)
+				}
+
+				if f.IsDir() { // directory
+					filePaths, err := file.GetFilePathsUnderDirectory(argAbsPath)
+					if err != nil {
+						return fmt.Errorf("fail to get file path under directory: %w", err)
+					}
+					for _, filePath := range filePaths {
+						curPath, err := os.Getwd()
+						if err != nil {
+							return fmt.Errorf("fail to get current directory: %w", err)
+						}
+						relPath, err := filepath.Rel(curPath, filePath)
+						if err != nil {
+							return fmt.Errorf("fail to get relative path: %w", err)
+						}
+						cleanedRelPath := strings.ReplaceAll(relPath, `\`, "/")
+						if !client.Idx.IsPathStaged([]byte(cleanedRelPath)) {
+							return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", cleanedRelPath)
+						}
+					}
+				} else { // file
+					cleanedArg := filepath.Clean(arg)
+					cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+					if !client.Idx.IsPathStaged([]byte(cleanedArg)) {
+						return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", cleanedArg)
+					}
+				}
+			}
+
+			// get HEAD commit
+			headCommit, err := getHeadCommit()
+			if err != nil {
+				return fmt.Errorf("fail to get HEAD commit: %w", err)
+			}
+
+			// get tree from HEAD commit
+			treeObject, err := object.GetObject(client.RootGoitPath, headCommit.Tree)
+			if err != nil {
+				return fmt.Errorf("fail to get tree object from commit HEAD: %w", err)
+			}
+			tree, err := object.NewTree(client.RootGoitPath, treeObject)
+			if err != nil {
+				return fmt.Errorf("fail to get tree: %w", err)
+			}
+			fmt.Println(tree)
+
+			// search
 		}
 
 		return nil
