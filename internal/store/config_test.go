@@ -395,7 +395,6 @@ func TestGetEmail(t *testing.T) {
 			t.Logf("%v: %s", err, goitDir)
 		}
 		// make .goit/config file
-		// make .goit/config file
 		localConfigFile := filepath.Join(goitDir, "config")
 		f, err := os.Create(localConfigFile)
 		if err != nil {
@@ -468,92 +467,141 @@ func TestGetEmail(t *testing.T) {
 	}
 }
 
-// func TestAdd(t *testing.T) {
-// 	type test struct {
-// 		name    string
-// 		content map[string]KV
-// 		want    *Config
-// 	}
-// 	tests := []*test{
-// 		func() *test {
-// 			config := newConfig()
-// 			config.Map = make(map[string]KV)
-// 			config.Map["user"] = make(KV)
-// 			config.Map["user"]["name"] = "Test Taro"
-// 			config.Map["user"]["email"] = "test@example.com"
+func TestAdd(t *testing.T) {
+	type test struct {
+		name          string
+		localContent  map[string]kv
+		globalContent map[string]kv
+		want          *Config
+	}
+	tests := []*test{
+		func() *test {
+			config := newConfig()
+			config.local["user"] = make(kv)
+			config.local["user"]["name"] = "Test Taro"
+			config.local["user"]["email"] = "test@example.com"
 
-// 			m := make(map[string]KV)
-// 			m["user"] = make(KV)
-// 			m["user"]["name"] = "Test Taro"
-// 			m["user"]["email"] = "test@example.com"
+			m := make(map[string]kv)
+			m["user"] = make(kv)
+			m["user"]["name"] = "Test Taro"
+			m["user"]["email"] = "test@example.com"
 
-// 			return &test{
-// 				name:    "success",
-// 				content: m,
-// 				want:    config,
-// 			}
-// 		}(),
-// 	}
-// 	for _, tt := range tests {
-// 		tmpDir := t.TempDir()
-// 		// .goit initialization
-// 		goitDir := filepath.Join(tmpDir, ".goit")
-// 		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-// 			t.Logf("%v: %s", err, goitDir)
-// 		}
-// 		// make .goit/config file
-// 		configFile := filepath.Join(goitDir, "config")
-// 		f, err := os.Create(configFile)
-// 		if err != nil {
-// 			t.Logf("%v: %s", err, configFile)
-// 		}
-// 		f.Close()
-// 		// make .goit/HEAD file and write main branch
-// 		headFile := filepath.Join(goitDir, "HEAD")
-// 		f, err = os.Create(headFile)
-// 		if err != nil {
-// 			t.Logf("%v: %s", err, headFile)
-// 		}
-// 		// set 'main' as default branch
-// 		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
-// 			t.Logf("%v: %s", err, headFile)
-// 		}
-// 		f.Close()
-// 		// make .goit/objects directory
-// 		objectsDir := filepath.Join(goitDir, "objects")
-// 		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-// 			t.Logf("%v: %s", err, objectsDir)
-// 		}
-// 		// make .goit/refs directory
-// 		refsDir := filepath.Join(goitDir, "refs")
-// 		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-// 			t.Logf("%v: %s", err, refsDir)
-// 		}
-// 		// make .goit/refs/heads directory
-// 		headsDir := filepath.Join(refsDir, "heads")
-// 		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-// 			t.Logf("%v: %s", err, headsDir)
-// 		}
-// 		// make .goit/refs/tags directory
-// 		tagsDir := filepath.Join(refsDir, "tags")
-// 		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-// 			t.Logf("%v: %s", err, tagsDir)
-// 		}
+			return &test{
+				name:          "success: add local",
+				localContent:  m,
+				globalContent: nil,
+				want:          config,
+			}
+		}(),
+		func() *test {
+			config := newConfig()
+			config.global["user"] = make(kv)
+			config.global["user"]["name"] = "Test Taro"
+			config.global["user"]["email"] = "test@example.com"
 
-// 		cfg, err := NewConfig(goitDir)
-// 		if err != nil {
-// 			t.Log(err)
-// 		}
-// 		for ident, kv := range tt.content {
-// 			for k, v := range kv {
-// 				cfg.Add(ident, k, v)
-// 			}
-// 		}
-// 		if !reflect.DeepEqual(cfg, tt.want) {
-// 			t.Errorf("got = %v, want = %v", cfg, tt.want)
-// 		}
-// 	}
-// }
+			m := make(map[string]kv)
+			m["user"] = make(kv)
+			m["user"]["name"] = "Test Taro"
+			m["user"]["email"] = "test@example.com"
+
+			return &test{
+				name:          "success: add global",
+				localContent:  nil,
+				globalContent: m,
+				want:          config,
+			}
+		}(),
+		func() *test {
+			config := newConfig()
+			config.local["user"] = make(kv)
+			config.local["user"]["name"] = "Test Taro"
+			config.local["user"]["email"] = "test@example.com"
+			config.global["user"] = make(kv)
+			config.global["user"]["name"] = "Test Taro"
+			config.global["user"]["email"] = "test@example.com"
+
+			m := make(map[string]kv)
+			m["user"] = make(kv)
+			m["user"]["name"] = "Test Taro"
+			m["user"]["email"] = "test@example.com"
+
+			return &test{
+				name:          "success: add both local and global",
+				localContent:  m,
+				globalContent: m,
+				want:          config,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		tmpDir := t.TempDir()
+		// .goit initialization
+		goitDir := filepath.Join(tmpDir, ".goit")
+		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+			t.Logf("%v: %s", err, goitDir)
+		}
+		// make .goit/config file
+		configFile := filepath.Join(goitDir, "config")
+		f, err := os.Create(configFile)
+		if err != nil {
+			t.Logf("%v: %s", err, configFile)
+		}
+		f.Close()
+		// make .goit/HEAD file and write main branch
+		headFile := filepath.Join(goitDir, "HEAD")
+		f, err = os.Create(headFile)
+		if err != nil {
+			t.Logf("%v: %s", err, headFile)
+		}
+		// set 'main' as default branch
+		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+			t.Logf("%v: %s", err, headFile)
+		}
+		f.Close()
+		// make .goit/objects directory
+		objectsDir := filepath.Join(goitDir, "objects")
+		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+			t.Logf("%v: %s", err, objectsDir)
+		}
+		// make .goit/refs directory
+		refsDir := filepath.Join(goitDir, "refs")
+		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+			t.Logf("%v: %s", err, refsDir)
+		}
+		// make .goit/refs/heads directory
+		headsDir := filepath.Join(refsDir, "heads")
+		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+			t.Logf("%v: %s", err, headsDir)
+		}
+		// make .goit/refs/tags directory
+		tagsDir := filepath.Join(refsDir, "tags")
+		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+			t.Logf("%v: %s", err, tagsDir)
+		}
+
+		cfg, err := NewConfig(goitDir)
+		if err != nil {
+			t.Log(err)
+		}
+		if tt.localContent != nil {
+			for ident, keyValue := range tt.localContent {
+				for k, v := range keyValue {
+					cfg.Add(ident, k, v, false)
+				}
+			}
+		}
+		if tt.globalContent != nil {
+			for ident, keyValue := range tt.globalContent {
+				for k, v := range keyValue {
+					cfg.Add(ident, k, v, true)
+				}
+			}
+		}
+		if !reflect.DeepEqual(cfg, tt.want) {
+			t.Errorf("got = %v, want = %v", cfg, tt.want)
+		}
+	}
+}
 
 // func TestWrite(t *testing.T) {
 // 	type test struct {
