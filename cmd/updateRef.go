@@ -32,6 +32,12 @@ var updateRefCmd = &cobra.Command{
 	Use:   "update-ref",
 	Short: "update reference",
 	Long:  "update reference",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 2 {
 			return ErrInvalidArgs
