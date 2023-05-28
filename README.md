@@ -32,6 +32,8 @@ go install github.com/JunNishimura/Goit@latest
 
 ### Future
 - [ ] tag
+- [ ] rm
+- [ ] switch
 - [ ] checkout
 - [ ] branch
 - [ ] merge
