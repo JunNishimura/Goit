@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -130,20 +129,6 @@ func (c *Commit) String() string {
 	commitString += fmt.Sprintf("\n\t%s\n", c.Message)
 
 	return commitString
-}
-
-func (c *Commit) UpdateBranch(branchPath string) error {
-	f, err := os.Create(branchPath)
-	if err != nil {
-		return fmt.Errorf("%w: %s", ErrIOHandling, err)
-	}
-	defer f.Close()
-
-	if _, err := f.WriteString(c.Hash.String()); err != nil {
-		return fmt.Errorf("%w: %s", ErrIOHandling, err)
-	}
-
-	return nil
 }
 
 func readSign(signString string) (Sign, error) {
