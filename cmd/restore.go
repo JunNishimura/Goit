@@ -1,11 +1,13 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -13,28 +15,37 @@ import (
 // restoreCmd represents the restore command
 var restoreCmd = &cobra.Command{
 	Use:   "restore",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "restore file",
+	Long:  "restore file",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// args validation
+		if len(args) == 0 {
+			return errors.New("fatal: you must specify path(s) to restore")
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("restore called")
+		// check if arg exists
+		for _, arg := range args {
+			argPath, err := filepath.Abs(arg)
+			if err != nil {
+				return fmt.Errorf("fail to get absolute path of %s: %w", arg, err)
+			}
+			if _, err := os.Stat(argPath); os.IsNotExist(err) {
+				return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", arg)
+			}
+		}
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(restoreCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// restoreCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// restoreCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	restoreCmd.Flags().Bool("staged", false, "restore index")
 }
