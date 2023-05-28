@@ -150,6 +150,29 @@ func isCommitNecessary(commitObj *object.Commit) (bool, error) {
 	return isDiff, nil
 }
 
+// get HEAD commit
+func getHeadCommit() (*object.Commit, error) {
+	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
+	hashBytes, err := os.ReadFile(branchPath)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrIOHandling, branchPath)
+	}
+	hashString := string(hashBytes)
+	hash, err := sha.ReadHash(hashString)
+	if err != nil {
+		return nil, fmt.Errorf("fail to decode hash string: %w", err)
+	}
+	commitObject, err := object.GetObject(client.RootGoitPath, hash)
+	if err != nil {
+		return nil, fmt.Errorf("fail to get last commit object: %w", err)
+	}
+	commit, err := object.NewCommit(commitObject)
+	if err != nil {
+		return nil, fmt.Errorf("fail to get last commit: %w", err)
+	}
+	return commit, nil
+}
+
 // commitCmd represents the commit command
 var commitCmd = &cobra.Command{
 	Use:   "commit",
@@ -189,30 +212,13 @@ var commitCmd = &cobra.Command{
 				return fmt.Errorf("fail to delete untracked files: %w", err)
 			}
 
-			// get last commit object
-			branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", "main")
-			hashBytes, err := os.ReadFile(branchPath)
+			headCommit, err := getHeadCommit()
 			if err != nil {
-				return fmt.Errorf("%w: %s", ErrIOHandling, branchPath)
-			}
-			hashString := string(hashBytes)
-			lastCommitHash, err := sha.ReadHash(hashString)
-			if err != nil {
-				return fmt.Errorf("fail to decode hash string: %w", err)
-			}
-			lastCommitObject, err := object.GetObject(client.RootGoitPath, lastCommitHash)
-			if err != nil {
-				return fmt.Errorf("fail to get last commit object: %w", err)
-			}
-
-			// get last commit
-			lastCommit, err := object.NewCommit(lastCommitObject)
-			if err != nil {
-				return fmt.Errorf("fail to get last commit: %w", err)
+				return fmt.Errorf("fail to get HEAD commit: %w", err)
 			}
 
 			// compare last commit with index
-			isCommitNecessary, err := isCommitNecessary(lastCommit)
+			isCommitNecessary, err := isCommitNecessary(headCommit)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %w", err)
 			}
