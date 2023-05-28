@@ -10,4 +10,5 @@ var (
 	ErrNotSpecifiedHash   = errors.New("error: no specified object hash")
 	ErrTooManyArgs        = errors.New("error: to many arguments")
 	ErrInvalidHash        = errors.New("error: not a valid object hash")
+	ErrInvalidHEAD        = errors.New("fatal: could not resolve HEAD")
 )

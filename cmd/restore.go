@@ -40,6 +40,22 @@ var restoreCmd = &cobra.Command{
 			}
 		}
 
+		// get staged option
+		isStaged, err := cmd.Flags().GetBool("staged")
+		if err != nil {
+			return fmt.Errorf("fail to get staged flag: %w", err)
+		}
+
+		// staged validation check
+		if isStaged {
+			// restore --stage is comparing index with commit object pointed by HEAD
+			// so, at lease one commit is needed
+			branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
+			if _, err := os.Stat(branchPath); os.IsNotExist(err) {
+				return errors.New("fatal: could not resolve HEAD")
+			}
+		}
+
 		return nil
 	},
 }
