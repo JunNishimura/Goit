@@ -15,6 +15,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func restoreIndex(tree *object.Tree, nodePath string) error {
+	// get entry
+	_, entry, isEntryFound := client.Idx.GetEntry([]byte(nodePath))
+	if !isEntryFound {
+		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", nodePath)
+	}
+
+	// get node
+	node, isNodeFound := object.GetNode(tree.Children, nodePath)
+
+	// restore index
+	if isNodeFound { // if node is in the last commit
+		// change hash
+		indexPath := filepath.Join(client.RootGoitPath, "index")
+		isUpdated, err := client.Idx.Update(indexPath, node.Hash, []byte(nodePath))
+		if err != nil {
+			return fmt.Errorf("fail to update index: %w", err)
+		}
+		if !isUpdated {
+			return errors.New("fail to restore index")
+		}
+	} else { // if node is not in the last commit
+		// delete entry
+		if err := client.Idx.DeleteEntry(client.RootGoitPath, entry); err != nil {
+			return fmt.Errorf("fail to delete entry: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // restoreCmd represents the restore command
 var restoreCmd = &cobra.Command{
 	Use:   "restore",
@@ -58,7 +89,22 @@ var restoreCmd = &cobra.Command{
 				return errors.New("fatal: could not resolve HEAD")
 			}
 
-			// check if args are registered in index
+			// get HEAD commit
+			headCommit, err := getHeadCommit()
+			if err != nil {
+				return fmt.Errorf("fail to get HEAD commit: %w", err)
+			}
+
+			// get tree from HEAD commit
+			treeObject, err := object.GetObject(client.RootGoitPath, headCommit.Tree)
+			if err != nil {
+				return fmt.Errorf("fail to get tree object from commit HEAD: %w", err)
+			}
+			tree, err := object.NewTree(client.RootGoitPath, treeObject)
+			if err != nil {
+				return fmt.Errorf("fail to get tree: %w", err)
+			}
+
 			for _, arg := range args {
 				argAbsPath, err := filepath.Abs(arg)
 				if err != nil {
@@ -84,37 +130,22 @@ var restoreCmd = &cobra.Command{
 							return fmt.Errorf("fail to get relative path: %w", err)
 						}
 						cleanedRelPath := strings.ReplaceAll(relPath, `\`, "/")
-						if !client.Idx.IsPathStaged([]byte(cleanedRelPath)) {
-							return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", cleanedRelPath)
+
+						// restore index
+						if err := restoreIndex(tree, cleanedRelPath); err != nil {
+							return err
 						}
 					}
 				} else { // file
 					cleanedArg := filepath.Clean(arg)
 					cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
-					if !client.Idx.IsPathStaged([]byte(cleanedArg)) {
-						return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", cleanedArg)
+
+					// restore index
+					if err := restoreIndex(tree, cleanedArg); err != nil {
+						return err
 					}
 				}
 			}
-
-			// get HEAD commit
-			headCommit, err := getHeadCommit()
-			if err != nil {
-				return fmt.Errorf("fail to get HEAD commit: %w", err)
-			}
-
-			// get tree from HEAD commit
-			treeObject, err := object.GetObject(client.RootGoitPath, headCommit.Tree)
-			if err != nil {
-				return fmt.Errorf("fail to get tree object from commit HEAD: %w", err)
-			}
-			tree, err := object.NewTree(client.RootGoitPath, treeObject)
-			if err != nil {
-				return fmt.Errorf("fail to get tree: %w", err)
-			}
-			fmt.Println(tree)
-
-			// search
 		}
 
 		return nil

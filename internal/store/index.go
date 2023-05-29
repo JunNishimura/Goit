@@ -57,19 +57,19 @@ func NewIndex(rootGoitPath string) (*Index, error) {
 	return index, nil
 }
 
-func (idx *Index) IsPathStaged(path []byte) bool {
+// return the position of entry, entry, and flag to tell the entry is found or not
+func (idx *Index) GetEntry(path []byte) (int, *Entry, bool) {
 	if idx.EntryNum == 0 {
-		return false
+		return newEntryFlag, nil, false
 	}
 
-	// binary search
 	left := 0
 	right := int(idx.EntryNum)
 	for {
 		middle := (left + right) / 2
 		entry := idx.Entries[middle]
 		if string(entry.Path) == string(path) {
-			return true
+			return middle, entry, true
 		} else if string(entry.Path) < string(path) {
 			left = middle + 1
 		} else {
@@ -81,54 +81,20 @@ func (idx *Index) IsPathStaged(path []byte) bool {
 		}
 	}
 
-	return false
-}
-
-// function to check if the path passed by parameter is already registered or not
-// return the index of entry if target is registered as the first return value
-// return -1 if target is not registered as the first return value
-func (idx *Index) isUpdateNeeded(hash sha.SHA1, path []byte) (int, bool) {
-	if idx.EntryNum == 0 {
-		return newEntryFlag, true
-	}
-
-	// binary search
-	left := 0
-	right := int(idx.EntryNum)
-	for {
-		middle := (left + right) / 2
-		entry := idx.Entries[middle]
-		if string(entry.Path) == string(path) && entry.Hash.String() == hash.String() {
-			return middle, false
-		}
-		if string(entry.Path) == string(path) && entry.Hash.String() != hash.String() {
-			return middle, true
-		}
-		if string(entry.Path) < string(path) {
-			left = middle + 1
-		}
-		if string(entry.Path) > string(path) {
-			right = middle
-		}
-
-		if right-left < 1 {
-			break
-		}
-	}
-	return newEntryFlag, true
+	return newEntryFlag, nil, false
 }
 
 func (idx *Index) Update(indexPath string, hash sha.SHA1, path []byte) (bool, error) {
-	n, isNeeded := idx.isUpdateNeeded(hash, path)
-	if !isNeeded {
+	pos, gotEntry, isFound := idx.GetEntry(path)
+	if isFound && string(gotEntry.Hash) == string(hash) && string(gotEntry.Path) == string(path) {
 		return false, nil
 	}
 
 	// add new entry and update index entries
 	entry := NewEntry(hash, path)
-	if n != newEntryFlag {
+	if pos != newEntryFlag {
 		// remove existing entry
-		idx.Entries = append(idx.Entries[:n], idx.Entries[n+1:]...)
+		idx.Entries = append(idx.Entries[:pos], idx.Entries[pos+1:]...)
 	}
 	idx.Entries = append(idx.Entries, entry)
 	idx.EntryNum = uint32(len(idx.Entries))
