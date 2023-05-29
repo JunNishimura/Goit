@@ -15,21 +15,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func restoreIndex(tree *object.Tree, nodePath string) error {
+func restoreIndex(tree *object.Tree, path string) error {
 	// get entry
-	_, entry, isEntryFound := client.Idx.GetEntry([]byte(nodePath))
+	_, entry, isEntryFound := client.Idx.GetEntry([]byte(path))
 	if !isEntryFound {
-		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", nodePath)
+		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", path)
 	}
 
 	// get node
-	node, isNodeFound := object.GetNode(tree.Children, nodePath)
+	node, isNodeFound := object.GetNode(tree.Children, path)
 
 	// restore index
 	if isNodeFound { // if node is in the last commit
 		// change hash
 		indexPath := filepath.Join(client.RootGoitPath, "index")
-		isUpdated, err := client.Idx.Update(indexPath, node.Hash, []byte(nodePath))
+		isUpdated, err := client.Idx.Update(indexPath, node.Hash, []byte(path))
 		if err != nil {
 			return fmt.Errorf("fail to update index: %w", err)
 		}
