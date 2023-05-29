@@ -141,6 +141,27 @@ func (idx *Index) Update(indexPath string, hash sha.SHA1, path []byte) (bool, er
 	return true, nil
 }
 
+func (idx *Index) DeleteEntry(rootGoitPath string, entry *Entry) error {
+	pos, _, isFound := idx.GetEntry(entry.Path)
+	if !isFound {
+		return fmt.Errorf("'%s' is not registered in index, so fail to delete", entry.Path)
+	}
+
+	// delete target entry
+	idx.Entries = append(idx.Entries[:pos], idx.Entries[pos+1:]...)
+
+	// reset entry num
+	idx.EntryNum = uint32(len(idx.Entries))
+
+	// write index
+	indexPath := filepath.Join(rootGoitPath, "index")
+	if err := idx.write(indexPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (idx *Index) DeleteUntrackedFiles(indexPath string) error {
 	var trackedEntries []*Entry
 	for _, entry := range idx.Entries {
