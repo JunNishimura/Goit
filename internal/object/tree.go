@@ -155,3 +155,35 @@ func (t *Tree) String() string {
 	message := strings.Join(lines, "\n")
 	return message
 }
+
+func GetNode(children []*Node, path string) (*Node, bool) {
+	if len(children) == 0 {
+		return nil, false
+	}
+
+	pathSplit := strings.SplitN(path, "/", 2)
+	searchName := pathSplit[0]
+
+	left := 0
+	right := len(children)
+	for {
+		middle := (left + right) / 2
+		node := children[middle]
+		if node.Name == searchName {
+			if len(node.Children) == 0 {
+				return node, true
+			}
+			return GetNode(node.Children, pathSplit[1])
+		} else if node.Name < searchName {
+			left = middle + 1
+		} else {
+			right = middle
+		}
+
+		if right-left < 1 {
+			break
+		}
+	}
+
+	return nil, false
+}
