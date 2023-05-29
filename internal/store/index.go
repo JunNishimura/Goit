@@ -119,8 +119,8 @@ func (idx *Index) isUpdateNeeded(hash sha.SHA1, path []byte) (int, bool) {
 }
 
 func (idx *Index) Update(indexPath string, hash sha.SHA1, path []byte) (bool, error) {
-	n, isUpdated := idx.isUpdateNeeded(hash, path)
-	if !isUpdated {
+	n, isNeeded := idx.isUpdateNeeded(hash, path)
+	if !isNeeded {
 		return false, nil
 	}
 
