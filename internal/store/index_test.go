@@ -243,3 +243,130 @@ func TestUpdate(t *testing.T) {
 		})
 	}
 }
+
+func TestGetEntry(t *testing.T) {
+	type fields struct {
+		hash sha.SHA1
+		path []byte
+	}
+	type args struct {
+		path []byte
+	}
+	type test struct {
+		name      string
+		fields    fields
+		args      args
+		wantPos   int
+		wantEntry *Entry
+		wantFound bool
+	}
+	tests := []*test{
+		func() *test {
+			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			path := []byte("cmd/main.go")
+
+			entry := NewEntry(hash, path)
+
+			return &test{
+				name: "found",
+				fields: fields{
+					hash: hash,
+					path: path,
+				},
+				args: args{
+					path: path,
+				},
+				wantPos:   0,
+				wantEntry: entry,
+				wantFound: true,
+			}
+		}(),
+		func() *test {
+			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			path := []byte("cmd/main.go")
+
+			return &test{
+				name: "not found",
+				fields: fields{
+					hash: hash,
+					path: path,
+				},
+				args: args{
+					path: []byte("notfound.txt"),
+				},
+				wantPos:   -1,
+				wantEntry: nil,
+				wantFound: false,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/config file
+			configFile := filepath.Join(goitDir, "config")
+			f, err := os.Create(configFile)
+			if err != nil {
+				t.Logf("%v: %s", err, configFile)
+			}
+			f.Close()
+			// make .goit/HEAD file and write main branch
+			headFile := filepath.Join(goitDir, "HEAD")
+			f, err = os.Create(headFile)
+			if err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			// set 'main' as default branch
+			if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			f.Close()
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// make .goit/refs/tags directory
+			tagsDir := filepath.Join(refsDir, "tags")
+			if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, tagsDir)
+			}
+
+			index, err := NewIndex(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+
+			_, err = index.Update(goitDir, tt.fields.hash, tt.fields.path)
+			if err != nil {
+				t.Log(err)
+			}
+
+			pos, entry, isFound := index.GetEntry(tt.args.path)
+			if pos != tt.wantPos {
+				t.Errorf("got = %d, want = %d", pos, tt.wantPos)
+			}
+			if !reflect.DeepEqual(entry, tt.wantEntry) {
+				t.Errorf("got = %v, want = %v", entry, tt.wantEntry)
+			}
+			if isFound != tt.wantFound {
+				t.Errorf("got = %v, want = %v", isFound, tt.wantFound)
+			}
+		})
+	}
+}
