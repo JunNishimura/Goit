@@ -40,8 +40,7 @@ func add(path string) error {
 	byteRelPath := []byte(cleanedRelPath)
 
 	// update index
-	indexPath := filepath.Join(client.RootGoitPath, "index")
-	isUpdated, err := client.Idx.Update(indexPath, object.Hash, byteRelPath)
+	isUpdated, err := client.Idx.Update(client.RootGoitPath, object.Hash, byteRelPath)
 	if err != nil {
 		return fmt.Errorf("fail to update index: %w", err)
 	}
@@ -104,8 +103,7 @@ var addCmd = &cobra.Command{
 		}
 
 		// delete untracked files from index
-		indexPath := filepath.Join(client.RootGoitPath, "index")
-		if err := client.Idx.DeleteUntrackedFiles(indexPath); err != nil {
+		if err := client.Idx.DeleteUntrackedFiles(client.RootGoitPath); err != nil {
 			return fmt.Errorf("fail to delete untracked files from index: %w", err)
 		}
 
