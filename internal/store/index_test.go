@@ -164,7 +164,7 @@ func TestUpdate(t *testing.T) {
 			path := []byte("cmd/main.go")
 
 			return &test{
-				name: "success",
+				name: "not update",
 				args: args{
 					hash: hash,
 					path: path,
