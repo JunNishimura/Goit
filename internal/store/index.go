@@ -50,7 +50,7 @@ func NewIndex(rootGoitPath string) (*Index, error) {
 	}
 	indexPath := filepath.Join(rootGoitPath, "index")
 	if _, err := os.Stat(indexPath); !os.IsNotExist(err) {
-		if err := index.read(indexPath); err != nil {
+		if err := index.read(rootGoitPath); err != nil {
 			return nil, fmt.Errorf("fail to read index: %w", err)
 		}
 	}
@@ -84,7 +84,7 @@ func (idx *Index) GetEntry(path []byte) (int, *Entry, bool) {
 	return newEntryFlag, nil, false
 }
 
-func (idx *Index) Update(indexPath string, hash sha.SHA1, path []byte) (bool, error) {
+func (idx *Index) Update(rootGoitPath string, hash sha.SHA1, path []byte) (bool, error) {
 	pos, gotEntry, isFound := idx.GetEntry(path)
 	if isFound && string(gotEntry.Hash) == string(hash) && string(gotEntry.Path) == string(path) {
 		return false, nil
@@ -100,7 +100,7 @@ func (idx *Index) Update(indexPath string, hash sha.SHA1, path []byte) (bool, er
 	idx.EntryNum = uint32(len(idx.Entries))
 	sort.Slice(idx.Entries, func(i, j int) bool { return string(idx.Entries[i].Path) < string(idx.Entries[j].Path) })
 
-	if err := idx.write(indexPath); err != nil {
+	if err := idx.write(rootGoitPath); err != nil {
 		return false, err
 	}
 
@@ -120,15 +120,14 @@ func (idx *Index) DeleteEntry(rootGoitPath string, entry *Entry) error {
 	idx.EntryNum = uint32(len(idx.Entries))
 
 	// write index
-	indexPath := filepath.Join(rootGoitPath, "index")
-	if err := idx.write(indexPath); err != nil {
+	if err := idx.write(rootGoitPath); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (idx *Index) DeleteUntrackedFiles(indexPath string) error {
+func (idx *Index) DeleteUntrackedFiles(rootGoitPath string) error {
 	var trackedEntries []*Entry
 	for _, entry := range idx.Entries {
 		if _, err := os.Stat(string(entry.Path)); !os.IsNotExist(err) {
@@ -144,15 +143,16 @@ func (idx *Index) DeleteUntrackedFiles(indexPath string) error {
 	// need to update index
 	idx.Entries = trackedEntries
 	idx.EntryNum = uint32(len(idx.Entries))
-	if err := idx.write(indexPath); err != nil {
+	if err := idx.write(rootGoitPath); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (idx *Index) read(indexPath string) error {
+func (idx *Index) read(rootGoitPath string) error {
 	// read index
+	indexPath := filepath.Join(rootGoitPath, "index")
 	b, err := os.ReadFile(indexPath)
 	if err != nil {
 		return fmt.Errorf("fail to read index: %w", err)
@@ -197,7 +197,8 @@ func (idx *Index) read(indexPath string) error {
 	return nil
 }
 
-func (idx *Index) write(indexPath string) error {
+func (idx *Index) write(rootGoitPath string) error {
+	indexPath := filepath.Join(rootGoitPath, "index")
 	f, err := os.Create(indexPath)
 	if err != nil {
 		return fmt.Errorf("fail to create .goit/index: %w", err)

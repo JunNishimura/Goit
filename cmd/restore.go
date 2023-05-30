@@ -28,8 +28,7 @@ func restoreIndex(tree *object.Tree, path string) error {
 	// restore index
 	if isNodeFound { // if node is in the last commit
 		// change hash
-		indexPath := filepath.Join(client.RootGoitPath, "index")
-		isUpdated, err := client.Idx.Update(indexPath, node.Hash, []byte(path))
+		isUpdated, err := client.Idx.Update(client.RootGoitPath, node.Hash, []byte(path))
 		if err != nil {
 			return fmt.Errorf("fail to update index: %w", err)
 		}

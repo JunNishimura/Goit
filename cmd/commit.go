@@ -207,8 +207,7 @@ var commitCmd = &cobra.Command{
 			}
 		} else {
 			// check if files are deleted
-			indexPath := filepath.Join(client.RootGoitPath, "index")
-			if err := client.Idx.DeleteUntrackedFiles(indexPath); err != nil {
+			if err := client.Idx.DeleteUntrackedFiles(client.RootGoitPath); err != nil {
 				return fmt.Errorf("fail to delete untracked files: %w", err)
 			}
 
