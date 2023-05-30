@@ -163,17 +163,7 @@ func (c *Config) Add(ident, key, value string, isGlobal bool) {
 	}
 }
 
-func (c *Config) Write(localConfigPath, globalConfigPath string) error {
-	if err := writeInternal(globalConfigPath, c.global); err != nil {
-		return err
-	}
-	if err := writeInternal(localConfigPath, c.local); err != nil {
-		return err
-	}
-	return nil
-}
-
-func writeInternal(configPath string, kvs map[string]kv) error {
+func (c *Config) Write(configPath string, isGlobal bool) error {
 	f, err := os.Create(configPath)
 	if err != nil {
 		return err
@@ -181,6 +171,12 @@ func writeInternal(configPath string, kvs map[string]kv) error {
 	defer f.Close()
 
 	var content string
+	var kvs map[string]kv
+	if isGlobal {
+		kvs = c.global
+	} else {
+		kvs = c.local
+	}
 	for ident, keyValue := range kvs {
 		content += fmt.Sprintf("[%s]\n", ident)
 		for k, v := range keyValue {
