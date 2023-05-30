@@ -46,6 +46,35 @@ func restoreIndex(tree *object.Tree, path string) error {
 	return nil
 }
 
+func restoreWorkingDirectory(path string) error {
+	_, entry, isEntryFound := client.Idx.GetEntry([]byte(path))
+	if !isEntryFound {
+		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", path)
+	}
+
+	obj, err := object.GetObject(client.RootGoitPath, entry.Hash)
+	if err != nil {
+		return fmt.Errorf("fail to get object '%s': %w", path, err)
+	}
+
+	// restore file
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("fail to get abs path '%s': %w", path, err)
+	}
+	f, err := os.Create(absPath)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrIOHandling, absPath)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(string(obj.Data)); err != nil {
+		return fmt.Errorf("fail to write to file '%s': %w", absPath, err)
+	}
+
+	return nil
+}
+
 // restoreCmd represents the restore command
 var restoreCmd = &cobra.Command{
 	Use:   "restore",
@@ -142,6 +171,49 @@ var restoreCmd = &cobra.Command{
 
 					// restore index
 					if err := restoreIndex(tree, cleanedArg); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			// execute restore working directory
+			for _, arg := range args {
+				argAbsPath, err := filepath.Abs(arg)
+				if err != nil {
+					return fmt.Errorf("fail to get arg abs path: %w", err)
+				}
+				f, err := os.Stat(argAbsPath)
+				if err != nil {
+					return fmt.Errorf("%w: %s", ErrIOHandling, argAbsPath)
+				}
+
+				if f.IsDir() { // directory
+					filePaths, err := file.GetFilePathsUnderDirectory(argAbsPath)
+					if err != nil {
+						return fmt.Errorf("fail to get file path under directory: %w", err)
+					}
+					for _, filePath := range filePaths {
+						curPath, err := os.Getwd()
+						if err != nil {
+							return fmt.Errorf("fail to get current directory: %w", err)
+						}
+						relPath, err := filepath.Rel(curPath, filePath)
+						if err != nil {
+							return fmt.Errorf("fail to get relative path: %w", err)
+						}
+						cleanedRelPath := strings.ReplaceAll(relPath, `\`, "/")
+
+						// restore working directory
+						if err := restoreWorkingDirectory(cleanedRelPath); err != nil {
+							return err
+						}
+					}
+				} else { // file
+					cleanedArg := filepath.Clean(arg)
+					cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+
+					// restore working directory
+					if err := restoreWorkingDirectory(cleanedArg); err != nil {
 						return err
 					}
 				}
