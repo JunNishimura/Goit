@@ -68,82 +68,84 @@ func TestNewConfig(t *testing.T) {
 		}(),
 	}
 	for _, tt := range tests {
-		tmpDir := t.TempDir()
-		// .goit initialization
-		goitDir := filepath.Join(tmpDir, ".goit")
-		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, goitDir)
-		}
-		// make .goit/config file
-		localConfigPath := filepath.Join(goitDir, "config")
-		f, err := os.Create(localConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, localConfigPath)
-		}
-		if tt.localContent != "" {
-			_, err := f.WriteString(tt.localContent)
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/config file
+			localConfigPath := filepath.Join(goitDir, "config")
+			f, err := os.Create(localConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, localConfigPath)
 			}
-		}
-		f.Close()
-		// make global/config file
-		userHomePath, err := os.UserHomeDir()
-		if err != nil {
-			t.Logf("%v: %s", err, userHomePath)
-		}
-		globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
-		f, err = os.Create(globalConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, globalConfigPath)
-		}
-		if tt.globalContent != "" {
-			_, err := f.WriteString(tt.globalContent)
+			if tt.localContent != "" {
+				_, err := f.WriteString(tt.localContent)
+				if err != nil {
+					t.Logf("%v: %s", err, localConfigPath)
+				}
+			}
+			f.Close()
+			// make global/config file
+			userHomePath, err := os.UserHomeDir()
+			if err != nil {
+				t.Logf("%v: %s", err, userHomePath)
+			}
+			globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
+			f, err = os.Create(globalConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, globalConfigPath)
 			}
-		}
-		f.Close()
-		// make .goit/HEAD file and write main branch
-		headFile := filepath.Join(goitDir, "HEAD")
-		f, err = os.Create(headFile)
-		if err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		// set 'main' as default branch
-		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		f.Close()
-		// make .goit/objects directory
-		objectsDir := filepath.Join(goitDir, "objects")
-		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, objectsDir)
-		}
-		// make .goit/refs directory
-		refsDir := filepath.Join(goitDir, "refs")
-		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, refsDir)
-		}
-		// make .goit/refs/heads directory
-		headsDir := filepath.Join(refsDir, "heads")
-		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, headsDir)
-		}
-		// make .goit/refs/tags directory
-		tagsDir := filepath.Join(refsDir, "tags")
-		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, tagsDir)
-		}
+			if tt.globalContent != "" {
+				_, err := f.WriteString(tt.globalContent)
+				if err != nil {
+					t.Logf("%v: %s", err, globalConfigPath)
+				}
+			}
+			f.Close()
+			// make .goit/HEAD file and write main branch
+			headFile := filepath.Join(goitDir, "HEAD")
+			f, err = os.Create(headFile)
+			if err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			// set 'main' as default branch
+			if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			f.Close()
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// make .goit/refs/tags directory
+			tagsDir := filepath.Join(refsDir, "tags")
+			if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, tagsDir)
+			}
 
-		cfg, err := NewConfig(goitDir)
-		if !errors.Is(err, tt.wantErr) {
-			t.Errorf("got = %v, want = %v", err, tt.wantErr)
-		}
+			cfg, err := NewConfig(goitDir)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
 
-		if !reflect.DeepEqual(cfg, tt.want) {
-			t.Errorf("got = %v, want = %v", cfg, tt.want)
-		}
+			if !reflect.DeepEqual(cfg, tt.want) {
+				t.Errorf("got = %v, want = %v", cfg, tt.want)
+			}
+		})
 	}
 }
 
@@ -170,83 +172,85 @@ func TestIsUserSet(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tmpDir := t.TempDir()
-		// .goit initialization
-		goitDir := filepath.Join(tmpDir, ".goit")
-		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, goitDir)
-		}
-		// make .goit/config file
-		// make .goit/config file
-		localConfigPath := filepath.Join(goitDir, "config")
-		f, err := os.Create(localConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, localConfigPath)
-		}
-		if tt.localContent != "" {
-			_, err := f.WriteString(tt.localContent)
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/config file
+			// make .goit/config file
+			localConfigPath := filepath.Join(goitDir, "config")
+			f, err := os.Create(localConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, localConfigPath)
 			}
-		}
-		f.Close()
-		// make global/config file
-		userHomePath, err := os.UserHomeDir()
-		if err != nil {
-			t.Logf("%v: %s", err, userHomePath)
-		}
-		globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
-		f, err = os.Create(globalConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, globalConfigPath)
-		}
-		if tt.globalContent != "" {
-			_, err := f.WriteString(tt.globalContent)
+			if tt.localContent != "" {
+				_, err := f.WriteString(tt.localContent)
+				if err != nil {
+					t.Logf("%v: %s", err, localConfigPath)
+				}
+			}
+			f.Close()
+			// make global/config file
+			userHomePath, err := os.UserHomeDir()
+			if err != nil {
+				t.Logf("%v: %s", err, userHomePath)
+			}
+			globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
+			f, err = os.Create(globalConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, globalConfigPath)
 			}
-		}
-		f.Close()
-		// make .goit/HEAD file and write main branch
-		headFile := filepath.Join(goitDir, "HEAD")
-		f, err = os.Create(headFile)
-		if err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		// set 'main' as default branch
-		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		f.Close()
-		// make .goit/objects directory
-		objectsDir := filepath.Join(goitDir, "objects")
-		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, objectsDir)
-		}
-		// make .goit/refs directory
-		refsDir := filepath.Join(goitDir, "refs")
-		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, refsDir)
-		}
-		// make .goit/refs/heads directory
-		headsDir := filepath.Join(refsDir, "heads")
-		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, headsDir)
-		}
-		// make .goit/refs/tags directory
-		tagsDir := filepath.Join(refsDir, "tags")
-		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, tagsDir)
-		}
+			if tt.globalContent != "" {
+				_, err := f.WriteString(tt.globalContent)
+				if err != nil {
+					t.Logf("%v: %s", err, globalConfigPath)
+				}
+			}
+			f.Close()
+			// make .goit/HEAD file and write main branch
+			headFile := filepath.Join(goitDir, "HEAD")
+			f, err = os.Create(headFile)
+			if err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			// set 'main' as default branch
+			if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			f.Close()
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// make .goit/refs/tags directory
+			tagsDir := filepath.Join(refsDir, "tags")
+			if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, tagsDir)
+			}
 
-		cfg, err := NewConfig(goitDir)
-		if err != nil {
-			t.Log(err)
-		}
-		isUserSet := cfg.IsUserSet()
-		if isUserSet != tt.want {
-			t.Errorf("got = %v, want = %v", isUserSet, tt.want)
-		}
+			cfg, err := NewConfig(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+			isUserSet := cfg.IsUserSet()
+			if isUserSet != tt.want {
+				t.Errorf("got = %v, want = %v", isUserSet, tt.want)
+			}
+		})
 	}
 }
 
@@ -279,83 +283,85 @@ func TestGetUserName(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tmpDir := t.TempDir()
-		// .goit initialization
-		goitDir := filepath.Join(tmpDir, ".goit")
-		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, goitDir)
-		}
-		// make .goit/config file
-		// make .goit/config file
-		localConfigPath := filepath.Join(goitDir, "config")
-		f, err := os.Create(localConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, localConfigPath)
-		}
-		if tt.localContent != "" {
-			_, err := f.WriteString(tt.localContent)
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/config file
+			// make .goit/config file
+			localConfigPath := filepath.Join(goitDir, "config")
+			f, err := os.Create(localConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, localConfigPath)
 			}
-		}
-		f.Close()
-		// make global/config file
-		userHomePath, err := os.UserHomeDir()
-		if err != nil {
-			t.Logf("%v: %s", err, userHomePath)
-		}
-		globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
-		f, err = os.Create(globalConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, globalConfigPath)
-		}
-		if tt.globalContent != "" {
-			_, err := f.WriteString(tt.globalContent)
+			if tt.localContent != "" {
+				_, err := f.WriteString(tt.localContent)
+				if err != nil {
+					t.Logf("%v: %s", err, localConfigPath)
+				}
+			}
+			f.Close()
+			// make global/config file
+			userHomePath, err := os.UserHomeDir()
+			if err != nil {
+				t.Logf("%v: %s", err, userHomePath)
+			}
+			globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
+			f, err = os.Create(globalConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, globalConfigPath)
 			}
-		}
-		f.Close()
-		// make .goit/HEAD file and write main branch
-		headFile := filepath.Join(goitDir, "HEAD")
-		f, err = os.Create(headFile)
-		if err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		// set 'main' as default branch
-		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		f.Close()
-		// make .goit/objects directory
-		objectsDir := filepath.Join(goitDir, "objects")
-		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, objectsDir)
-		}
-		// make .goit/refs directory
-		refsDir := filepath.Join(goitDir, "refs")
-		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, refsDir)
-		}
-		// make .goit/refs/heads directory
-		headsDir := filepath.Join(refsDir, "heads")
-		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, headsDir)
-		}
-		// make .goit/refs/tags directory
-		tagsDir := filepath.Join(refsDir, "tags")
-		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, tagsDir)
-		}
+			if tt.globalContent != "" {
+				_, err := f.WriteString(tt.globalContent)
+				if err != nil {
+					t.Logf("%v: %s", err, globalConfigPath)
+				}
+			}
+			f.Close()
+			// make .goit/HEAD file and write main branch
+			headFile := filepath.Join(goitDir, "HEAD")
+			f, err = os.Create(headFile)
+			if err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			// set 'main' as default branch
+			if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			f.Close()
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// make .goit/refs/tags directory
+			tagsDir := filepath.Join(refsDir, "tags")
+			if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, tagsDir)
+			}
 
-		cfg, err := NewConfig(goitDir)
-		if err != nil {
-			t.Log(err)
-		}
-		userName := cfg.GetUserName()
-		if userName != tt.want {
-			t.Errorf("got = %s, want = %s", userName, tt.want)
-		}
+			cfg, err := NewConfig(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+			userName := cfg.GetUserName()
+			if userName != tt.want {
+				t.Errorf("got = %s, want = %s", userName, tt.want)
+			}
+		})
 	}
 }
 
@@ -388,82 +394,84 @@ func TestGetEmail(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tmpDir := t.TempDir()
-		// .goit initialization
-		goitDir := filepath.Join(tmpDir, ".goit")
-		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, goitDir)
-		}
-		// make .goit/config file
-		localConfigPath := filepath.Join(goitDir, "config")
-		f, err := os.Create(localConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, localConfigPath)
-		}
-		if tt.localContent != "" {
-			_, err := f.WriteString(tt.localContent)
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/config file
+			localConfigPath := filepath.Join(goitDir, "config")
+			f, err := os.Create(localConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, localConfigPath)
 			}
-		}
-		f.Close()
-		// make global/config file
-		userHomePath, err := os.UserHomeDir()
-		if err != nil {
-			t.Logf("%v: %s", err, userHomePath)
-		}
-		globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
-		f, err = os.Create(globalConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, globalConfigPath)
-		}
-		if tt.globalContent != "" {
-			_, err := f.WriteString(tt.globalContent)
+			if tt.localContent != "" {
+				_, err := f.WriteString(tt.localContent)
+				if err != nil {
+					t.Logf("%v: %s", err, localConfigPath)
+				}
+			}
+			f.Close()
+			// make global/config file
+			userHomePath, err := os.UserHomeDir()
+			if err != nil {
+				t.Logf("%v: %s", err, userHomePath)
+			}
+			globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
+			f, err = os.Create(globalConfigPath)
 			if err != nil {
 				t.Logf("%v: %s", err, globalConfigPath)
 			}
-		}
-		f.Close()
-		// make .goit/HEAD file and write main branch
-		headFile := filepath.Join(goitDir, "HEAD")
-		f, err = os.Create(headFile)
-		if err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		// set 'main' as default branch
-		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		f.Close()
-		// make .goit/objects directory
-		objectsDir := filepath.Join(goitDir, "objects")
-		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, objectsDir)
-		}
-		// make .goit/refs directory
-		refsDir := filepath.Join(goitDir, "refs")
-		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, refsDir)
-		}
-		// make .goit/refs/heads directory
-		headsDir := filepath.Join(refsDir, "heads")
-		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, headsDir)
-		}
-		// make .goit/refs/tags directory
-		tagsDir := filepath.Join(refsDir, "tags")
-		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, tagsDir)
-		}
+			if tt.globalContent != "" {
+				_, err := f.WriteString(tt.globalContent)
+				if err != nil {
+					t.Logf("%v: %s", err, globalConfigPath)
+				}
+			}
+			f.Close()
+			// make .goit/HEAD file and write main branch
+			headFile := filepath.Join(goitDir, "HEAD")
+			f, err = os.Create(headFile)
+			if err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			// set 'main' as default branch
+			if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			f.Close()
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// make .goit/refs/tags directory
+			tagsDir := filepath.Join(refsDir, "tags")
+			if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, tagsDir)
+			}
 
-		cfg, err := NewConfig(goitDir)
-		if err != nil {
-			t.Log(err)
-		}
-		email := cfg.GetEmail()
-		if email != tt.want {
-			t.Errorf("got = %s, want = %s", email, tt.want)
-		}
+			cfg, err := NewConfig(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+			email := cfg.GetEmail()
+			if email != tt.want {
+				t.Errorf("got = %s, want = %s", email, tt.want)
+			}
+		})
 	}
 }
 
@@ -534,83 +542,83 @@ func TestAdd(t *testing.T) {
 		}(),
 	}
 	for _, tt := range tests {
-		tmpDir := t.TempDir()
-		// .goit initialization
-		goitDir := filepath.Join(tmpDir, ".goit")
-		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, goitDir)
-		}
-		// make .goit/config file
-		configFile := filepath.Join(goitDir, "config")
-		f, err := os.Create(configFile)
-		if err != nil {
-			t.Logf("%v: %s", err, configFile)
-		}
-		f.Close()
-		// make .goit/HEAD file and write main branch
-		headFile := filepath.Join(goitDir, "HEAD")
-		f, err = os.Create(headFile)
-		if err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		// set 'main' as default branch
-		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		f.Close()
-		// make .goit/objects directory
-		objectsDir := filepath.Join(goitDir, "objects")
-		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, objectsDir)
-		}
-		// make .goit/refs directory
-		refsDir := filepath.Join(goitDir, "refs")
-		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, refsDir)
-		}
-		// make .goit/refs/heads directory
-		headsDir := filepath.Join(refsDir, "heads")
-		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, headsDir)
-		}
-		// make .goit/refs/tags directory
-		tagsDir := filepath.Join(refsDir, "tags")
-		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, tagsDir)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/config file
+			configFile := filepath.Join(goitDir, "config")
+			f, err := os.Create(configFile)
+			if err != nil {
+				t.Logf("%v: %s", err, configFile)
+			}
+			f.Close()
+			// make .goit/HEAD file and write main branch
+			headFile := filepath.Join(goitDir, "HEAD")
+			f, err = os.Create(headFile)
+			if err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			// set 'main' as default branch
+			if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			f.Close()
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// make .goit/refs/tags directory
+			tagsDir := filepath.Join(refsDir, "tags")
+			if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, tagsDir)
+			}
 
-		cfg, err := NewConfig(goitDir)
-		if err != nil {
-			t.Log(err)
-		}
-		if tt.localContent != nil {
-			for ident, keyValue := range tt.localContent {
-				for k, v := range keyValue {
-					cfg.Add(ident, k, v, false)
+			cfg, err := NewConfig(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+			if tt.localContent != nil {
+				for ident, keyValue := range tt.localContent {
+					for k, v := range keyValue {
+						cfg.Add(ident, k, v, false)
+					}
 				}
 			}
-		}
-		if tt.globalContent != nil {
-			for ident, keyValue := range tt.globalContent {
-				for k, v := range keyValue {
-					cfg.Add(ident, k, v, true)
+			if tt.globalContent != nil {
+				for ident, keyValue := range tt.globalContent {
+					for k, v := range keyValue {
+						cfg.Add(ident, k, v, true)
+					}
 				}
 			}
-		}
-		if !reflect.DeepEqual(cfg, tt.want) {
-			t.Errorf("got = %v, want = %v", cfg, tt.want)
-		}
+			if !reflect.DeepEqual(cfg, tt.want) {
+				t.Errorf("got = %v, want = %v", cfg, tt.want)
+			}
+		})
 	}
 }
 
 func TestWrite(t *testing.T) {
 	type test struct {
-		name          string
-		localContent  map[string]kv
-		globalContent map[string]kv
-		wantLocal     string
-		wantGlobal    string
-		wantErr       error
+		name         string
+		localContent map[string]kv
+		wantLocal    string
+		wantErr      error
 	}
 	tests := []*test{
 		func() *test {
@@ -619,145 +627,83 @@ func TestWrite(t *testing.T) {
 			localContent["user"]["name"] = "Test Taro"
 
 			return &test{
-				name:          "success: write local",
-				localContent:  localContent,
-				globalContent: nil,
-				wantLocal:     "[user]\n\tname = Test Taro\n",
-				wantGlobal:    "",
-				wantErr:       nil,
-			}
-		}(),
-		func() *test {
-			globalContent := make(map[string]kv)
-			globalContent["user"] = make(kv)
-			globalContent["user"]["name"] = "Test Taro"
-
-			return &test{
-				name:          "success: write global",
-				localContent:  nil,
-				globalContent: globalContent,
-				wantLocal:     "",
-				wantGlobal:    "[user]\n\tname = Test Taro\n",
-				wantErr:       nil,
-			}
-		}(),
-		func() *test {
-			localContent := make(map[string]kv)
-			localContent["user"] = make(kv)
-			localContent["user"]["name"] = "Test Taro"
-
-			globalContent := make(map[string]kv)
-			globalContent["user"] = make(kv)
-			globalContent["user"]["email"] = "test@example.com"
-
-			return &test{
-				name:          "success: write both local and global",
-				localContent:  localContent,
-				globalContent: globalContent,
-				wantLocal:     "[user]\n\tname = Test Taro\n",
-				wantGlobal:    "[user]\n\temail = test@example.com\n",
-				wantErr:       nil,
+				name:         "success: write local",
+				localContent: localContent,
+				wantLocal:    "[user]\n\tname = Test Taro\n",
+				wantErr:      nil,
 			}
 		}(),
 	}
 	for _, tt := range tests {
-		tmpDir := t.TempDir()
-		// .goit initialization
-		goitDir := filepath.Join(tmpDir, ".goit")
-		if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, goitDir)
-		}
-		// make .goit/config file
-		localConfigPath := filepath.Join(goitDir, "config")
-		f, err := os.Create(localConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, localConfigPath)
-		}
-		f.Close()
-		// make global/config file
-		userHomePath, err := os.UserHomeDir()
-		if err != nil {
-			t.Logf("%v: %s", err, userHomePath)
-		}
-		globalConfigPath := filepath.Join(userHomePath, ".goitconfig")
-		f, err = os.Create(globalConfigPath)
-		if err != nil {
-			t.Logf("%v: %s", err, globalConfigPath)
-		}
-		f.Close()
-		// make .goit/HEAD file and write main branch
-		headFile := filepath.Join(goitDir, "HEAD")
-		f, err = os.Create(headFile)
-		if err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		// set 'main' as default branch
-		if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
-			t.Logf("%v: %s", err, headFile)
-		}
-		f.Close()
-		// make .goit/objects directory
-		objectsDir := filepath.Join(goitDir, "objects")
-		if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, objectsDir)
-		}
-		// make .goit/refs directory
-		refsDir := filepath.Join(goitDir, "refs")
-		if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, refsDir)
-		}
-		// make .goit/refs/heads directory
-		headsDir := filepath.Join(refsDir, "heads")
-		if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, headsDir)
-		}
-		// make .goit/refs/tags directory
-		tagsDir := filepath.Join(refsDir, "tags")
-		if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
-			t.Logf("%v: %s", err, tagsDir)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/HEAD file and write main branch
+			headFile := filepath.Join(goitDir, "HEAD")
+			f, err := os.Create(headFile)
+			if err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			// set 'main' as default branch
+			if _, err := f.WriteString("ref: refs/heads/main"); err != nil {
+				t.Logf("%v: %s", err, headFile)
+			}
+			f.Close()
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// make .goit/refs/tags directory
+			tagsDir := filepath.Join(refsDir, "tags")
+			if err := os.Mkdir(tagsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, tagsDir)
+			}
 
-		cfg, err := NewConfig(goitDir)
-		if err != nil {
-			t.Log(err)
-		}
-		if tt.localContent != nil {
+			cfg, err := NewConfig(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+
+			// make .goit/config file
+			localConfigPath := filepath.Join(goitDir, "config")
+			f, err = os.Create(localConfigPath)
+			if err != nil {
+				t.Logf("%v: %s", err, localConfigPath)
+			}
+			f.Close()
 			for ident, keyValue := range tt.localContent {
 				for k, v := range keyValue {
 					cfg.Add(ident, k, v, false)
 				}
 			}
-		}
-		if tt.globalContent != nil {
-			for ident, keyValue := range tt.globalContent {
-				for k, v := range keyValue {
-					cfg.Add(ident, k, v, true)
-				}
+			err = cfg.Write(localConfigPath, false)
+			if !errors.Is(err, tt.wantErr) {
+				t.Log(err)
 			}
-		}
-		err = cfg.Write(localConfigPath, globalConfigPath)
-		if !errors.Is(err, tt.wantErr) {
-			t.Log(err)
-		}
-
-		// local content check
-		localContentBytes, err := os.ReadFile(localConfigPath)
-		if err != nil {
-			t.Log(err)
-		}
-		localContent := string(localContentBytes)
-		if localContent != tt.wantLocal {
-			t.Errorf("got = %s, want = %s", localContent, tt.wantLocal)
-		}
-
-		// global content check
-		globalContentBytes, err := os.ReadFile(globalConfigPath)
-		if err != nil {
-			t.Log(err)
-		}
-		globalContent := string(globalContentBytes)
-		if globalContent != tt.wantGlobal {
-			t.Errorf("got = %s, want = %s", globalContent, tt.wantGlobal)
-		}
+			// local content check
+			localContentBytes, err := os.ReadFile(localConfigPath)
+			if err != nil {
+				t.Log(err)
+			}
+			localContent := string(localContentBytes)
+			if localContent != tt.wantLocal {
+				t.Errorf("got = %s, want = %s", localContent, tt.wantLocal)
+			}
+		})
 	}
 }
