@@ -69,7 +69,13 @@ var configCmd = &cobra.Command{
 		client.Conf.Add(identifier, key, value, isGlobal)
 
 		// write to config
-		if err := client.Conf.Write(localConfigPath, globalConfigPath); err != nil {
+		var configPath string
+		if isGlobal {
+			configPath = globalConfigPath
+		} else {
+			configPath = localConfigPath
+		}
+		if err := client.Conf.Write(configPath, isGlobal); err != nil {
 			return fmt.Errorf("fail to write config: %w", err)
 		}
 
