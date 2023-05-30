@@ -10,7 +10,7 @@
 # Goit - Git made by Golang
 
 ## 📖 Overview
-Goit is version control tool just like Git made by Golang.
+Goit is a version control tool just like Git made by Golang.
 
 ## 💻 Installation
 ### Homebrew Tap
@@ -28,6 +28,7 @@ go install github.com/JunNishimura/Goit@latest
 - [x] `init` - initialize Goit, make .goit directory where you init
 - [x] `add` - make goit object and register to index
 - [x] `commit` - make commit object
+- [x] `restore` (**NEW FEATURE🎉**) - restore files
 - [x] `log` - show commit history
 - [x] `config` - set config. e.x.) name, email
 - [x] `cat-file` - show goit object data
@@ -47,7 +48,6 @@ go install github.com/JunNishimura/Goit@latest
 - [ ] stash
 - [ ] reset
 - [ ] revert
-- [ ] restore
 - [ ] diff
 - [ ] read-tree
 - [ ] symbolic-ref
