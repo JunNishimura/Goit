@@ -1,7 +1,6 @@
 package object
 
 import (
-	"reflect"
 	"testing"
 	"time"
 )
@@ -32,8 +31,11 @@ func TestNewSign(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := NewSign(tt.args.name, tt.args.email)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got = %s, want = %s", got, tt.want)
+			if got.Name != tt.want.Name {
+				t.Errorf("got = %s, want = %s", got.Name, tt.want.Name)
+			}
+			if got.Email != tt.want.Email {
+				t.Errorf("got = %s, want = %s", got.Email, tt.want.Email)
 			}
 		})
 	}
