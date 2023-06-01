@@ -13,7 +13,7 @@ builds:
       - linux
       - windows
       - darwin
-    flags: -s -w -X main.version={{.Version}}
+    flags: -X main.version={{.Version}}
 
 archives:
   - format: tar.gz
