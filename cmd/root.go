@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	client *store.Client
+	client      *store.Client
+	goitVersion = ""
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -21,9 +22,22 @@ var rootCmd = &cobra.Command{
 	Use:   "goit",
 	Short: "Git made by Golang",
 	Long:  "This is a Git-like CLI tool made by Golang",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		versionFlag, err := cmd.Flags().GetBool("version")
+		if err != nil {
+			return fmt.Errorf("fail to get version flag: %w", err)
+		}
+
+		if versionFlag {
+			fmt.Println(goitVersion)
+		}
+
+		return nil
+	},
 }
 
-func Execute() {
+func Execute(version string) {
+	goitVersion = version
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -51,4 +65,5 @@ func init() {
 	client = store.NewClient(config, index, head, rootGoitPath)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().BoolP("version", "v", false, "Show Goit version")
 }

@@ -5,6 +5,8 @@ package main
 
 import "github.com/JunNishimura/Goit/cmd"
 
+var version = ""
+
 func main() {
-	cmd.Execute()
+	cmd.Execute(version)
 }
