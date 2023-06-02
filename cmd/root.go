@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/JunNishimura/Goit/internal/file"
 	"github.com/JunNishimura/Goit/internal/store"
@@ -37,7 +38,15 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute(version string) {
-	goitVersion = version
+	// set version
+	if version == "" {
+		if buildInfo, ok := debug.ReadBuildInfo(); ok {
+			goitVersion = buildInfo.Main.Version
+		}
+	} else {
+		goitVersion = version
+	}
+
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -45,7 +54,6 @@ func Execute(version string) {
 }
 
 func init() {
-	// get client
 	rootGoitPath, _ := file.FindGoitRoot(".") // ignore the error since the error is not important
 	config, err := store.NewConfig(rootGoitPath)
 	if err != nil {
