@@ -37,6 +37,7 @@ go install github.com/JunNishimura/Goit@latest
 - [x] `rev-parse` - show hash of reference such as branch, HEAD
 - [x] `update-ref` - update reference
 - [x] `write-tree` - write tree object
+- [x] `version` - show version of Goit
 
 ### Future
 - [ ] tag
