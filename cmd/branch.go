@@ -26,11 +26,16 @@ var branchCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// get list flag
 		isList, err := cmd.Flags().GetBool("list")
 		if err != nil {
 			return fmt.Errorf("fail to get list flag: %w", err)
 		}
-		fmt.Println(isList)
+
+		// flag validation
+		if !((isList && renameOption == "" && deleteOption == "") || (!isList && renameOption != "" && deleteOption == "") || (!isList && renameOption == "" && deleteOption != "")) {
+			return fmt.Errorf("only one flag is acceptible")
+		}
 
 		return nil
 	},
