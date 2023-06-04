@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -35,6 +36,17 @@ var branchCmd = &cobra.Command{
 		// flag validation
 		if !((isList && renameOption == "" && deleteOption == "") || (!isList && renameOption != "" && deleteOption == "") || (!isList && renameOption == "" && deleteOption != "")) {
 			return fmt.Errorf("only one flag is acceptible")
+		}
+
+		// list branches
+		if isList {
+			for _, branch := range client.Refs.Heads {
+				if branch.Name == client.Head.Reference {
+					color.Green("* %s", branch.Name)
+				} else {
+					fmt.Println(branch.Name)
+				}
+			}
 		}
 
 		return nil
