@@ -52,6 +52,8 @@ go install github.com/JunNishimura/Goit@latest
 - [ ] diff
 - [ ] read-tree
 - [ ] symbolic-ref
+- [ ] cherry-pick
+- [ ] rebase
 
 ## 👀 How to use
 ### 0. Install Goit
