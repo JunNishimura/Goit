@@ -69,7 +69,7 @@ func NewHead(rootGoitPath string) (*Head, error) {
 		if _, err := os.Stat(branchPath); os.IsNotExist(err) {
 			return head, nil
 		}
-		commit, err := getHeadCommit(rootGoitPath, branch)
+		commit, err := getHeadCommit(branch, rootGoitPath)
 		if err != nil {
 			return nil, ErrInvalidHead
 		}
