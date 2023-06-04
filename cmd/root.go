@@ -70,7 +70,12 @@ func init() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	client = store.NewClient(config, index, head, rootGoitPath)
+	r, err := store.NewRefs(rootGoitPath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	client = store.NewClient(config, index, head, r, rootGoitPath)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.Flags().BoolP("version", "v", false, "Show Goit version")
