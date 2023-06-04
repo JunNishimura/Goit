@@ -112,19 +112,13 @@ var restoreCmd = &cobra.Command{
 		if isStaged {
 			// restore --stage is comparing index with commit object pointed by HEAD
 			// so, at lease one commit is needed
-			branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
+			branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", client.Head.Reference)
 			if _, err := os.Stat(branchPath); os.IsNotExist(err) {
 				return errors.New("fatal: could not resolve HEAD")
 			}
 
-			// get HEAD commit
-			headCommit, err := getHeadCommit()
-			if err != nil {
-				return fmt.Errorf("fail to get HEAD commit: %w", err)
-			}
-
 			// get tree from HEAD commit
-			treeObject, err := object.GetObject(client.RootGoitPath, headCommit.Tree)
+			treeObject, err := object.GetObject(client.RootGoitPath, client.Head.Commit.Tree)
 			if err != nil {
 				return fmt.Errorf("fail to get tree object from commit HEAD: %w", err)
 			}

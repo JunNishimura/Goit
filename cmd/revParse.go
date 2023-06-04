@@ -16,7 +16,7 @@ func revParse(refNames ...string) error {
 	for _, refName := range refNames {
 		var refPath string
 		if strings.ToLower(refName) == "head" {
-			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
+			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", client.Head.Reference)
 		} else {
 			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", refName)
 		}

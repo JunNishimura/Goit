@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -12,27 +13,33 @@ func TestNewHead(t *testing.T) {
 		name      string
 		content   string
 		isCreated bool
-		want      Head
+		want      *Head
 		wantErr   error
 	}{
 		{
 			name:      "success",
 			content:   "ref: refs/heads/main",
 			isCreated: true,
-			want:      "main",
-			wantErr:   nil,
+			want: &Head{
+				Reference: "main",
+				Commit:    nil,
+			},
+			wantErr: nil,
 		}, {
 			name:      "invalid HEAD format",
 			content:   "ref: ***",
 			isCreated: true,
-			want:      "",
+			want:      nil,
 			wantErr:   ErrInvalidHead,
 		}, {
 			name:      "no HEAD file",
 			content:   "ref: refs/heads/main",
 			isCreated: false,
-			want:      "",
-			wantErr:   nil,
+			want: &Head{
+				Reference: "",
+				Commit:    nil,
+			},
+			wantErr: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -88,8 +95,8 @@ func TestNewHead(t *testing.T) {
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("got = %v, want = %v", err, tt.wantErr)
 			}
-			if head != tt.want {
-				t.Errorf("got = %s, want = %s", head, tt.want)
+			if !reflect.DeepEqual(head, tt.want) {
+				t.Errorf("got = %v, want = %v", head, tt.want)
 			}
 		})
 	}
