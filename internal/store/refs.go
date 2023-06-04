@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -12,6 +13,23 @@ type branch struct {
 	hash sha.SHA1
 }
 
+func newBranch(rootGoitPath, branchName string) (*branch, error) {
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", branchName)
+	hashByte, err := os.ReadFile(branchPath)
+	if err != nil {
+		return nil, err
+	}
+	hashString := string(hashByte)
+	hash, err := sha.ReadHash(hashString)
+	if err != nil {
+		return nil, err
+	}
+	return &branch{
+		Name: branchName,
+		hash: hash,
+	}, nil
+}
+
 type Refs struct {
 	Heads []*branch
 }
@@ -19,6 +37,9 @@ type Refs struct {
 func NewRefs(rootGoitPath string) (*Refs, error) {
 	r := newRefs()
 	headsPath := filepath.Join(rootGoitPath, "refs", "heads")
+	if _, err := os.Stat(headsPath); os.IsNotExist(err) {
+		return r, nil
+	}
 	files, err := os.ReadDir(headsPath)
 	if err != nil {
 		return nil, err
@@ -39,19 +60,11 @@ func newRefs() *Refs {
 	}
 }
 
-func newBranch(rootGoitPath, branchName string) (*branch, error) {
-	branchPath := filepath.Join(rootGoitPath, "refs", "heads", branchName)
-	hashByte, err := os.ReadFile(branchPath)
-	if err != nil {
-		return nil, err
+func (r *Refs) GetBranch(name string) (*branch, error) {
+	for _, b := range r.Heads {
+		if b.Name == name {
+			return b, nil
+		}
 	}
-	hashString := string(hashByte)
-	hash, err := sha.ReadHash(hashString)
-	if err != nil {
-		return nil, err
-	}
-	return &branch{
-		Name: branchName,
-		hash: hash,
-	}, nil
+	return nil, fmt.Errorf("fail to find '%s' branch", name)
 }
