@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 
 	"github.com/JunNishimura/Goit/internal/object"
-	"github.com/JunNishimura/Goit/internal/sha"
 	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -150,29 +149,6 @@ func isCommitNecessary(commitObj *object.Commit) (bool, error) {
 	return isDiff, nil
 }
 
-// get HEAD commit
-func getHeadCommit() (*object.Commit, error) {
-	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", string(client.Head))
-	hashBytes, err := os.ReadFile(branchPath)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrIOHandling, branchPath)
-	}
-	hashString := string(hashBytes)
-	hash, err := sha.ReadHash(hashString)
-	if err != nil {
-		return nil, fmt.Errorf("fail to decode hash string: %w", err)
-	}
-	commitObject, err := object.GetObject(client.RootGoitPath, hash)
-	if err != nil {
-		return nil, fmt.Errorf("fail to get last commit object: %w", err)
-	}
-	commit, err := object.NewCommit(commitObject)
-	if err != nil {
-		return nil, fmt.Errorf("fail to get last commit: %w", err)
-	}
-	return commit, nil
-}
-
 // commitCmd represents the commit command
 var commitCmd = &cobra.Command{
 	Use:   "commit",
@@ -211,13 +187,8 @@ var commitCmd = &cobra.Command{
 				return fmt.Errorf("fail to delete untracked files: %w", err)
 			}
 
-			headCommit, err := getHeadCommit()
-			if err != nil {
-				return fmt.Errorf("fail to get HEAD commit: %w", err)
-			}
-
 			// compare last commit with index
-			isCommitNecessary, err := isCommitNecessary(headCommit)
+			isCommitNecessary, err := isCommitNecessary(client.Head.Commit)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %w", err)
 			}
