@@ -1,6 +1,5 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
@@ -10,31 +9,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	renameOption string = ""
+	deleteOption string = ""
+)
+
 // branchCmd represents the branch command
 var branchCmd = &cobra.Command{
 	Use:   "branch",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "handle with branch operation",
+	Long:  "handle with branch operation",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		isList, err := cmd.Flags().GetBool("list")
+		if err != nil {
+			return fmt.Errorf("fail to get list flag: %w", err)
+		}
+		fmt.Println(isList)
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("branch called")
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(branchCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// branchCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// branchCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	branchCmd.Flags().BoolP("list", "l", false, "show list of branches")
+	branchCmd.Flags().StringVarP(&renameOption, "rename", "r", "", "rename branch")
+	branchCmd.Flags().StringVarP(&deleteOption, "delete", "d", "", "delete branch")
 }
