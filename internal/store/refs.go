@@ -68,3 +68,29 @@ func (r *Refs) GetBranch(name string) (*branch, error) {
 	}
 	return nil, fmt.Errorf("fail to find '%s' branch", name)
 }
+
+func getBranchPos(branches []*branch, name string) (int, bool) {
+	for n, branch := range branches {
+		if branch.Name == name {
+			return n, true
+		}
+	}
+	return -1, false
+}
+
+func (r *Refs) DeleteBranch(rootGoitPath, name string) error {
+	// delete branch from Refs
+	p, isBranchFound := getBranchPos(r.Heads, name)
+	if !isBranchFound {
+		return fmt.Errorf("branch '%s' not found", name)
+	}
+	r.Heads = append(r.Heads[:p], r.Heads[p+1:]...)
+
+	// delete branch file
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", name)
+	if err := os.Remove(branchPath); err != nil {
+		return err
+	}
+
+	return nil
+}

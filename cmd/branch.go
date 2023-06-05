@@ -58,6 +58,29 @@ func rename(client *store.Client, newName string) error {
 	return nil
 }
 
+func delete(client *store.Client, branchName string) error {
+	// branch validation
+	if branchName == client.Head.Reference {
+		return fmt.Errorf("error: cannot delete current branch '%s'", client.Head.Reference)
+	}
+	isBranchFound := false
+	for _, branch := range client.Refs.Heads {
+		if branch.Name == branchName {
+			isBranchFound = true
+		}
+	}
+	if !isBranchFound {
+		return fmt.Errorf("error: branch '%s' not found", branchName)
+	}
+
+	// delete branch
+	if err := client.Refs.DeleteBranch(client.RootGoitPath, branchName); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // branchCmd represents the branch command
 var branchCmd = &cobra.Command{
 	Use:   "branch",
@@ -89,6 +112,12 @@ var branchCmd = &cobra.Command{
 		// rename current branch
 		if renameOption != "" {
 			if err := rename(client, renameOption); err != nil {
+				return err
+			}
+		}
+
+		if deleteOption != "" {
+			if err := delete(client, deleteOption); err != nil {
 				return err
 			}
 		}
