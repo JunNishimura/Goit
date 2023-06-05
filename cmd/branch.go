@@ -18,7 +18,7 @@ var (
 	deleteOption string = ""
 )
 
-func list(client *store.Client) {
+func listBranch(client *store.Client) {
 	for _, branch := range client.Refs.Heads {
 		if branch.Name == client.Head.Reference {
 			color.Green("* %s", branch.Name)
@@ -28,7 +28,7 @@ func list(client *store.Client) {
 	}
 }
 
-func rename(client *store.Client, newName string) error {
+func renameBranch(client *store.Client, newName string) error {
 	// check if new name is not used for other branches
 	for _, branch := range client.Refs.Heads {
 		if branch.Name == newName {
@@ -58,7 +58,7 @@ func rename(client *store.Client, newName string) error {
 	return nil
 }
 
-func delete(client *store.Client, branchName string) error {
+func deleteBranch(client *store.Client, branchName string) error {
 	// branch validation
 	if branchName == client.Head.Reference {
 		return fmt.Errorf("error: cannot delete current branch '%s'", client.Head.Reference)
@@ -106,18 +106,18 @@ var branchCmd = &cobra.Command{
 
 		// list branches
 		if isList {
-			list(client)
+			listBranch(client)
 		}
 
 		// rename current branch
 		if renameOption != "" {
-			if err := rename(client, renameOption); err != nil {
+			if err := renameBranch(client, renameOption); err != nil {
 				return err
 			}
 		}
 
 		if deleteOption != "" {
-			if err := delete(client, deleteOption); err != nil {
+			if err := deleteBranch(client, deleteOption); err != nil {
 				return err
 			}
 		}
