@@ -109,14 +109,14 @@ func TestNewRefs(t *testing.T) {
 		hash sha.SHA1
 	}
 	tests := []struct {
-		name       string
-		filedsList []*fields
-		want       *Refs
-		wantErr    error
+		name    string
+		fields  []*fields
+		want    *Refs
+		wantErr error
 	}{
 		{
-			name:       "success: no heads",
-			filedsList: nil,
+			name:   "success: no heads",
+			fields: nil,
 			want: &Refs{
 				Heads: make([]*branch, 0),
 			},
@@ -124,7 +124,7 @@ func TestNewRefs(t *testing.T) {
 		},
 		{
 			name: "success: some heads",
-			filedsList: []*fields{
+			fields: []*fields{
 				{
 					name: "main",
 					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
@@ -166,7 +166,7 @@ func TestNewRefs(t *testing.T) {
 			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
 				t.Logf("%v: %s", err, headsDir)
 			}
-			for _, field := range tt.filedsList {
+			for _, field := range tt.fields {
 				// make main branch
 				branchPath := filepath.Join(headsDir, field.name)
 				f, err := os.Create(branchPath)
@@ -290,6 +290,98 @@ func TestAddBranch(t *testing.T) {
 			}
 			if !reflect.DeepEqual(r, tt.want) {
 				t.Errorf("got = %v, want = %v", r, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetBranchPos(t *testing.T) {
+	type args struct {
+		branchName string
+	}
+	type fields struct {
+		name string
+		hash sha.SHA1
+	}
+	tests := []struct {
+		name       string
+		args       args
+		fieldsList []*fields
+		want       int
+	}{
+		{
+			name: "found existing branch",
+			args: args{
+				branchName: "main",
+			},
+			fieldsList: []*fields{
+				{
+					name: "main",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+				{
+					name: "test",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+			},
+			want: 0,
+		},
+		{
+			name: "not found",
+			args: args{
+				branchName: "xxxx",
+			},
+			fieldsList: []*fields{
+				{
+					name: "main",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+				{
+					name: "test",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+			},
+			want: NewBranchFlag,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			for _, field := range tt.fieldsList {
+				// make main branch
+				branchPath := filepath.Join(headsDir, field.name)
+				f, err := os.Create(branchPath)
+				if err != nil {
+					t.Logf("%v: %s", err, branchPath)
+				}
+				if _, err := f.WriteString(field.hash.String()); err != nil {
+					t.Log(err)
+				}
+				f.Close()
+			}
+
+			r, err := NewRefs(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+			got := r.getBranchPos(tt.args.branchName)
+			if got != tt.want {
+				t.Errorf("got = %d, want = %d", got, tt.want)
 			}
 		})
 	}
