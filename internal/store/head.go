@@ -84,3 +84,34 @@ func NewHead(rootGoitPath string) (*Head, error) {
 func newHead() *Head {
 	return &Head{}
 }
+
+func (h *Head) Update(rootGoitPath, newRef string) error {
+	headPath := filepath.Join(rootGoitPath, "HEAD")
+	if _, err := os.Stat(headPath); os.IsNotExist(err) {
+		return errors.New("fail to find HEAD, cannot update")
+	}
+	f, err := os.Create(headPath)
+	if err != nil {
+		return fmt.Errorf("fail to create HEAD: %w", err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(fmt.Sprintf("ref: refs/heads/%s", newRef)); err != nil {
+		return fmt.Errorf("fail to write HEAD: %w", err)
+	}
+
+	h.Reference = newRef
+
+	// get commit from branch
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", newRef)
+	if _, err := os.Stat(branchPath); os.IsNotExist(err) {
+		return fmt.Errorf("fail to find branch %s: %w", newRef, err)
+	}
+	commit, err := getHeadCommit(newRef, rootGoitPath)
+	if err != nil {
+		return ErrInvalidHead
+	}
+	h.Commit = commit
+
+	return nil
+}
