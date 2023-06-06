@@ -63,6 +63,7 @@ func NewRefs(rootGoitPath string) (*Refs, error) {
 		}
 		r.Heads = append(r.Heads, b)
 	}
+	sort.Slice(r.Heads, func(i, j int) bool { return r.Heads[i].Name < r.Heads[j].Name })
 	return r, nil
 }
 
