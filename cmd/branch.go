@@ -109,11 +109,10 @@ var branchCmd = &cobra.Command{
 
 		// add branch
 		if len(args) == 1 {
-			// check if
 			addBranchName := args[0]
 			addBranchHash := client.Head.Commit.Hash
 
-			if err := client.Refs.AddBranch(addBranchName, addBranchHash); err != nil {
+			if err := client.Refs.AddBranch(client.RootGoitPath, addBranchName, addBranchHash); err != nil {
 				return fmt.Errorf("fail to add branch '%s': %w", addBranchName, err)
 			}
 		}

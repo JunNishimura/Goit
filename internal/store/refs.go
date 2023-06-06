@@ -80,7 +80,7 @@ func (r *Refs) GetBranch(name string) (*branch, error) {
 	return nil, fmt.Errorf("fail to find '%s' branch", name)
 }
 
-func (r *Refs) AddBranch(newBranchName string, newBranchHash sha.SHA1) error {
+func (r *Refs) AddBranch(rootGoitPath, newBranchName string, newBranchHash sha.SHA1) error {
 	// check if branch already exists
 	n := r.getBranchPos(newBranchName)
 	if n != NewBranchFlag {
@@ -89,6 +89,17 @@ func (r *Refs) AddBranch(newBranchName string, newBranchHash sha.SHA1) error {
 
 	b := newBranch(newBranchName, newBranchHash)
 	r.Heads = append(r.Heads, b)
+
+	// write file
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", newBranchName)
+	f, err := os.Create(branchPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err := f.WriteString(newBranchHash.String()); err != nil {
+		return err
+	}
 
 	// sort heads
 	sort.Slice(r.Heads, func(i, j int) bool { return r.Heads[i].Name < r.Heads[j].Name })
