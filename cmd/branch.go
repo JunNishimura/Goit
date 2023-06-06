@@ -99,9 +99,23 @@ var branchCmd = &cobra.Command{
 			return fmt.Errorf("fail to get list flag: %w", err)
 		}
 
-		// flag validation
-		if !((isList && renameOption == "" && deleteOption == "") || (!isList && renameOption != "" && deleteOption == "") || (!isList && renameOption == "" && deleteOption != "")) {
-			return fmt.Errorf("only one flag is acceptible")
+		// parameter validation
+		if !((len(args) == 1 && !isList && renameOption == "" && deleteOption == "") ||
+			(len(args) == 0 && isList && renameOption == "" && deleteOption == "") ||
+			(len(args) == 0 && !isList && renameOption != "" && deleteOption == "") ||
+			(len(args) == 0 && !isList && renameOption == "" && deleteOption != "")) {
+			return fmt.Errorf("parameters are not valid")
+		}
+
+		// add branch
+		if len(args) == 1 {
+			// check if
+			addBranchName := args[0]
+			addBranchHash := client.Head.Commit.Hash
+
+			if err := client.Refs.AddBranch(addBranchName, addBranchHash); err != nil {
+				return fmt.Errorf("fail to add branch '%s': %w", addBranchName, err)
+			}
 		}
 
 		// list branches

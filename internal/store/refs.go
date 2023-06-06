@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/JunNishimura/Goit/internal/sha"
+)
+
+const (
+	NewBranchFlag = -1
 )
 
 type branch struct {
@@ -13,21 +18,27 @@ type branch struct {
 	hash sha.SHA1
 }
 
-func newBranch(rootGoitPath, branchName string) (*branch, error) {
-	branchPath := filepath.Join(rootGoitPath, "refs", "heads", branchName)
+func newBranch(name string, hash sha.SHA1) *branch {
+	return &branch{
+		Name: name,
+		hash: hash,
+	}
+}
+
+func (b *branch) loadHash(rootGoitPath string) error {
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", b.Name)
 	hashByte, err := os.ReadFile(branchPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	hashString := string(hashByte)
 	hash, err := sha.ReadHash(hashString)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &branch{
-		Name: branchName,
-		hash: hash,
-	}, nil
+	b.hash = hash
+
+	return nil
 }
 
 type Refs struct {
@@ -45,8 +56,8 @@ func NewRefs(rootGoitPath string) (*Refs, error) {
 		return nil, err
 	}
 	for _, file := range files {
-		b, err := newBranch(rootGoitPath, file.Name())
-		if err != nil {
+		b := newBranch(file.Name(), nil)
+		if err := b.loadHash(rootGoitPath); err != nil {
 			return nil, err
 		}
 		r.Heads = append(r.Heads, b)
@@ -69,19 +80,37 @@ func (r *Refs) GetBranch(name string) (*branch, error) {
 	return nil, fmt.Errorf("fail to find '%s' branch", name)
 }
 
-func getBranchPos(branches []*branch, name string) (int, bool) {
-	for n, branch := range branches {
-		if branch.Name == name {
-			return n, true
+func (r *Refs) AddBranch(newBranchName string, newBranchHash sha.SHA1) error {
+	// check if branch already exists
+	n := r.getBranchPos(newBranchName)
+	if n != NewBranchFlag {
+		return fmt.Errorf("fatal: a branch named '%s' already exists", newBranchName)
+	}
+
+	b := newBranch(newBranchName, newBranchHash)
+	r.Heads = append(r.Heads, b)
+
+	// sort heads
+	sort.Slice(r.Heads, func(i, j int) bool { return r.Heads[i].Name < r.Heads[j].Name })
+
+	return nil
+}
+
+// return the index of branch in the Refs Heads.
+// if not found, return NewBranchFlag which is -1.
+func (r *Refs) getBranchPos(branchName string) int {
+	for n, branch := range r.Heads {
+		if branch.Name == branchName {
+			return n
 		}
 	}
-	return -1, false
+	return NewBranchFlag
 }
 
 func (r *Refs) DeleteBranch(rootGoitPath, name string) error {
 	// delete branch from Refs
-	p, isBranchFound := getBranchPos(r.Heads, name)
-	if !isBranchFound {
+	p := r.getBranchPos(name)
+	if p == NewBranchFlag {
 		return fmt.Errorf("branch '%s' not found", name)
 	}
 	r.Heads = append(r.Heads[:p], r.Heads[p+1:]...)
