@@ -119,7 +119,7 @@ func (r *Refs) RenameBranch(head *Head, rootGoitPath, newBranchName string) erro
 
 	// get current branch
 	curNum := r.getBranchPos(head.Reference)
-	if n == NewBranchFlag {
+	if curNum == NewBranchFlag {
 		return fmt.Errorf("head branch '%s' does not exist", head.Reference)
 	}
 
