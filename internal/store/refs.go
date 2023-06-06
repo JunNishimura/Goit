@@ -73,15 +73,6 @@ func newRefs() *Refs {
 	}
 }
 
-func (r *Refs) GetBranch(name string) (*branch, error) {
-	for _, b := range r.Heads {
-		if b.Name == name {
-			return b, nil
-		}
-	}
-	return nil, fmt.Errorf("fail to find '%s' branch", name)
-}
-
 func (r *Refs) ListBranches(headBranchName string) {
 	for _, b := range r.Heads {
 		if b.Name == headBranchName {
@@ -119,14 +110,61 @@ func (r *Refs) AddBranch(rootGoitPath, newBranchName string, newBranchHash sha.S
 	return nil
 }
 
+func (r *Refs) RenameBranch(head *Head, rootGoitPath, newBranchName string) error {
+	// check if new branch name is not used for other branches
+	n := r.getBranchPos(newBranchName)
+	if n != NewBranchFlag {
+		return fmt.Errorf("fatal: branch named '%s' already exists", newBranchName)
+	}
+
+	// get current branch
+	curNum := r.getBranchPos(head.Reference)
+	if n == NewBranchFlag {
+		return fmt.Errorf("head branch '%s' does not exist", head.Reference)
+	}
+
+	// rename branch
+	r.Heads[curNum].Name = newBranchName
+
+	// rename file
+	oldPath := filepath.Join(rootGoitPath, "refs", "heads", head.Reference)
+	newPath := filepath.Join(rootGoitPath, "refs", "heads", newBranchName)
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return fmt.Errorf("fail to rename file: %w", err)
+	}
+
+	// update HEAD
+	if err := head.Update(rootGoitPath, newBranchName); err != nil {
+		return fmt.Errorf("fail to update HEAD: %w", err)
+	}
+
+	return nil
+}
+
 // return the index of branch in the Refs Heads.
 // if not found, return NewBranchFlag which is -1.
 func (r *Refs) getBranchPos(branchName string) int {
-	for n, branch := range r.Heads {
-		if branch.Name == branchName {
-			return n
+	// binary search
+	left := 0
+	right := len(r.Heads)
+	for {
+		middle := (left + right) / 2
+		b := r.Heads[middle]
+		if b.Name == branchName {
+			return middle
+		}
+		if b.Name < branchName {
+			left = middle + 1
+		}
+		if b.Name > branchName {
+			right = middle
+		}
+
+		if right-left < 1 {
+			break
 		}
 	}
+
 	return NewBranchFlag
 }
 
