@@ -102,3 +102,90 @@ func TestLoadHash(t *testing.T) {
 		})
 	}
 }
+
+func TestNewRefs(t *testing.T) {
+	type fields struct {
+		name string
+		hash sha.SHA1
+	}
+	tests := []struct {
+		name       string
+		filedsList []*fields
+		want       *Refs
+		wantErr    error
+	}{
+		{
+			name:       "success: no heads",
+			filedsList: nil,
+			want: &Refs{
+				Heads: make([]*branch, 0),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success: some heads",
+			filedsList: []*fields{
+				{
+					name: "main",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+				{
+					name: "test",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+			},
+			want: &Refs{
+				Heads: []*branch{
+					{
+						Name: "main",
+						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+					},
+					{
+						Name: "test",
+						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			for _, field := range tt.filedsList {
+				// make main branch
+				branchPath := filepath.Join(headsDir, field.name)
+				f, err := os.Create(branchPath)
+				if err != nil {
+					t.Logf("%v: %s", err, branchPath)
+				}
+				if _, err := f.WriteString(field.hash.String()); err != nil {
+					t.Log(err)
+				}
+				f.Close()
+			}
+
+			got, err := NewRefs(goitDir)
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got = %v, want = %v", got, tt.want)
+			}
+		})
+	}
+}
