@@ -168,18 +168,23 @@ func (r *Refs) getBranchPos(branchName string) int {
 	return NewBranchFlag
 }
 
-func (r *Refs) DeleteBranch(rootGoitPath, name string) error {
-	// delete branch from Refs
-	p := r.getBranchPos(name)
-	if p == NewBranchFlag {
-		return fmt.Errorf("branch '%s' not found", name)
+func (r *Refs) DeleteBranch(rootGoitPath, headBranchName, deleteBranchName string) error {
+	// branch validation
+	if deleteBranchName == headBranchName {
+		return fmt.Errorf("error: cannot delete current branch '%s'", headBranchName)
 	}
-	r.Heads = append(r.Heads[:p], r.Heads[p+1:]...)
+	n := r.getBranchPos(deleteBranchName)
+	if n == NewBranchFlag {
+		return fmt.Errorf("error: branch '%s' not found", deleteBranchName)
+	}
+
+	// delete from refs
+	r.Heads = append(r.Heads[:n], r.Heads[n+1:]...)
 
 	// delete branch file
-	branchPath := filepath.Join(rootGoitPath, "refs", "heads", name)
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", deleteBranchName)
 	if err := os.Remove(branchPath); err != nil {
-		return err
+		return fmt.Errorf("fail to delete branch file: %w", err)
 	}
 
 	return nil

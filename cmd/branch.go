@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
 
@@ -14,29 +13,6 @@ var (
 	renameOption string = ""
 	deleteOption string = ""
 )
-
-func deleteBranch(client *store.Client, branchName string) error {
-	// branch validation
-	if branchName == client.Head.Reference {
-		return fmt.Errorf("error: cannot delete current branch '%s'", client.Head.Reference)
-	}
-	isBranchFound := false
-	for _, branch := range client.Refs.Heads {
-		if branch.Name == branchName {
-			isBranchFound = true
-		}
-	}
-	if !isBranchFound {
-		return fmt.Errorf("error: branch '%s' not found", branchName)
-	}
-
-	// delete branch
-	if err := client.Refs.DeleteBranch(client.RootGoitPath, branchName); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 // branchCmd represents the branch command
 var branchCmd = &cobra.Command{
@@ -82,13 +58,13 @@ var branchCmd = &cobra.Command{
 		// rename current branch
 		if renameOption != "" {
 			if err := client.Refs.RenameBranch(client.Head, client.RootGoitPath, renameOption); err != nil {
-				return err
+				return fmt.Errorf("fail to rename branch: %w", err)
 			}
 		}
 
 		if deleteOption != "" {
-			if err := deleteBranch(client, deleteOption); err != nil {
-				return err
+			if err := client.Refs.DeleteBranch(client.RootGoitPath, client.Head.Reference, deleteOption); err != nil {
+				return fmt.Errorf("fail to delete branch: %w", err)
 			}
 		}
 
