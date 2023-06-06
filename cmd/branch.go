@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/JunNishimura/Goit/internal/store"
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -17,16 +16,6 @@ var (
 	renameOption string = ""
 	deleteOption string = ""
 )
-
-func listBranch(client *store.Client) {
-	for _, branch := range client.Refs.Heads {
-		if branch.Name == client.Head.Reference {
-			color.Green("* %s", branch.Name)
-		} else {
-			fmt.Println(branch.Name)
-		}
-	}
-}
 
 func renameBranch(client *store.Client, newName string) error {
 	// check if new name is not used for other branches
@@ -119,7 +108,7 @@ var branchCmd = &cobra.Command{
 
 		// list branches
 		if isList {
-			listBranch(client)
+			client.Refs.ListBranches(client.Head.Reference)
 		}
 
 		// rename current branch

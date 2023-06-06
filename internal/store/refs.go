@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/JunNishimura/Goit/internal/sha"
+	"github.com/fatih/color"
 )
 
 const (
@@ -78,6 +79,16 @@ func (r *Refs) GetBranch(name string) (*branch, error) {
 		}
 	}
 	return nil, fmt.Errorf("fail to find '%s' branch", name)
+}
+
+func (r *Refs) ListBranches(headBranchName string) {
+	for _, b := range r.Heads {
+		if b.Name == headBranchName {
+			color.Green("* %s", b.Name)
+		} else {
+			fmt.Println(b.Name)
+		}
+	}
 }
 
 func (r *Refs) AddBranch(rootGoitPath, newBranchName string, newBranchHash sha.SHA1) error {
