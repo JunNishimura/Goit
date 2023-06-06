@@ -87,7 +87,7 @@ func (r *Refs) AddBranch(rootGoitPath, newBranchName string, newBranchHash sha.S
 	// check if branch already exists
 	n := r.getBranchPos(newBranchName)
 	if n != NewBranchFlag {
-		return fmt.Errorf("fatal: a branch named '%s' already exists", newBranchName)
+		return fmt.Errorf("a branch named '%s' already exists", newBranchName)
 	}
 
 	b := newBranch(newBranchName, newBranchHash)
@@ -114,7 +114,7 @@ func (r *Refs) RenameBranch(head *Head, rootGoitPath, newBranchName string) erro
 	// check if new branch name is not used for other branches
 	n := r.getBranchPos(newBranchName)
 	if n != NewBranchFlag {
-		return fmt.Errorf("fatal: branch named '%s' already exists", newBranchName)
+		return fmt.Errorf("branch named '%s' already exists", newBranchName)
 	}
 
 	// get current branch
@@ -171,11 +171,11 @@ func (r *Refs) getBranchPos(branchName string) int {
 func (r *Refs) DeleteBranch(rootGoitPath, headBranchName, deleteBranchName string) error {
 	// branch validation
 	if deleteBranchName == headBranchName {
-		return fmt.Errorf("error: cannot delete current branch '%s'", headBranchName)
+		return fmt.Errorf("cannot delete current branch '%s'", headBranchName)
 	}
 	n := r.getBranchPos(deleteBranchName)
 	if n == NewBranchFlag {
-		return fmt.Errorf("error: branch '%s' not found", deleteBranchName)
+		return fmt.Errorf("branch '%s' not found", deleteBranchName)
 	}
 
 	// delete from refs
