@@ -177,6 +177,7 @@ func (r *Refs) DeleteBranch(rootGoitPath, headBranchName, deleteBranchName strin
 	if n == NewBranchFlag {
 		return fmt.Errorf("branch '%s' not found", deleteBranchName)
 	}
+	deleteBranch := r.Heads[n]
 
 	// delete from refs
 	r.Heads = append(r.Heads[:n], r.Heads[n+1:]...)
@@ -186,6 +187,9 @@ func (r *Refs) DeleteBranch(rootGoitPath, headBranchName, deleteBranchName strin
 	if err := os.Remove(branchPath); err != nil {
 		return fmt.Errorf("fail to delete branch file: %w", err)
 	}
+
+	// print out message
+	fmt.Printf("Deleted branch %s (was %s).\n", deleteBranch.Name, deleteBranch.hash.String()[:7])
 
 	return nil
 }
