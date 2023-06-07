@@ -85,7 +85,13 @@ func newHead() *Head {
 	return &Head{}
 }
 
-func (h *Head) Update(rootGoitPath, newRef string) error {
+func (h *Head) Update(refs *Refs, rootGoitPath, newRef string) error {
+	// check if branch exists
+	n := refs.getBranchPos(newRef)
+	if n == NewBranchFlag {
+		return fmt.Errorf("branch %s does not exist", newRef)
+	}
+
 	headPath := filepath.Join(rootGoitPath, "HEAD")
 	if _, err := os.Stat(headPath); os.IsNotExist(err) {
 		return errors.New("fail to find HEAD, cannot update")

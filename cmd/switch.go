@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -33,6 +34,13 @@ var switchCmd = &cobra.Command{
 			return errors.New("fatal: missing branch")
 		} else if createOption != "" && len(args) >= 1 {
 			return errors.New("invalid create option format")
+		}
+
+		// switch branch == update HEAD
+		if len(args) == 1 {
+			if err := client.Head.Update(client.Refs, client.RootGoitPath, args[0]); err != nil {
+				return fmt.Errorf("fail to update HEAD: %w", err)
+			}
 		}
 
 		return nil
