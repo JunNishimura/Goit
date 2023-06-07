@@ -43,6 +43,15 @@ var switchCmd = &cobra.Command{
 			}
 		}
 
+		if createOption != "" {
+			if err := client.Refs.AddBranch(client.RootGoitPath, createOption, client.Head.Commit.Hash); err != nil {
+				return fmt.Errorf("fail to create new branch %s: %w", createOption, err)
+			}
+			if err := client.Head.Update(client.Refs, client.RootGoitPath, createOption); err != nil {
+				return fmt.Errorf("fail to update HEAD: %w", err)
+			}
+		}
+
 		return nil
 	},
 }
