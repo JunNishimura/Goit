@@ -79,20 +79,8 @@ var logCmd = &cobra.Command{
 			return fmt.Errorf("fatal: your current branch 'main' does not have any commits yet")
 		}
 
-		// get last commit hash
-		branchPath := filepath.Join(dirName, "main")
-		lastCommitHashBytes, err := os.ReadFile(branchPath)
-		if err != nil {
-			return fmt.Errorf("%w: %s", ErrIOHandling, branchPath)
-		}
-		lastCommitHashString := string(lastCommitHashBytes)
-		lastCommitHash, err := sha.ReadHash(lastCommitHashString)
-		if err != nil {
-			return fmt.Errorf("fail to read hash: %w", err)
-		}
-
 		// print log
-		if err := walkHistory(lastCommitHash, func(commit *object.Commit) error {
+		if err := walkHistory(client.Head.Commit.Hash, func(commit *object.Commit) error {
 			fmt.Println(commit)
 			return nil
 		}); err != nil {
