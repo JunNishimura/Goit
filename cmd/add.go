@@ -75,6 +75,19 @@ var addCmd = &cobra.Command{
 		for _, arg := range args {
 			if _, err := os.Stat(arg); os.IsNotExist(err) {
 				// If the file does not exist but is registered in the index, delete it from the index
+				// but not delete here, just check it
+				cleanedArg := filepath.Clean(arg)
+				cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+				_, _, isEntryFound := client.Idx.GetEntry([]byte(cleanedArg))
+				if !isEntryFound {
+					return fmt.Errorf(`path "%s" did not match any files`, arg)
+				}
+			}
+		}
+
+		for _, arg := range args {
+			// If the file does not exist but is registered in the index, delete it from the index
+			if _, err := os.Stat(arg); os.IsNotExist(err) {
 				cleanedArg := filepath.Clean(arg)
 				cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
 				_, entry, isEntryFound := client.Idx.GetEntry([]byte(cleanedArg))
@@ -82,12 +95,11 @@ var addCmd = &cobra.Command{
 					return fmt.Errorf(`path "%s" did not match any files`, arg)
 				}
 				if err := client.Idx.DeleteEntry(client.RootGoitPath, entry); err != nil {
-					return fmt.Errorf("fail to delete '%s' from index: %w", cleanedArg, err)
+					return fmt.Errorf("fail to delete untracked file %s: %w", cleanedArg, err)
 				}
+				continue
 			}
-		}
 
-		for _, arg := range args {
 			path, err := filepath.Abs(arg)
 			if err != nil {
 				return fmt.Errorf("fail to convert abs path: %s", arg)

@@ -40,7 +40,7 @@ func commit() error {
 
 	// make and write commit object
 	var data []byte
-	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", "main")
+	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", client.Head.Reference)
 	branchBytes, err := os.ReadFile(branchPath)
 	author := object.NewSign(client.Conf.GetUserName(), client.Conf.GetEmail())
 	committer := author
@@ -182,11 +182,6 @@ var commitCmd = &cobra.Command{
 				return err
 			}
 		} else {
-			// check if files are deleted
-			if err := client.Idx.DeleteUntrackedFiles(client.RootGoitPath); err != nil {
-				return fmt.Errorf("fail to delete untracked files: %w", err)
-			}
-
 			// compare last commit with index
 			isCommitNecessary, err := isCommitNecessary(client.Head.Commit)
 			if err != nil {
