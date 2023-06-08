@@ -74,7 +74,16 @@ var addCmd = &cobra.Command{
 		}
 		for _, arg := range args {
 			if _, err := os.Stat(arg); os.IsNotExist(err) {
-				return fmt.Errorf(`path "%s" did not match any files`, arg)
+				// If the file does not exist but is registered in the index, delete it from the index
+				cleanedArg := filepath.Clean(arg)
+				cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+				_, entry, isEntryFound := client.Idx.GetEntry([]byte(cleanedArg))
+				if !isEntryFound {
+					return fmt.Errorf(`path "%s" did not match any files`, arg)
+				}
+				if err := client.Idx.DeleteEntry(client.RootGoitPath, entry); err != nil {
+					return fmt.Errorf("fail to delete '%s' from index: %w", cleanedArg, err)
+				}
 			}
 		}
 
@@ -100,11 +109,6 @@ var addCmd = &cobra.Command{
 					return err
 				}
 			}
-		}
-
-		// delete untracked files from index
-		if err := client.Idx.DeleteUntrackedFiles(client.RootGoitPath); err != nil {
-			return fmt.Errorf("fail to delete untracked files from index: %w", err)
 		}
 
 		return nil
