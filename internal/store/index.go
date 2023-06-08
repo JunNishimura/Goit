@@ -127,29 +127,6 @@ func (idx *Index) DeleteEntry(rootGoitPath string, entry *Entry) error {
 	return nil
 }
 
-func (idx *Index) DeleteUntrackedFiles(rootGoitPath string) error {
-	var trackedEntries []*Entry
-	for _, entry := range idx.Entries {
-		if _, err := os.Stat(string(entry.Path)); !os.IsNotExist(err) {
-			trackedEntries = append(trackedEntries, entry)
-		}
-	}
-
-	// no need to delete
-	if len(trackedEntries) == int(idx.EntryNum) {
-		return nil
-	}
-
-	// need to update index
-	idx.Entries = trackedEntries
-	idx.EntryNum = uint32(len(idx.Entries))
-	if err := idx.write(rootGoitPath); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (idx *Index) read(rootGoitPath string) error {
 	// read index
 	indexPath := filepath.Join(rootGoitPath, "index")

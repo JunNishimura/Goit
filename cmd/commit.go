@@ -182,11 +182,6 @@ var commitCmd = &cobra.Command{
 				return err
 			}
 		} else {
-			// check if files are deleted
-			if err := client.Idx.DeleteUntrackedFiles(client.RootGoitPath); err != nil {
-				return fmt.Errorf("fail to delete untracked files: %w", err)
-			}
-
 			// compare last commit with index
 			isCommitNecessary, err := isCommitNecessary(client.Head.Commit)
 			if err != nil {
