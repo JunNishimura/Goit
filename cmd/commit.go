@@ -40,7 +40,7 @@ func commit() error {
 
 	// make and write commit object
 	var data []byte
-	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", "main")
+	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", client.Head.Reference)
 	branchBytes, err := os.ReadFile(branchPath)
 	author := object.NewSign(client.Conf.GetUserName(), client.Conf.GetEmail())
 	committer := author
