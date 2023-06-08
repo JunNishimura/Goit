@@ -134,7 +134,7 @@ func (r *Refs) RenameBranch(head *Head, rootGoitPath, newBranchName string) erro
 	}
 
 	// update HEAD
-	if err := head.Update(rootGoitPath, newBranchName); err != nil {
+	if err := head.Update(r, rootGoitPath, newBranchName); err != nil {
 		return fmt.Errorf("fail to update HEAD: %w", err)
 	}
 
