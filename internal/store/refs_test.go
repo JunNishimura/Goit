@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/hex"
 	"errors"
 	"os"
 	"path/filepath"
@@ -15,22 +16,26 @@ func TestNewBanch(t *testing.T) {
 		name string
 		hash sha.SHA1
 	}
-	tests := []struct {
+	type test struct {
 		name string
 		args args
 		want *branch
-	}{
-		{
-			name: "success",
-			args: args{
-				name: "main",
-				hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			},
-			want: &branch{
-				Name: "main",
-				hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			},
-		},
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "success",
+				args: args{
+					name: "main",
+					hash: sha.SHA1(hash),
+				},
+				want: &branch{
+					Name: "main",
+					hash: sha.SHA1(hash),
+				},
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -47,21 +52,25 @@ func TestLoadHash(t *testing.T) {
 		name string
 		hash sha.SHA1
 	}
-	tests := []struct {
+	type test struct {
 		name    string
 		fields  fields
 		want    sha.SHA1
 		wantErr error
-	}{
-		{
-			name: "success",
-			fields: fields{
-				name: "main",
-				hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			},
-			want:    sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			wantErr: nil,
-		},
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "success",
+				fields: fields{
+					name: "main",
+					hash: sha.SHA1(hash),
+				},
+				want:    sha.SHA1(hash),
+				wantErr: nil,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -108,45 +117,52 @@ func TestNewRefs(t *testing.T) {
 		name string
 		hash sha.SHA1
 	}
-	tests := []struct {
+	type test struct {
 		name    string
 		fields  []*fields
 		want    *Refs
 		wantErr error
-	}{
-		{
-			name:   "success: no heads",
-			fields: nil,
-			want: &Refs{
-				Heads: make([]*branch, 0),
-			},
-			wantErr: nil,
-		},
-		{
-			name: "success: some heads",
-			fields: []*fields{
-				{
-					name: "main",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+	}
+	tests := []*test{
+		func() *test {
+			return &test{
+				name:   "success: no heads",
+				fields: nil,
+				want: &Refs{
+					Heads: make([]*branch, 0),
 				},
-				{
-					name: "test",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-				},
-			},
-			want: &Refs{
-				Heads: []*branch{
+				wantErr: nil,
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "success: some heads",
+				fields: []*fields{
 					{
-						Name: "main",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+						name: "main",
+						hash: sha.SHA1(hash),
 					},
 					{
-						Name: "test",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+						name: "test",
+						hash: sha.SHA1(hash),
 					},
 				},
-			},
-		},
+				want: &Refs{
+					Heads: []*branch{
+						{
+							Name: "main",
+							hash: sha.SHA1(hash),
+						},
+						{
+							Name: "test",
+							hash: sha.SHA1(hash),
+						},
+					},
+				},
+				wantErr: nil,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -199,57 +215,64 @@ func TestAddBranch(t *testing.T) {
 		name string
 		hash sha.SHA1
 	}
-	tests := []struct {
+	type test struct {
 		name    string
 		args    args
 		fields  fields
 		want    *Refs
 		wantErr bool
-	}{
-		{
-			name: "success",
-			args: args{
-				newBranchName: "main",
-				newBranchHash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			},
-			fields: fields{
-				name: "test",
-				hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			},
-			want: &Refs{
-				Heads: []*branch{
-					{
-						Name: "main",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-					},
-					{
-						Name: "test",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "success",
+				args: args{
+					newBranchName: "main",
+					newBranchHash: sha.SHA1(hash),
+				},
+				fields: fields{
+					name: "test",
+					hash: sha.SHA1(hash),
+				},
+				want: &Refs{
+					Heads: []*branch{
+						{
+							Name: "main",
+							hash: sha.SHA1(hash),
+						},
+						{
+							Name: "test",
+							hash: sha.SHA1(hash),
+						},
 					},
 				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "failure",
-			args: args{
-				newBranchName: "main",
-				newBranchHash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			},
-			fields: fields{
-				name: "main",
-				hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-			},
-			want: &Refs{
-				Heads: []*branch{
-					{
-						Name: "main",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				wantErr: false,
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "failure",
+				args: args{
+					newBranchName: "main",
+					newBranchHash: sha.SHA1(hash),
+				},
+				fields: fields{
+					name: "main",
+					hash: sha.SHA1(hash),
+				},
+				want: &Refs{
+					Heads: []*branch{
+						{
+							Name: "main",
+							hash: sha.SHA1(hash),
+						},
 					},
 				},
-			},
-			wantErr: true,
-		},
+				wantErr: true,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -303,46 +326,53 @@ func TestGetBranchPos(t *testing.T) {
 		name string
 		hash sha.SHA1
 	}
-	tests := []struct {
+	type test struct {
 		name       string
 		args       args
 		fieldsList []*fields
 		want       int
-	}{
-		{
-			name: "found existing branch",
-			args: args{
-				branchName: "main",
-			},
-			fieldsList: []*fields{
-				{
-					name: "main",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "found existing branch",
+				args: args{
+					branchName: "main",
 				},
-				{
-					name: "test",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				fieldsList: []*fields{
+					{
+						name: "main",
+						hash: sha.SHA1(hash),
+					},
+					{
+						name: "test",
+						hash: sha.SHA1(hash),
+					},
 				},
-			},
-			want: 0,
-		},
-		{
-			name: "not found",
-			args: args{
-				branchName: "xxxx",
-			},
-			fieldsList: []*fields{
-				{
-					name: "main",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				want: 0,
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "not found",
+				args: args{
+					branchName: "xxxx",
 				},
-				{
-					name: "test",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				fieldsList: []*fields{
+					{
+						name: "main",
+						hash: sha.SHA1(hash),
+					},
+					{
+						name: "test",
+						hash: sha.SHA1(hash),
+					},
 				},
-			},
-			want: NewBranchFlag,
-		},
+				want: NewBranchFlag,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -396,69 +426,76 @@ func TestDeleteBranch(t *testing.T) {
 		name string
 		hash sha.SHA1
 	}
-	tests := []struct {
+	type test struct {
 		name       string
 		args       args
 		fieldsList []*fields
 		want       *Refs
 		wantErr    bool
-	}{
-		{
-			name: "success",
-			args: args{
-				headBranchName:   "main",
-				deleteBranchName: "test",
-			},
-			fieldsList: []*fields{
-				{
-					name: "main",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "success",
+				args: args{
+					headBranchName:   "main",
+					deleteBranchName: "test",
 				},
-				{
-					name: "test",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-				},
-			},
-			want: &Refs{
-				Heads: []*branch{
+				fieldsList: []*fields{
 					{
-						Name: "main",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "failure",
-			args: args{
-				headBranchName:   "main",
-				deleteBranchName: "main",
-			},
-			fieldsList: []*fields{
-				{
-					name: "main",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-				},
-				{
-					name: "test",
-					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
-				},
-			},
-			want: &Refs{
-				Heads: []*branch{
-					{
-						Name: "main",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+						name: "main",
+						hash: sha.SHA1(hash),
 					},
 					{
-						Name: "test",
-						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+						name: "test",
+						hash: sha.SHA1(hash),
 					},
 				},
-			},
-			wantErr: true,
-		},
+				want: &Refs{
+					Heads: []*branch{
+						{
+							Name: "main",
+							hash: sha.SHA1(hash),
+						},
+					},
+				},
+				wantErr: false,
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			return &test{
+				name: "failure",
+				args: args{
+					headBranchName:   "main",
+					deleteBranchName: "main",
+				},
+				fieldsList: []*fields{
+					{
+						name: "main",
+						hash: sha.SHA1(hash),
+					},
+					{
+						name: "test",
+						hash: sha.SHA1(hash),
+					},
+				},
+				want: &Refs{
+					Heads: []*branch{
+						{
+							Name: "main",
+							hash: sha.SHA1(hash),
+						},
+						{
+							Name: "test",
+							hash: sha.SHA1(hash),
+						},
+					},
+				},
+				wantErr: true,
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
