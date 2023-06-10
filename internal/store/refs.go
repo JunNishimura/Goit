@@ -193,3 +193,26 @@ func (r *Refs) DeleteBranch(rootGoitPath, headBranchName, deleteBranchName strin
 
 	return nil
 }
+
+func (r *Refs) UpdateBranchHash(rootGoitPath, branchName string, newHash sha.SHA1) error {
+	n := r.getBranchPos(branchName)
+	if n == NewBranchFlag {
+		return fmt.Errorf("branch '%s' does not exist", branchName)
+	}
+
+	branch := r.Heads[n]
+	branch.hash = newHash
+
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", branchName)
+	f, err := os.Create(branchPath)
+	if err != nil {
+		return fmt.Errorf("fail to create %s: %w", branchPath, err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(newHash.String()); err != nil {
+		return fmt.Errorf("fail to write hash: %w", err)
+	}
+
+	return nil
+}
