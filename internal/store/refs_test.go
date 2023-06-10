@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/hex"
 	"errors"
 	"os"
 	"path/filepath"
@@ -99,6 +100,74 @@ func TestLoadHash(t *testing.T) {
 			}
 			if b.hash.String() != tt.want.String() {
 				t.Errorf("got = %s, want = %s", b.hash, tt.want)
+			}
+		})
+	}
+}
+
+func TestBranchWrite(t *testing.T) {
+	type fields struct {
+		name string
+		hash sha.SHA1
+	}
+	type test struct {
+		name            string
+		fields          fields
+		wantFileName    string
+		wantFileContent string
+		wantErr         bool
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+
+			return &test{
+				name: "success",
+				fields: fields{
+					name: "main",
+					hash: sha.SHA1(hash),
+				},
+				wantFileName:    "main",
+				wantFileContent: "87f3c49bccf2597484ece08746d3ee5defaba335",
+				wantErr:         false,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			// write branch
+			b := newBranch(tt.fields.name, tt.fields.hash)
+			if err := b.write(goitDir); (err != nil) != tt.wantErr {
+				t.Errorf("got  = %v, want = %v", err, tt.wantErr)
+			}
+
+			branchPath := filepath.Join(headsDir, tt.wantFileName)
+			if _, err := os.Stat(branchPath); os.IsNotExist(err) {
+				t.Errorf("fail to find branch '%s': %v", tt.wantFileName, err)
+			}
+			hashBytes, err := os.ReadFile(branchPath)
+			if err != nil {
+				t.Errorf("fail to read file '%s': %v", branchPath, err)
+			}
+
+			if string(hashBytes) != tt.wantFileContent {
+				t.Errorf("got = %s, want = %s", string(hashBytes), tt.wantFileContent)
 			}
 		})
 	}
