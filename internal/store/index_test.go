@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/hex"
 	"errors"
 	"os"
 	"path/filepath"
@@ -22,8 +23,10 @@ func TestNewEntry(t *testing.T) {
 		want *Entry
 	}
 	tests := []*test{
+
 		func() *test {
-			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 			nameLength := uint16(len(path))
 
@@ -145,7 +148,8 @@ func TestUpdate(t *testing.T) {
 	}
 	tests := []*test{
 		func() *test {
-			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
 			return &test{
@@ -160,7 +164,8 @@ func TestUpdate(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
 			return &test{
@@ -262,7 +267,8 @@ func TestGetEntry(t *testing.T) {
 	}
 	tests := []*test{
 		func() *test {
-			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
 			entry := NewEntry(hash, path)
@@ -282,7 +288,8 @@ func TestGetEntry(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
 			return &test{
@@ -387,7 +394,8 @@ func TestDeleteEntry(t *testing.T) {
 	}
 	tests := []*test{
 		func() *test {
-			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
 			entry := NewEntry(hash, path)
@@ -405,7 +413,8 @@ func TestDeleteEntry(t *testing.T) {
 			}
 		}(),
 		func() *test {
-			hash := sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335"))
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
 			dummyEntry := NewEntry([]byte{}, []byte("not_exist.txt"))
