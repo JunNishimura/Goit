@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/JunNishimura/Goit/internal/sha"
@@ -496,6 +497,128 @@ func TestDeleteBranch(t *testing.T) {
 				t.Log(err)
 			}
 			if err := r.DeleteBranch(goitDir, tt.args.headBranchName, tt.args.deleteBranchName); (err != nil) != tt.wantErr {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(r, tt.want) {
+				t.Errorf("got = %v, want = %v", r, tt.want)
+			}
+		})
+	}
+}
+
+func TestUpdateBranchHash(t *testing.T) {
+	type args struct {
+		branchName string
+		newHash    sha.SHA1
+	}
+	type fields struct {
+		name string
+		hash sha.SHA1
+	}
+	tests := []struct {
+		name       string
+		args       args
+		fieldsList []*fields
+		want       *Refs
+		wantErr    bool
+	}{
+		{
+			name: "success",
+			args: args{
+				branchName: "main",
+				newHash:    sha.SHA1([]byte(strings.Repeat("4", 40))),
+			},
+			fieldsList: []*fields{
+				{
+					name: "main",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+				{
+					name: "test",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+			},
+			want: &Refs{
+				Heads: []*branch{
+					{
+						Name: "main",
+						hash: sha.SHA1([]byte(strings.Repeat("4", 40))),
+					},
+					{
+						Name: "test",
+						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failure",
+			args: args{
+				branchName: "xxxx",
+				newHash:    sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+			},
+			fieldsList: []*fields{
+				{
+					name: "main",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+				{
+					name: "test",
+					hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+				},
+			},
+			want: &Refs{
+				Heads: []*branch{
+					{
+						Name: "main",
+						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+					},
+					{
+						Name: "test",
+						hash: sha.SHA1([]byte("87f3c49bccf2597484ece08746d3ee5defaba335")),
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/refs directory
+			refsDir := filepath.Join(goitDir, "refs")
+			if err := os.Mkdir(refsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, refsDir)
+			}
+			// make .goit/refs/heads directory
+			headsDir := filepath.Join(refsDir, "heads")
+			if err := os.Mkdir(headsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, headsDir)
+			}
+			for _, field := range tt.fieldsList {
+				// make main branch
+				branchPath := filepath.Join(headsDir, field.name)
+				f, err := os.Create(branchPath)
+				if err != nil {
+					t.Logf("%v: %s", err, branchPath)
+				}
+				if _, err := f.WriteString(field.hash.String()); err != nil {
+					t.Log(err)
+				}
+				f.Close()
+			}
+
+			r, err := NewRefs(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+			if err := r.UpdateBranchHash(goitDir, tt.args.branchName, tt.args.newHash); (err != nil) != tt.wantErr {
 				t.Errorf("got = %v, want = %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(r, tt.want) {
