@@ -42,6 +42,21 @@ func (b *branch) loadHash(rootGoitPath string) error {
 	return nil
 }
 
+func (b *branch) write(rootGoitPath string) error {
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", b.Name)
+	f, err := os.Create(branchPath)
+	if err != nil {
+		return fmt.Errorf("fail to create %s: %w", branchPath, err)
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(b.hash.String()); err != nil {
+		return fmt.Errorf("fail to write hash(%s): %w", b.hash, err)
+	}
+
+	return nil
+}
+
 type Refs struct {
 	Heads []*branch
 }
@@ -94,14 +109,8 @@ func (r *Refs) AddBranch(rootGoitPath, newBranchName string, newBranchHash sha.S
 	r.Heads = append(r.Heads, b)
 
 	// write file
-	branchPath := filepath.Join(rootGoitPath, "refs", "heads", newBranchName)
-	f, err := os.Create(branchPath)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	if _, err := f.WriteString(newBranchHash.String()); err != nil {
-		return err
+	if err := b.write(rootGoitPath); err != nil {
+		return fmt.Errorf("fail to write branch: %w", err)
 	}
 
 	// sort heads
@@ -190,6 +199,23 @@ func (r *Refs) DeleteBranch(rootGoitPath, headBranchName, deleteBranchName strin
 
 	// print out message
 	fmt.Printf("Deleted branch %s (was %s).\n", deleteBranch.Name, deleteBranch.hash.String()[:7])
+
+	return nil
+}
+
+func (r *Refs) UpdateBranchHash(rootGoitPath, branchName string, newHash sha.SHA1) error {
+	n := r.getBranchPos(branchName)
+	if n == NewBranchFlag {
+		return fmt.Errorf("branch '%s' does not exist", branchName)
+	}
+
+	branch := r.Heads[n]
+	branch.hash = newHash
+
+	// write file
+	if err := branch.write(rootGoitPath); err != nil {
+		return fmt.Errorf("fail to write branch: %w", err)
+	}
 
 	return nil
 }

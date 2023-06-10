@@ -7,25 +7,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/JunNishimura/Goit/internal/sha"
 	"github.com/spf13/cobra"
 )
 
-func updateReference(refPath string, hash sha.SHA1) error {
-	f, err := os.Create(refPath)
-	if err != nil {
-		return fmt.Errorf("%w: %s", ErrIOHandling, refPath)
-	}
-	defer f.Close()
-
-	_, err = f.WriteString(hash.String())
-	if err != nil {
-		return fmt.Errorf("fail to write hash(%s) to %s", hash.String(), refPath)
-	}
-
-	return nil
-}
+var (
+	branchRegexp = regexp.MustCompile("refs/heads/.+")
+)
 
 // updateRefCmd represents the updateRef command
 var updateRefCmd = &cobra.Command{
@@ -44,7 +35,11 @@ var updateRefCmd = &cobra.Command{
 		}
 
 		// get reference path
-		refPath := filepath.Join(client.RootGoitPath, args[0])
+		if ok := branchRegexp.MatchString(args[0]); !ok {
+			return fmt.Errorf("invalid branch path %s", args[0])
+		}
+		branchSplit := strings.Split(args[0], "/")
+		branchName := branchSplit[len(branchSplit)-1]
 
 		// hash validation
 		hashString := args[1]
@@ -53,15 +48,15 @@ var updateRefCmd = &cobra.Command{
 		}
 		hashPath := filepath.Join(client.RootGoitPath, "objects", hashString[:2], hashString[2:])
 		if _, err := os.Stat(hashPath); os.IsNotExist(err) {
-			return fmt.Errorf("fatal: trying to write ref '%s' with nonexistent object %s", refPath, hashString)
+			return fmt.Errorf("fatal: trying to write ref '%s' with nonexistent object %s", args[0], hashString)
 		}
-		hash, err := sha.ReadHash(hashString)
+		newHash, err := sha.ReadHash(hashString)
 		if err != nil {
 			return ErrInvalidHash
 		}
 
-		if err := updateReference(refPath, hash); err != nil {
-			return fmt.Errorf("fail to update reference %s: %w", refPath, err)
+		if err := client.Refs.UpdateBranchHash(client.RootGoitPath, branchName, newHash); err != nil {
+			return fmt.Errorf("fail to update reference %s: %w", args[0], err)
 		}
 
 		return nil
