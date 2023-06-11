@@ -74,9 +74,9 @@ func commit() error {
 		if err := client.Refs.AddBranch(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
 			return fmt.Errorf("fail to create branch %s: %w", client.Head.Reference, err)
 		}
-		if err := client.Head.Update(client.Refs, client.RootGoitPath, client.Head.Reference); err != nil {
-			return fmt.Errorf("fail to update HEAD: %w", err)
-		}
+	}
+	if err := client.Head.Update(client.Refs, client.RootGoitPath, client.Head.Reference); err != nil {
+		return fmt.Errorf("fail to update HEAD: %w", err)
 	}
 
 	return nil
