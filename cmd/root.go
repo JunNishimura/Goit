@@ -9,11 +9,13 @@ import (
 	"runtime/debug"
 
 	"github.com/JunNishimura/Goit/internal/file"
+	"github.com/JunNishimura/Goit/internal/log"
 	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
 
 var (
+	gLogger     *log.GoitLogger
 	client      *store.Client
 	goitVersion = ""
 )
@@ -76,6 +78,8 @@ func init() {
 		os.Exit(1)
 	}
 	client = store.NewClient(config, index, head, r, rootGoitPath)
+
+	gLogger = log.NewGoitLogger(client.RootGoitPath)
 
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.Flags().BoolP("version", "v", false, "Show Goit version")
