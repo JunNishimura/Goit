@@ -59,6 +59,10 @@ var updateRefCmd = &cobra.Command{
 			return fmt.Errorf("fail to update reference %s: %w", args[0], err)
 		}
 
+		if err := client.Head.Update(client.Refs, client.RootGoitPath, branchName); err != nil {
+			return fmt.Errorf("fail to update HEAD: %w", err)
+		}
+
 		return nil
 	},
 }

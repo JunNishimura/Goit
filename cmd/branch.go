@@ -57,8 +57,12 @@ var branchCmd = &cobra.Command{
 
 		// rename current branch
 		if renameOption != "" {
-			if err := client.Refs.RenameBranch(client.Head, client.RootGoitPath, renameOption); err != nil {
+			if err := client.Refs.RenameBranch(client.RootGoitPath, client.Head.Reference, renameOption); err != nil {
 				return fmt.Errorf("fail to rename branch: %w", err)
+			}
+			// update HEAD
+			if err := client.Head.Update(client.Refs, client.RootGoitPath, renameOption); err != nil {
+				return fmt.Errorf("fail to update HEAD: %w", err)
 			}
 		}
 
