@@ -63,9 +63,17 @@ func commit() error {
 		return fmt.Errorf("fail to write commit object: %w", err)
 	}
 
-	// update branch
-	if err := client.Refs.UpdateBranchHash(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
-		return fmt.Errorf("fail to update branch %s: %w", client.Head.Reference, err)
+	// create/update branch
+	if client.Refs.IsBranchExist(client.Head.Reference) {
+		// update
+		if err := client.Refs.UpdateBranchHash(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
+			return fmt.Errorf("fail to update branch %s: %w", client.Head.Reference, err)
+		}
+	} else {
+		// create
+		if err := client.Refs.AddBranch(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
+			return fmt.Errorf("fail to create branch %s: %w", client.Head.Reference, err)
+		}
 	}
 
 	return nil
