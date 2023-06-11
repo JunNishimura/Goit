@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/JunNishimura/Goit/internal/log"
 	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
@@ -69,11 +71,19 @@ func commit() error {
 		if err := client.Refs.UpdateBranchHash(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
 			return fmt.Errorf("fail to update branch %s: %w", client.Head.Reference, err)
 		}
+		// log
+		record := log.NewRecord(log.CommitRecord, client.Head.Commit.Hash, commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), message)
+		gLogger.WriteHEAD(record)
+		gLogger.WriteBranch(record, client.Head.Reference)
 	} else {
 		// create
 		if err := client.Refs.AddBranch(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
 			return fmt.Errorf("fail to create branch %s: %w", client.Head.Reference, err)
 		}
+		// log
+		record := log.NewRecord(log.CommitRecord, nil, commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), message)
+		gLogger.WriteHEAD(record)
+		gLogger.WriteBranch(record, client.Head.Reference)
 	}
 	if err := client.Head.Update(client.Refs, client.RootGoitPath, client.Head.Reference); err != nil {
 		return fmt.Errorf("fail to update HEAD: %w", err)
