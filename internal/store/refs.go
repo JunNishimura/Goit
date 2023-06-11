@@ -124,7 +124,7 @@ func (r *Refs) AddBranch(rootGoitPath, newBranchName string, newBranchHash sha.S
 	return nil
 }
 
-func (r *Refs) RenameBranch(head *Head, rootGoitPath, newBranchName string) error {
+func (r *Refs) RenameBranch(rootGoitPath, curBranchName, newBranchName string) error {
 	// check if new branch name is not used for other branches
 	n := r.getBranchPos(newBranchName)
 	if n != NewBranchFlag {
@@ -132,24 +132,19 @@ func (r *Refs) RenameBranch(head *Head, rootGoitPath, newBranchName string) erro
 	}
 
 	// get current branch
-	curNum := r.getBranchPos(head.Reference)
+	curNum := r.getBranchPos(curBranchName)
 	if curNum == NewBranchFlag {
-		return fmt.Errorf("head branch '%s' does not exist", head.Reference)
+		return fmt.Errorf("head branch '%s' does not exist", curBranchName)
 	}
 
 	// rename branch
 	r.Heads[curNum].Name = newBranchName
 
 	// rename file
-	oldPath := filepath.Join(rootGoitPath, "refs", "heads", head.Reference)
+	oldPath := filepath.Join(rootGoitPath, "refs", "heads", curBranchName)
 	newPath := filepath.Join(rootGoitPath, "refs", "heads", newBranchName)
 	if err := os.Rename(oldPath, newPath); err != nil {
 		return fmt.Errorf("fail to rename file: %w", err)
-	}
-
-	// update HEAD
-	if err := head.Update(r, rootGoitPath, newBranchName); err != nil {
-		return fmt.Errorf("fail to update HEAD: %w", err)
 	}
 
 	return nil
