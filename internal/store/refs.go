@@ -98,6 +98,11 @@ func (r *Refs) ListBranches(headBranchName string) {
 	}
 }
 
+func (r *Refs) IsBranchExist(branchName string) bool {
+	p := r.getBranchPos(branchName)
+	return p != NewBranchFlag
+}
+
 func (r *Refs) AddBranch(rootGoitPath, newBranchName string, newBranchHash sha.SHA1) error {
 	// check if branch already exists
 	n := r.getBranchPos(newBranchName)
@@ -153,6 +158,10 @@ func (r *Refs) RenameBranch(head *Head, rootGoitPath, newBranchName string) erro
 // return the index of branch in the Refs Heads.
 // if not found, return NewBranchFlag which is -1.
 func (r *Refs) getBranchPos(branchName string) int {
+	if len(r.Heads) == 0 {
+		return NewBranchFlag
+	}
+
 	// binary search
 	left := 0
 	right := len(r.Heads)
