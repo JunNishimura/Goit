@@ -12,6 +12,7 @@ import (
 
 	"github.com/JunNishimura/Goit/internal/log"
 	"github.com/JunNishimura/Goit/internal/object"
+	"github.com/JunNishimura/Goit/internal/sha"
 	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -66,25 +67,30 @@ func commit() error {
 	}
 
 	// create/update branch
+	var from sha.SHA1
 	if client.Refs.IsBranchExist(client.Head.Reference) {
 		// update
 		if err := client.Refs.UpdateBranchHash(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
 			return fmt.Errorf("fail to update branch %s: %w", client.Head.Reference, err)
 		}
-		// log
-		record := log.NewRecord(log.CommitRecord, client.Head.Commit.Hash, commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), message)
-		gLogger.WriteHEAD(record)
-		gLogger.WriteBranch(record, client.Head.Reference)
+		from = client.Head.Commit.Hash
 	} else {
 		// create
 		if err := client.Refs.AddBranch(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
 			return fmt.Errorf("fail to create branch %s: %w", client.Head.Reference, err)
 		}
-		// log
-		record := log.NewRecord(log.CommitRecord, nil, commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), message)
-		gLogger.WriteHEAD(record)
-		gLogger.WriteBranch(record, client.Head.Reference)
+		from = nil
 	}
+	// log
+	record := log.NewRecord(log.CommitRecord, from, commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), message)
+	if err := gLogger.WriteHEAD(record); err != nil {
+		return fmt.Errorf("log error: %w", err)
+	}
+	if err := gLogger.WriteBranch(record, client.Head.Reference); err != nil {
+		return fmt.Errorf("log error: %w", err)
+	}
+
+	// update HEAD
 	if err := client.Head.Update(client.Refs, client.RootGoitPath, client.Head.Reference); err != nil {
 		return fmt.Errorf("fail to update HEAD: %w", err)
 	}
