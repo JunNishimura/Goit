@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/JunNishimura/Goit/internal/log"
 	"github.com/spf13/cobra"
 )
 
@@ -47,6 +49,9 @@ var branchCmd = &cobra.Command{
 
 			if err := client.Refs.AddBranch(client.RootGoitPath, addBranchName, addBranchHash); err != nil {
 				return fmt.Errorf("fail to add branch '%s': %w", addBranchName, err)
+			}
+			if err := gLogger.WriteBranch(log.NewRecord(log.BranchRecord, nil, addBranchHash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("Created from %s", client.Head.Reference)), addBranchName); err != nil {
+				return fmt.Errorf("log error: %w", err)
 			}
 		}
 
