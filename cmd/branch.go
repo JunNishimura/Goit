@@ -92,6 +92,9 @@ var branchCmd = &cobra.Command{
 			if err := client.Refs.DeleteBranch(client.RootGoitPath, client.Head.Reference, deleteOption); err != nil {
 				return fmt.Errorf("fail to delete branch: %w", err)
 			}
+			if err := gLogger.DeleteBranch(deleteOption); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
 		}
 
 		return nil
