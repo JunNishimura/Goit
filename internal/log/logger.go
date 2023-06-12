@@ -67,7 +67,7 @@ func (r *record) String() string {
 	} else {
 		fromStr = r.from.String()
 	}
-	return fmt.Sprintf("%s %s %s <%s> %s %s\t%s: %s", fromStr, r.to, r.name, r.email, r.unixtime, r.timeDiff, r.recType, r.message)
+	return fmt.Sprintf("%s %s %s <%s> %s %s\t%s: %s\n", fromStr, r.to, r.name, r.email, r.unixtime, r.timeDiff, r.recType, r.message)
 }
 
 type GoitLogger struct {
