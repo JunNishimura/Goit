@@ -61,13 +61,18 @@ func NewRecord(recType recordType, from, to sha.SHA1, name, email string, t time
 }
 
 func (r *record) String() string {
-	var fromStr string
+	var fromStr, toStr string
 	if r.from == nil {
 		fromStr = strings.Repeat("0", 40)
 	} else {
 		fromStr = r.from.String()
 	}
-	return fmt.Sprintf("%s %s %s <%s> %s %s\t%s: %s\n", fromStr, r.to, r.name, r.email, r.unixtime, r.timeDiff, r.recType, r.message)
+	if r.to == nil {
+		toStr = strings.Repeat("0", 40)
+	} else {
+		toStr = r.to.String()
+	}
+	return fmt.Sprintf("%s %s %s <%s> %s %s\t%s: %s\n", fromStr, toStr, r.name, r.email, r.unixtime, r.timeDiff, r.recType, r.message)
 }
 
 type GoitLogger struct {
@@ -135,5 +140,13 @@ func (l *GoitLogger) WriteBranch(r *record, branchName string) error {
 		return fmt.Errorf("fail to write %s: %w", branchPath, err)
 	}
 
+	return nil
+}
+
+func (l *GoitLogger) DeleteBranch(branchName string) error {
+	branchPath := filepath.Join(l.rootGoitPath, "logs", "refs", "heads", branchName)
+	if err := os.Remove(branchPath); err != nil {
+		return fmt.Errorf("fail to delete %s: %w", branchPath, err)
+	}
 	return nil
 }

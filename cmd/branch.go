@@ -62,12 +62,29 @@ var branchCmd = &cobra.Command{
 
 		// rename current branch
 		if renameOption != "" {
+			prevBranch := client.Head.Reference
 			if err := client.Refs.RenameBranch(client.RootGoitPath, client.Head.Reference, renameOption); err != nil {
 				return fmt.Errorf("fail to rename branch: %w", err)
 			}
 			// update HEAD
 			if err := client.Head.Update(client.Refs, client.RootGoitPath, renameOption); err != nil {
 				return fmt.Errorf("fail to update HEAD: %w", err)
+			}
+			// log
+			if err := gLogger.WriteHEAD(log.NewRecord(log.BranchRecord, client.Head.Commit.Hash, nil, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("renamed refs/heads/%s to refs/heads/%s", prevBranch, client.Head.Reference))); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteHEAD(log.NewRecord(log.BranchRecord, nil, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("renamed refs/heads/%s to refs/heads/%s", prevBranch, client.Head.Reference))); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.DeleteBranch(prevBranch); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteBranch(log.NewRecord(log.BranchRecord, nil, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("Created from %s", prevBranch)), client.Head.Reference); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteBranch(log.NewRecord(log.BranchRecord, client.Head.Commit.Hash, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("renamed refs/heads/%s refs/heads/%s", prevBranch, client.Head.Reference)), client.Head.Reference); err != nil {
+				return fmt.Errorf("log error: %w", err)
 			}
 		}
 
