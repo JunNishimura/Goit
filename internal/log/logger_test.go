@@ -287,3 +287,55 @@ func TestWriteBranch(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteBranch(t *testing.T) {
+	type args struct {
+		branchName string
+	}
+	type fields struct {
+		rec *record
+	}
+	type test struct {
+		name    string
+		args    args
+		fields  fields
+		wantErr bool
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			now := time.Now()
+			rec := NewRecord(CommitRecord, hash, hash, "Test Taro", "test@example.com", now, "test")
+
+			return &test{
+				name: "success",
+				args: args{
+					branchName: "test",
+				},
+				fields: fields{
+					rec: rec,
+				},
+				wantErr: false,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+
+			gLogger := NewGoitLogger(tmpDir)
+			if err := gLogger.WriteBranch(tt.fields.rec, tt.args.branchName); err != nil {
+				t.Log(err)
+			}
+
+			if err := gLogger.DeleteBranch(tt.args.branchName); (err != nil) != tt.wantErr {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+
+			branchPath := filepath.Join(tmpDir, "logs", "refs", "heads", tt.args.branchName)
+			if _, err := os.Stat(branchPath); !os.IsNotExist(err) {
+				t.Errorf("fail to delete '%s'", tt.args.branchName)
+			}
+		})
+	}
+}
