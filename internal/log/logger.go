@@ -128,7 +128,7 @@ func (l *GoitLogger) WriteBranch(r *record, branchName string) error {
 		}
 	}
 
-	// write HEAD log
+	// write branch log
 	branchPath := filepath.Join(logsRefsPath, "heads", branchName)
 	f, err := os.OpenFile(branchPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
