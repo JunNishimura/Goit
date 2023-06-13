@@ -6,7 +6,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/JunNishimura/Goit/internal/log"
 	"github.com/spf13/cobra"
 )
 
@@ -38,17 +40,28 @@ var switchCmd = &cobra.Command{
 
 		// switch branch == update HEAD
 		if len(args) == 1 {
+			prevBranch := client.Head.Reference
 			if err := client.Head.Update(client.Refs, client.RootGoitPath, args[0]); err != nil {
 				return fmt.Errorf("fail to update HEAD: %w", err)
+			}
+			if err := gLogger.WriteHEAD(log.NewRecord(log.CheckoutRecord, client.Head.Commit.Hash, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("moving from %s to %s", prevBranch, client.Head.Reference))); err != nil {
+				return fmt.Errorf("log error: %w", err)
 			}
 		}
 
 		if createOption != "" {
+			prevBranch := client.Head.Reference
 			if err := client.Refs.AddBranch(client.RootGoitPath, createOption, client.Head.Commit.Hash); err != nil {
 				return fmt.Errorf("fail to create new branch %s: %w", createOption, err)
 			}
 			if err := client.Head.Update(client.Refs, client.RootGoitPath, createOption); err != nil {
 				return fmt.Errorf("fail to update HEAD: %w", err)
+			}
+			if err := gLogger.WriteHEAD(log.NewRecord(log.CheckoutRecord, client.Head.Commit.Hash, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("moving from %s to %s", prevBranch, client.Head.Reference))); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteBranch(log.NewRecord(log.BranchRecord, nil, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("Created from %s", prevBranch)), createOption); err != nil {
+				return fmt.Errorf("log error: %w", err)
 			}
 		}
 

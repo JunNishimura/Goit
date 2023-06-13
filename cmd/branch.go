@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/JunNishimura/Goit/internal/log"
 	"github.com/spf13/cobra"
 )
 
@@ -48,6 +50,9 @@ var branchCmd = &cobra.Command{
 			if err := client.Refs.AddBranch(client.RootGoitPath, addBranchName, addBranchHash); err != nil {
 				return fmt.Errorf("fail to add branch '%s': %w", addBranchName, err)
 			}
+			if err := gLogger.WriteBranch(log.NewRecord(log.BranchRecord, nil, addBranchHash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("Created from %s", client.Head.Reference)), addBranchName); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
 		}
 
 		// list branches
@@ -57,6 +62,7 @@ var branchCmd = &cobra.Command{
 
 		// rename current branch
 		if renameOption != "" {
+			prevBranch := client.Head.Reference
 			if err := client.Refs.RenameBranch(client.RootGoitPath, client.Head.Reference, renameOption); err != nil {
 				return fmt.Errorf("fail to rename branch: %w", err)
 			}
@@ -64,11 +70,30 @@ var branchCmd = &cobra.Command{
 			if err := client.Head.Update(client.Refs, client.RootGoitPath, renameOption); err != nil {
 				return fmt.Errorf("fail to update HEAD: %w", err)
 			}
+			// log
+			if err := gLogger.WriteHEAD(log.NewRecord(log.BranchRecord, client.Head.Commit.Hash, nil, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("renamed refs/heads/%s to refs/heads/%s", prevBranch, client.Head.Reference))); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteHEAD(log.NewRecord(log.BranchRecord, nil, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("renamed refs/heads/%s to refs/heads/%s", prevBranch, client.Head.Reference))); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.DeleteBranch(prevBranch); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteBranch(log.NewRecord(log.BranchRecord, nil, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("Created from %s", prevBranch)), client.Head.Reference); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteBranch(log.NewRecord(log.BranchRecord, client.Head.Commit.Hash, client.Head.Commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("renamed refs/heads/%s refs/heads/%s", prevBranch, client.Head.Reference)), client.Head.Reference); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
 		}
 
 		if deleteOption != "" {
 			if err := client.Refs.DeleteBranch(client.RootGoitPath, client.Head.Reference, deleteOption); err != nil {
 				return fmt.Errorf("fail to delete branch: %w", err)
+			}
+			if err := gLogger.DeleteBranch(deleteOption); err != nil {
+				return fmt.Errorf("log error: %w", err)
 			}
 		}
 

@@ -139,6 +139,7 @@ func (r *Refs) RenameBranch(rootGoitPath, curBranchName, newBranchName string) e
 
 	// rename branch
 	r.Heads[curNum].Name = newBranchName
+	sort.Slice(r.Heads, func(i, j int) bool { return r.Heads[i].Name < r.Heads[j].Name })
 
 	// rename file
 	oldPath := filepath.Join(rootGoitPath, "refs", "heads", curBranchName)
