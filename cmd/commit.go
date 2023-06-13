@@ -210,11 +210,11 @@ var commitCmd = &cobra.Command{
 			}
 		} else {
 			// compare last commit with index
-			isCommitNecessary, err := isCommitNecessary(client.Head.Commit)
+			isDiff, err := isCommitNecessary(client.Head.Commit)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %w", err)
 			}
-			if !isCommitNecessary {
+			if !isDiff {
 				return ErrNothingToCommit
 			}
 
