@@ -14,7 +14,7 @@ import (
 
 func TestNewRecord(t *testing.T) {
 	type args struct {
-		recType recordType
+		recType RecordType
 		from    sha.SHA1
 		to      sha.SHA1
 		name    string
