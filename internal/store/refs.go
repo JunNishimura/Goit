@@ -182,6 +182,17 @@ func (r *Refs) getBranchPos(branchName string) int {
 	return NewBranchFlag
 }
 
+func (r *Refs) getBranchesByHash(hash sha.SHA1) []*branch {
+	var branches []*branch
+	for _, branch := range r.Heads {
+		if branch.hash.String() == hash.String() {
+			branches = append(branches, branch)
+		}
+	}
+
+	return branches
+}
+
 func (r *Refs) DeleteBranch(rootGoitPath, headBranchName, deleteBranchName string) error {
 	// branch validation
 	if deleteBranchName == headBranchName {
