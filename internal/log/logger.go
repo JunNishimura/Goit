@@ -19,6 +19,18 @@ const (
 	BranchRecord
 )
 
+func NewRecordType(typeString string) RecordType {
+	switch typeString {
+	case "commit":
+		return CommitRecord
+	case "checkout":
+		return CheckoutRecord
+	case "branch":
+		return BranchRecord
+	default:
+		return UndefinedRecord
+	}
+}
 
 func (t RecordType) String() string {
 	switch t {
