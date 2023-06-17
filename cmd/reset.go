@@ -9,7 +9,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/JunNishimura/Goit/internal/log"
 	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -65,8 +67,18 @@ var resetCmd = &cobra.Command{
 			}
 
 			// reset Head
+			prevHeadHash := client.Head.Commit.Hash
 			if err := client.Head.Reset(client.RootGoitPath, client.Refs, logRecord.Hash); err != nil {
 				return fmt.Errorf("fail to reset HEAD: %w", err)
+			}
+
+			// log
+			newRecord := log.NewRecord(log.ResetRecord, prevHeadHash, logRecord.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), fmt.Sprintf("moving to %s", args[0]))
+			if err := gLogger.WriteHEAD(newRecord); err != nil {
+				return fmt.Errorf("log error: %w", err)
+			}
+			if err := gLogger.WriteBranch(newRecord, client.Head.Reference); err != nil {
+				return fmt.Errorf("log error: %w", err)
 			}
 		}
 
