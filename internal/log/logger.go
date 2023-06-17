@@ -10,15 +10,29 @@ import (
 	"github.com/JunNishimura/Goit/internal/sha"
 )
 
-type recordType int
+type RecordType int
 
 const (
-	CommitRecord recordType = iota
+	UndefinedRecord RecordType = iota
+	CommitRecord
 	CheckoutRecord
 	BranchRecord
 )
 
-func (t recordType) String() string {
+func NewRecordType(typeString string) RecordType {
+	switch typeString {
+	case "commit":
+		return CommitRecord
+	case "checkout":
+		return CheckoutRecord
+	case "branch":
+		return BranchRecord
+	default:
+		return UndefinedRecord
+	}
+}
+
+func (t RecordType) String() string {
 	switch t {
 	case CommitRecord:
 		return "commit"
@@ -32,7 +46,7 @@ func (t recordType) String() string {
 }
 
 type record struct {
-	recType  recordType
+	recType  RecordType
 	from     sha.SHA1
 	to       sha.SHA1
 	name     string
@@ -42,7 +56,7 @@ type record struct {
 	message  string
 }
 
-func NewRecord(recType recordType, from, to sha.SHA1, name, email string, t time.Time, message string) *record {
+func NewRecord(recType RecordType, from, to sha.SHA1, name, email string, t time.Time, message string) *record {
 	unixtime := fmt.Sprint(t.Unix())
 	_, offset := t.Zone()
 	offsetMinutes := offset / 60
