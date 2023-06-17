@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -13,8 +14,7 @@ var (
 )
 
 type Ignore struct {
-	file      []string
-	directory []string
+	paths []string
 }
 
 func NewIgnore(rootGoitPath string) (*Ignore, error) {
@@ -22,20 +22,17 @@ func NewIgnore(rootGoitPath string) (*Ignore, error) {
 	if err := i.load(rootGoitPath); err != nil {
 		return nil, err
 	}
-	fmt.Println(i.file, i.directory)
 	return i, nil
 }
 
 func newIgnore() *Ignore {
 	return &Ignore{
-		file:      make([]string, 0),
-		directory: []string{".goit/"},
+		paths: []string{".goit/.*"},
 	}
 }
 
 func (i *Ignore) load(rootGoitPath string) error {
 	goitignorePath := filepath.Join(filepath.Dir(rootGoitPath), ".goitignore")
-	fmt.Println(goitignorePath)
 	if _, err := os.Stat(goitignorePath); os.IsNotExist(err) {
 		return nil
 	}
@@ -48,12 +45,31 @@ func (i *Ignore) load(rootGoitPath string) error {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		text := scanner.Text()
+		var replacedText string
 		if directoryRegexp.MatchString(text) {
-			i.directory = append(i.directory, text)
+			replacedText = fmt.Sprintf("%s.*", text)
 		} else {
-			i.file = append(i.file, text)
+			replacedText = strings.ReplaceAll(text, ".", `\.`)
+			replacedText = strings.ReplaceAll(replacedText, "*", ".*")
 		}
+		i.paths = append(i.paths, replacedText)
 	}
 
 	return nil
+}
+
+// return true if the parameter is included in ignore list
+func (i *Ignore) IsIncluded(path string) bool {
+	target := path
+	info, _ := os.Stat(path)
+	if info.IsDir() && !directoryRegexp.MatchString(path) {
+		target = fmt.Sprintf("%s/", path)
+	}
+	for _, exFile := range i.paths {
+		exRegexp := regexp.MustCompile(exFile)
+		if exRegexp.MatchString(target) {
+			return true
+		}
+	}
+	return false
 }
