@@ -121,6 +121,37 @@ func TestNewRecord(t *testing.T) {
 				},
 			}
 		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			now := time.Now()
+			unixtime := fmt.Sprint(now.Unix())
+			_, offset := now.Zone()
+			offsetMinutes := offset / 60
+			timeDiff := fmt.Sprintf("%+03d%02d", offsetMinutes/60, offsetMinutes%60)
+
+			return &test{
+				name: "success: reset record",
+				args: args{
+					recType: ResetRecord,
+					from:    sha.SHA1(hash),
+					to:      sha.SHA1(hash),
+					name:    "Test Taro",
+					email:   "test@example.com",
+					t:       now,
+					message: "test",
+				},
+				want: &record{
+					recType:  ResetRecord,
+					from:     sha.SHA1(hash),
+					to:       sha.SHA1(hash),
+					name:     "Test Taro",
+					email:    "test@example.com",
+					unixtime: unixtime,
+					timeDiff: timeDiff,
+					message:  "test",
+				},
+			}
+		}(),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -178,6 +209,20 @@ func TestWriteHEAD(t *testing.T) {
 
 			return &test{
 				name: "success: checkout record",
+				args: args{
+					rec: rec,
+				},
+				want:    fmt.Sprintf("%s %s %s <%s> %s %s\t%s: %s\n", rec.from, rec.to, rec.name, rec.email, rec.unixtime, rec.timeDiff, rec.recType, rec.message),
+				wantErr: false,
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			now := time.Now()
+			rec := NewRecord(ResetRecord, hash, hash, "Test Taro", "test@example.com", now, "test")
+
+			return &test{
+				name: "success: reset record",
 				args: args{
 					rec: rec,
 				},
@@ -257,6 +302,21 @@ func TestWriteBranch(t *testing.T) {
 
 			return &test{
 				name: "success: checkout record",
+				args: args{
+					rec:        rec,
+					branchName: "test",
+				},
+				want:    fmt.Sprintf("%s %s %s <%s> %s %s\t%s: %s\n", rec.from, rec.to, rec.name, rec.email, rec.unixtime, rec.timeDiff, rec.recType, rec.message),
+				wantErr: false,
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			now := time.Now()
+			rec := NewRecord(ResetRecord, hash, hash, "Test Taro", "test@example.com", now, "test")
+
+			return &test{
+				name: "success: reset record",
 				args: args{
 					rec:        rec,
 					branchName: "test",

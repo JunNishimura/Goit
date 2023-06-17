@@ -17,6 +17,7 @@ const (
 	CommitRecord
 	CheckoutRecord
 	BranchRecord
+	ResetRecord
 )
 
 func NewRecordType(typeString string) RecordType {
@@ -27,6 +28,8 @@ func NewRecordType(typeString string) RecordType {
 		return CheckoutRecord
 	case "branch":
 		return BranchRecord
+	case "reset":
+		return ResetRecord
 	default:
 		return UndefinedRecord
 	}
@@ -40,6 +43,8 @@ func (t RecordType) String() string {
 		return "checkout"
 	case BranchRecord:
 		return "branch"
+	case ResetRecord:
+		return "reset"
 	default:
 		return "undefined"
 	}
