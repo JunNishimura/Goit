@@ -72,12 +72,17 @@ func init() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	r, err := store.NewRefs(rootGoitPath)
+	refs, err := store.NewRefs(rootGoitPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	client = store.NewClient(config, index, head, r, rootGoitPath)
+	ignore, err := store.NewIgnore(rootGoitPath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	client = store.NewClient(config, index, head, refs, ignore, rootGoitPath)
 
 	gLogger = log.NewGoitLogger(client.RootGoitPath)
 
