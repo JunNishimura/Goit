@@ -6,6 +6,7 @@ type Client struct {
 	Head         *Head
 	Refs         *Refs
 	RootGoitPath string
+	ExcludePaths []string
 }
 
 func NewClient(config *Config, index *Index, head *Head, refs *Refs, rootGoitPath string) *Client {
@@ -15,5 +16,6 @@ func NewClient(config *Config, index *Index, head *Head, refs *Refs, rootGoitPat
 		Head:         head,
 		Refs:         refs,
 		RootGoitPath: rootGoitPath,
+		ExcludePaths: []string{".goit"},
 	}
 }

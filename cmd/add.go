@@ -86,10 +86,21 @@ var addCmd = &cobra.Command{
 		}
 
 		for _, arg := range args {
+			// check if the arg is the target of excluding path
+			cleanedArg := filepath.Clean(arg)
+			cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+			isExcluded := false
+			for _, excludePath := range client.ExcludePaths {
+				if excludePath == cleanedArg {
+					isExcluded = true
+				}
+			}
+			if isExcluded {
+				continue
+			}
+
 			// If the file does not exist but is registered in the index, delete it from the index
 			if _, err := os.Stat(arg); os.IsNotExist(err) {
-				cleanedArg := filepath.Clean(arg)
-				cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
 				_, entry, isEntryFound := client.Idx.GetEntry([]byte(cleanedArg))
 				if !isEntryFound {
 					return fmt.Errorf(`path "%s" did not match any files`, arg)
