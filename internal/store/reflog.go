@@ -12,8 +12,8 @@ import (
 	"github.com/fatih/color"
 )
 
-type logRecord struct {
-	hash       sha.SHA1
+type LogRecord struct {
+	Hash       sha.SHA1
 	isHead     bool
 	references []string
 	recType    log.RecordType
@@ -21,7 +21,7 @@ type logRecord struct {
 }
 
 type Reflog struct {
-	records []*logRecord
+	records []*LogRecord
 }
 
 func NewReflog(rootGoitPath string, head *Head, refs *Refs) (*Reflog, error) {
@@ -35,7 +35,7 @@ func NewReflog(rootGoitPath string, head *Head, refs *Refs) (*Reflog, error) {
 
 func newReflog() *Reflog {
 	return &Reflog{
-		records: make([]*logRecord, 0),
+		records: make([]*LogRecord, 0),
 	}
 }
 
@@ -49,7 +49,7 @@ func (r *Reflog) load(rootGoitPath string, head *Head, refs *Refs) error {
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		record := &logRecord{
+		record := &LogRecord{
 			references: make([]string, 0),
 		}
 
@@ -61,13 +61,13 @@ func (r *Reflog) load(rootGoitPath string, head *Head, refs *Refs) error {
 			continue
 		}
 		if sp1[1] == strings.Repeat("0", 40) {
-			record.hash = nil
+			record.Hash = nil
 		} else {
 			hash, err := sha.ReadHash(sp1[1])
 			if err != nil {
 				return fmt.Errorf("fail to read hash %s: %w", sp1[1], err)
 			}
-			record.hash = hash
+			record.Hash = hash
 
 			// references
 			if head.Commit.Hash.Compare(hash) {

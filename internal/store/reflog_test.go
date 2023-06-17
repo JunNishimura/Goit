@@ -29,7 +29,7 @@ func TestReflogLoad(t *testing.T) {
 				},
 				fields: "",
 				want: &Reflog{
-					records: make([]*logRecord, 0),
+					records: make([]*LogRecord, 0),
 				},
 				wantErr: false,
 			}
