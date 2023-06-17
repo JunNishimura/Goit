@@ -147,7 +147,7 @@ func isIndexDifferentFromTree(index *store.Index, tree *object.Tree) (bool, erro
 		if string(gotEntries[i].Path) != string(index.Entries[i].Path) {
 			return true, nil
 		}
-		if gotEntries[i].Hash.String() != index.Entries[i].Hash.String() {
+		if !gotEntries[i].Hash.Compare(index.Entries[i].Hash) {
 			return true, nil
 		}
 	}

@@ -77,7 +77,7 @@ func TestNewTree(t *testing.T) {
 			for i := 0; i < len(got.Children); i++ {
 				gotChild := got.Children[i]
 				wantChild := tt.want.Children[i]
-				if gotChild.Hash.String() != wantChild.Hash.String() {
+				if !gotChild.Hash.Compare(wantChild.Hash) {
 					t.Errorf("got = %v, want = %v", gotChild.Hash.String(), wantChild.Hash.String())
 				}
 				if gotChild.Name != wantChild.Name {

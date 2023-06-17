@@ -70,7 +70,7 @@ func (r *Reflog) load(rootGoitPath string, head *Head, refs *Refs) error {
 			record.hash = hash
 
 			// references
-			if head.Commit.Hash.String() == sp1[1] {
+			if head.Commit.Hash.Compare(hash) {
 				record.isHead = true
 			}
 			branches := refs.getBranchesByHash(hash)
