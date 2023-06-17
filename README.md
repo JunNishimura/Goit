@@ -29,9 +29,10 @@ go install github.com/JunNishimura/Goit@latest
 - [x] `add` - make goit object and register to index
 - [x] `commit` - make commit object
 - [x] `branch` - manipulate branches
-- [x] `switch` (**NEW FEATURE🎉**) - switch branches
+- [x] `switch` - switch branches
 - [x] `restore` - restore files
 - [x] `log` - show commit history
+- [x] `reflog` (**NEW FEATURE🎉**) - show reference log
 - [x] `config` - set config. e.x.) name, email
 - [x] `cat-file` - show goit object data
 - [x] `ls-files` - show index
@@ -44,7 +45,6 @@ go install github.com/JunNishimura/Goit@latest
 ### Future
 - [ ] tag
 - [ ] rm
-- [ ] reflog
 - [ ] checkout
 - [ ] merge
 - [ ] stash
