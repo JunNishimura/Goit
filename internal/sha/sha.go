@@ -13,8 +13,12 @@ var (
 	ErrInvalidHash = errors.New("invalid hash")
 )
 
-func (sha1 SHA1) String() string {
-	return hex.EncodeToString(sha1)
+func (s SHA1) String() string {
+	return hex.EncodeToString(s)
+}
+
+func (s SHA1) Compare(other SHA1) bool {
+	return s.String() == other.String()
 }
 
 func ReadHash(hashString string) (SHA1, error) {

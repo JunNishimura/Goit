@@ -185,7 +185,7 @@ func (r *Refs) getBranchPos(branchName string) int {
 func (r *Refs) getBranchesByHash(hash sha.SHA1) []*branch {
 	var branches []*branch
 	for _, branch := range r.Heads {
-		if branch.hash.String() == hash.String() {
+		if branch.hash.Compare(hash) {
 			branches = append(branches, branch)
 		}
 	}

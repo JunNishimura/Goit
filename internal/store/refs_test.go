@@ -106,7 +106,7 @@ func TestLoadHash(t *testing.T) {
 			if err := b.loadHash(goitDir); !errors.Is(err, tt.wantErr) {
 				t.Errorf("got = %v, want = %v", err, tt.wantErr)
 			}
-			if b.hash.String() != tt.want.String() {
+			if !b.hash.Compare(tt.want) {
 				t.Errorf("got = %s, want = %s", b.hash, tt.want)
 			}
 		})
