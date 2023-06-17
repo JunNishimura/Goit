@@ -115,9 +115,9 @@ func (r *Reflog) Show() {
 		}
 
 		if referenceString == "" {
-			fmt.Printf("%s HEAD:{%d}: %s: %s\n", color.YellowString(record.hash.String()[:7]), i, record.recType, record.message)
+			fmt.Printf("%s HEAD@{%d}: %s: %s\n", color.YellowString(record.Hash.String()[:7]), i, record.recType, record.message)
 		} else {
-			fmt.Printf("%s (%s) HEAD:{%d}: %s: %s\n", color.YellowString(record.hash.String()[:7]), referenceString, i, record.recType, record.message)
+			fmt.Printf("%s (%s) HEAD@{%d}: %s: %s\n", color.YellowString(record.Hash.String()[:7]), referenceString, i, record.recType, record.message)
 		}
 	}
 }
