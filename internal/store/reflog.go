@@ -101,6 +101,13 @@ func (r *Reflog) load(rootGoitPath string, head *Head, refs *Refs) error {
 	return nil
 }
 
+func (r *Reflog) GetRecord(num int) (*LogRecord, error) {
+	if num >= len(r.records) {
+		return nil, fmt.Errorf("num %d needs to be below %d", num, len(r.records)-1)
+	}
+	return r.records[len(r.records)-1-num], nil
+}
+
 func (r *Reflog) Show() {
 	for i := range r.records {
 		idx := len(r.records) - i - 1
