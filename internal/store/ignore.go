@@ -27,7 +27,7 @@ func NewIgnore(rootGoitPath string) (*Ignore, error) {
 
 func newIgnore() *Ignore {
 	return &Ignore{
-		paths: []string{".goit/.*"},
+		paths: []string{`\.goit/.*`},
 	}
 }
 
