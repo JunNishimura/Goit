@@ -49,6 +49,7 @@ go install github.com/JunNishimura/Goit@latest
 - [ ] checkout
 - [ ] merge
 - [ ] stash
+- [ ] status
 - [ ] revert
 - [ ] diff
 - [ ] read-tree
