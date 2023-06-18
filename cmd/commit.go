@@ -34,18 +34,18 @@ to set your account's default identity.
 	ErrNothingToCommit = errors.New("nothing to commit, working tree clean")
 )
 
-func commit() error {
+func commit(rootGoitPath string, index *store.Index, head *store.Head, conf *store.Config, refs *store.Refs) error {
 	// make and write tree object
-	treeObject, err := writeTreeObject(client.RootGoitPath, client.Idx.Entries)
+	treeObject, err := writeTreeObject(rootGoitPath, index.Entries)
 	if err != nil {
 		return err
 	}
 
 	// make and write commit object
 	var data []byte
-	branchPath := filepath.Join(client.RootGoitPath, "refs", "heads", client.Head.Reference)
+	branchPath := filepath.Join(rootGoitPath, "refs", "heads", head.Reference)
 	branchBytes, err := os.ReadFile(branchPath)
-	author := object.NewSign(client.Conf.GetUserName(), client.Conf.GetEmail())
+	author := object.NewSign(conf.GetUserName(), conf.GetEmail())
 	committer := author
 	if err != nil {
 		// no branch means that this is the initial commit
@@ -62,36 +62,36 @@ func commit() error {
 	if err != nil {
 		return fmt.Errorf("fail to make commit object: %w", err)
 	}
-	if err := commit.Write(client.RootGoitPath); err != nil {
+	if err := commit.Write(rootGoitPath); err != nil {
 		return fmt.Errorf("fail to write commit object: %w", err)
 	}
 
 	// create/update branch
 	var from sha.SHA1
-	if client.Refs.IsBranchExist(client.Head.Reference) {
+	if refs.IsBranchExist(head.Reference) {
 		// update
-		if err := client.Refs.UpdateBranchHash(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
-			return fmt.Errorf("fail to update branch %s: %w", client.Head.Reference, err)
+		if err := refs.UpdateBranchHash(rootGoitPath, head.Reference, commit.Hash); err != nil {
+			return fmt.Errorf("fail to update branch %s: %w", head.Reference, err)
 		}
-		from = client.Head.Commit.Hash
+		from = head.Commit.Hash
 	} else {
 		// create
-		if err := client.Refs.AddBranch(client.RootGoitPath, client.Head.Reference, commit.Hash); err != nil {
-			return fmt.Errorf("fail to create branch %s: %w", client.Head.Reference, err)
+		if err := refs.AddBranch(rootGoitPath, head.Reference, commit.Hash); err != nil {
+			return fmt.Errorf("fail to create branch %s: %w", head.Reference, err)
 		}
 		from = nil
 	}
 	// log
-	record := log.NewRecord(log.CommitRecord, from, commit.Hash, client.Conf.GetUserName(), client.Conf.GetEmail(), time.Now(), message)
+	record := log.NewRecord(log.CommitRecord, from, commit.Hash, conf.GetUserName(), conf.GetEmail(), time.Now(), message)
 	if err := gLogger.WriteHEAD(record); err != nil {
 		return fmt.Errorf("log error: %w", err)
 	}
-	if err := gLogger.WriteBranch(record, client.Head.Reference); err != nil {
+	if err := gLogger.WriteBranch(record, head.Reference); err != nil {
 		return fmt.Errorf("log error: %w", err)
 	}
 
 	// update HEAD
-	if err := client.Head.Update(client.Refs, client.RootGoitPath, client.Head.Reference); err != nil {
+	if err := head.Update(refs, rootGoitPath, head.Reference); err != nil {
 		return fmt.Errorf("fail to update HEAD: %w", err)
 	}
 
@@ -119,21 +119,21 @@ func isIndexDifferentFromTree(index *store.Index, tree *object.Tree) (bool, erro
 	return false, nil
 }
 
-func isCommitNecessary(commitObj *object.Commit) (bool, error) {
+func isCommitNecessary(rootGoitPath string, index *store.Index, commitObj *object.Commit) (bool, error) {
 	// get tree object
-	treeObject, err := object.GetObject(client.RootGoitPath, commitObj.Tree)
+	treeObject, err := object.GetObject(rootGoitPath, commitObj.Tree)
 	if err != nil {
 		return false, fmt.Errorf("fail to get tree object: %w", err)
 	}
 
 	// get tree
-	tree, err := object.NewTree(client.RootGoitPath, treeObject)
+	tree, err := object.NewTree(rootGoitPath, treeObject)
 	if err != nil {
 		return false, fmt.Errorf("fail to get tree: %w", err)
 	}
 
 	// compare index with tree
-	isDiff, err := isIndexDifferentFromTree(client.Idx, tree)
+	isDiff, err := isIndexDifferentFromTree(index, tree)
 	if err != nil {
 		return false, fmt.Errorf("fail to compare index with tree: %w", err)
 	}
@@ -170,12 +170,12 @@ var commitCmd = &cobra.Command{
 			}
 
 			// commit
-			if err := commit(); err != nil {
+			if err := commit(client.RootGoitPath, client.Idx, client.Head, client.Conf, client.Refs); err != nil {
 				return err
 			}
 		} else {
 			// compare last commit with index
-			isDiff, err := isCommitNecessary(client.Head.Commit)
+			isDiff, err := isCommitNecessary(client.RootGoitPath, client.Idx, client.Head.Commit)
 			if err != nil {
 				return fmt.Errorf("fail to compare last commit with index: %w", err)
 			}
@@ -184,7 +184,7 @@ var commitCmd = &cobra.Command{
 			}
 
 			// commit
-			if err := commit(); err != nil {
+			if err := commit(client.RootGoitPath, client.Idx, client.Head, client.Conf, client.Refs); err != nil {
 				return fmt.Errorf("fail to commit: %w", err)
 			}
 		}
