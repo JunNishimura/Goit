@@ -12,10 +12,11 @@ import (
 
 	"github.com/JunNishimura/Goit/internal/file"
 	"github.com/JunNishimura/Goit/internal/object"
+	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
 
-func add(path string) error {
+func add(rootGoitPath, path string, index *store.Index) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrIOHandling, path)
@@ -40,7 +41,7 @@ func add(path string) error {
 	byteRelPath := []byte(cleanedRelPath)
 
 	// update index
-	isUpdated, err := client.Idx.Update(client.RootGoitPath, object.Hash, byteRelPath)
+	isUpdated, err := index.Update(rootGoitPath, object.Hash, byteRelPath)
 	if err != nil {
 		return fmt.Errorf("fail to update index: %w", err)
 	}
@@ -49,7 +50,7 @@ func add(path string) error {
 	}
 
 	// write object to file
-	if err := object.Write(client.RootGoitPath); err != nil {
+	if err := object.Write(rootGoitPath); err != nil {
 		return fmt.Errorf("fail to write object: %w", err)
 	}
 
@@ -117,12 +118,12 @@ var addCmd = &cobra.Command{
 					return fmt.Errorf("fail to get file path under directory: %w", err)
 				}
 				for _, filePath := range filePaths {
-					if err := add(filePath); err != nil {
+					if err := add(client.RootGoitPath, filePath, client.Idx); err != nil {
 						return err
 					}
 				}
 			} else {
-				if err := add(path); err != nil {
+				if err := add(client.RootGoitPath, path, client.Idx); err != nil {
 					return err
 				}
 			}
