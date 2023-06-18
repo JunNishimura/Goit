@@ -9,16 +9,17 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
 
-func revParse(refNames ...string) error {
+func revParse(rootGoitPath string, head *store.Head, refNames ...string) error {
 	for _, refName := range refNames {
 		var refPath string
 		if strings.ToLower(refName) == "head" {
-			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", client.Head.Reference)
+			refPath = filepath.Join(rootGoitPath, "refs", "heads", head.Reference)
 		} else {
-			refPath = filepath.Join(client.RootGoitPath, "refs", "heads", refName)
+			refPath = filepath.Join(rootGoitPath, "refs", "heads", refName)
 		}
 		hashBytes, err := os.ReadFile(refPath)
 		if err != nil {
@@ -42,7 +43,7 @@ var revParseCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := revParse(args...); err != nil {
+		if err := revParse(client.RootGoitPath, client.Head, args...); err != nil {
 			return err
 		}
 
