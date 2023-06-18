@@ -31,8 +31,9 @@ go install github.com/JunNishimura/Goit@latest
 - [x] `branch` - manipulate branches
 - [x] `switch` - switch branches
 - [x] `restore` - restore files
+- [x] `reset` (**NEW FEATURE🎉**) - reset HEAD to the specified state
 - [x] `log` - show commit history
-- [x] `reflog` (**NEW FEATURE🎉**) - show reference log
+- [x] `reflog` - show reference log
 - [x] `config` - set config. e.x.) name, email
 - [x] `cat-file` - show goit object data
 - [x] `ls-files` - show index
@@ -48,7 +49,6 @@ go install github.com/JunNishimura/Goit@latest
 - [ ] checkout
 - [ ] merge
 - [ ] stash
-- [ ] reset
 - [ ] revert
 - [ ] diff
 - [ ] read-tree
