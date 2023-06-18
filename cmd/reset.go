@@ -56,10 +56,10 @@ func resetWorkingTree(rootGoitPath string, index *store.Index) error {
 	for _, entry := range index.Entries {
 		obj, err := object.GetObject(rootGoitPath, entry.Hash)
 		if err != nil {
-			fmt.Errorf("fail to get object: %w", err)
+			return fmt.Errorf("fail to get object: %w", err)
 		}
 		if err := obj.ReflectToWorkingTree(rootGoitPath, string(entry.Path)); err != nil {
-			fmt.Errorf("fail to reflect %s to working directory: %w", string(entry.Path), err)
+			return fmt.Errorf("fail to reflect %s to working directory: %w", string(entry.Path), err)
 		}
 	}
 
