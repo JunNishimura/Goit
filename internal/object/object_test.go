@@ -339,3 +339,70 @@ func TestWrite(t *testing.T) {
 		})
 	}
 }
+
+func TestReflectToWorkingTree(t *testing.T) {
+	type args struct {
+		path string
+	}
+	type fields struct {
+		data string
+	}
+	type test struct {
+		name    string
+		args    args
+		fields  fields
+		want    string
+		wantErr bool
+	}
+	tests := []*test{
+		func() *test {
+			return &test{
+				name: "success",
+				args: args{
+					path: "test.txt",
+				},
+				fields: fields{
+					data: "hello, world",
+				},
+				want:    "hello, world",
+				wantErr: false,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			// make .goit/objects directory
+			objectsDir := filepath.Join(goitDir, "objects")
+			if err := os.Mkdir(objectsDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, objectsDir)
+			}
+
+			obj, err := NewObject(BlobObject, []byte(tt.fields.data))
+			if err != nil {
+				t.Log(err)
+			}
+			if err := obj.Write(goitDir); err != nil {
+				t.Log(err)
+			}
+
+			if err := obj.ReflectToWorkingTree(goitDir, tt.args.path); (err != nil) != tt.wantErr {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+
+			filePath := filepath.Join(tmpDir, tt.args.path)
+			got, err := os.ReadFile(filePath)
+			if err != nil {
+				t.Log(err)
+			}
+			if string(got) != tt.want {
+				t.Errorf("got = %s, want = %s", string(got), tt.want)
+			}
+		})
+	}
+}
