@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/JunNishimura/Goit/internal/sha"
 )
 
@@ -491,6 +492,93 @@ func TestDeleteEntry(t *testing.T) {
 
 			if err := index.DeleteEntry(goitDir, tt.args.entry); (err != nil) != tt.wantErr {
 				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGetEntriesFromTree(t *testing.T) {
+	type args struct {
+		rootName string
+		nodes    []*object.Node
+	}
+	type test struct {
+		name    string
+		args    args
+		want    []*Entry
+		wantErr bool
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+
+			return &test{
+				name: "success",
+				args: args{
+					rootName: "",
+					nodes: []*object.Node{
+						{
+							Hash:     hash,
+							Name:     "a.txt",
+							Children: []*object.Node{},
+						},
+						{
+							Hash: hash,
+							Name: "b",
+							Children: []*object.Node{
+								{
+									Hash:     hash,
+									Name:     "a.txt",
+									Children: []*object.Node{},
+								},
+								{
+									Hash:     hash,
+									Name:     "b.txt",
+									Children: []*object.Node{},
+								},
+							},
+						},
+						{
+							Hash:     hash,
+							Name:     "c.txt",
+							Children: []*object.Node{},
+						},
+					},
+				},
+				want: []*Entry{
+					{
+						Hash:       hash,
+						NameLength: uint16(len("a.txt")),
+						Path:       []byte("a.txt"),
+					},
+					{
+						Hash:       hash,
+						NameLength: uint16(len("b/a.txt")),
+						Path:       []byte("b/a.txt"),
+					},
+					{
+						Hash:       hash,
+						NameLength: uint16(len("b/b.txt")),
+						Path:       []byte("b/b.txt"),
+					},
+					{
+						Hash:       hash,
+						NameLength: uint16(len("c.txt")),
+						Path:       []byte("c.txt"),
+					},
+				},
+				wantErr: false,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetEntriesFromTree(tt.args.rootName, tt.args.nodes)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got = %v, want = %v", got, tt.want)
 			}
 		})
 	}
