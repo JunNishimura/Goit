@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/JunNishimura/Goit/internal/sha"
 )
 
@@ -41,13 +42,7 @@ type Index struct {
 }
 
 func NewIndex(rootGoitPath string) (*Index, error) {
-	index := &Index{
-		Header: Header{
-			Signature: [4]byte{'D', 'I', 'R', 'C'},
-			Version:   uint32(1),
-			EntryNum:  uint32(0),
-		},
-	}
+	index := newIndex()
 	indexPath := filepath.Join(rootGoitPath, "index")
 	if _, err := os.Stat(indexPath); !os.IsNotExist(err) {
 		if err := index.read(rootGoitPath); err != nil {
@@ -55,6 +50,16 @@ func NewIndex(rootGoitPath string) (*Index, error) {
 		}
 	}
 	return index, nil
+}
+
+func newIndex() *Index {
+	return &Index{
+		Header: Header{
+			Signature: [4]byte{'D', 'I', 'R', 'C'},
+			Version:   uint32(1),
+			EntryNum:  uint32(0),
+		},
+	}
 }
 
 // return the position of entry, entry, and flag to tell the entry is found or not
@@ -198,6 +203,82 @@ func (idx *Index) write(rootGoitPath string) error {
 	}
 	if _, err := f.Write(data); err != nil {
 		return fmt.Errorf("fail to write variable-length encoding: %w", err)
+	}
+
+	return nil
+}
+
+func GetEntriesFromTree(rootName string, nodes []*object.Node) ([]*Entry, error) {
+	var entries []*Entry
+
+	for _, node := range nodes {
+		if len(node.Children) == 0 {
+			var entryName string
+			if rootName == "" {
+				entryName = node.Name
+			} else {
+				entryName = fmt.Sprintf("%s/%s", rootName, node.Name)
+			}
+			newEntry := &Entry{
+				Hash:       node.Hash,
+				NameLength: uint16(len(entryName)),
+				Path:       []byte(entryName),
+			}
+			entries = append(entries, newEntry)
+		} else {
+			var newRootName string
+			if rootName == "" {
+				newRootName = node.Name
+			} else {
+				newRootName = fmt.Sprintf("%s/%s", rootName, node.Name)
+			}
+			childEntries, err := GetEntriesFromTree(newRootName, node.Children)
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, childEntries...)
+		}
+	}
+
+	return entries, nil
+}
+
+func (idx *Index) Reset(rootGoitPath string, hash sha.SHA1) error {
+	// get commit
+	commitObject, err := object.GetObject(rootGoitPath, hash)
+	if err != nil {
+		return fmt.Errorf("fail to get commit object: %w", err)
+	}
+
+	// get commit
+	commit, err := object.NewCommit(commitObject)
+	if err != nil {
+		return fmt.Errorf("fail to get commit: %w", err)
+	}
+
+	// get tree object
+	treeObject, err := object.GetObject(rootGoitPath, commit.Tree)
+	if err != nil {
+		return fmt.Errorf("fail to get tree object: %w", err)
+	}
+
+	// get tree
+	tree, err := object.NewTree(rootGoitPath, treeObject)
+	if err != nil {
+		return fmt.Errorf("fail to get tree: %w", err)
+	}
+
+	// update index from tree
+	entries, err := GetEntriesFromTree("", tree.Children)
+	if err != nil {
+		return fmt.Errorf("fail to get entries from tree: %w", err)
+	}
+	idx.Header.EntryNum = uint32(len(entries))
+	idx.Entries = entries
+
+	// write index
+	if err := idx.write(rootGoitPath); err != nil {
+		return fmt.Errorf("fail to write index: %w", err)
 	}
 
 	return nil

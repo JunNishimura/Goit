@@ -23,22 +23,7 @@ var (
 	resetRegexp = regexp.MustCompile(`HEAD@\{\d\}`)
 )
 
-func resetHead(arg, rootGoitPath string, head *store.Head, refs *store.Refs, conf *store.Config) error {
-	// get log record
-	reflog, err := store.NewReflog(rootGoitPath, head, refs)
-	if err != nil {
-		return fmt.Errorf("fail to initialize reflog: %w", err)
-	}
-	sp := strings.Split(arg, "HEAD@")[1]
-	headNum, err := strconv.Atoi(sp[1 : len(sp)-1])
-	if err != nil {
-		return fmt.Errorf("fail to convert number '%s': %w", arg, err)
-	}
-	logRecord, err := reflog.GetRecord(headNum)
-	if err != nil {
-		return fmt.Errorf("fail to get log record: %w", err)
-	}
-
+func resetHead(arg, rootGoitPath string, logRecord *store.LogRecord, head *store.Head, refs *store.Refs, conf *store.Config) error {
 	// reset Head
 	prevHeadHash := head.Commit.Hash
 	if err := head.Reset(rootGoitPath, refs, logRecord.Hash); err != nil {
@@ -52,6 +37,15 @@ func resetHead(arg, rootGoitPath string, head *store.Head, refs *store.Refs, con
 	}
 	if err := gLogger.WriteBranch(newRecord, head.Reference); err != nil {
 		return fmt.Errorf("log error: %w", err)
+	}
+
+	return nil
+}
+
+func resetIndex(rootGoitPath string, logRecord *store.LogRecord, index *store.Index) error {
+	// reset index
+	if err := index.Reset(rootGoitPath, logRecord.Hash); err != nil {
+		return fmt.Errorf("fail to reset index: %w", err)
 	}
 
 	return nil
@@ -84,9 +78,32 @@ var resetCmd = &cobra.Command{
 			return errors.New("only one argument is acceptible. argument format is 'HEAD@{number}'")
 		}
 
+		// get log record
+		reflog, err := store.NewReflog(client.RootGoitPath, client.Head, client.Refs)
+		if err != nil {
+			return fmt.Errorf("fail to initialize reflog: %w", err)
+		}
+		sp := strings.Split(args[0], "HEAD@")[1]
+		headNum, err := strconv.Atoi(sp[1 : len(sp)-1])
+		if err != nil {
+			return fmt.Errorf("fail to convert number '%s': %w", args[0], err)
+		}
+		logRecord, err := reflog.GetRecord(headNum)
+		if err != nil {
+			return fmt.Errorf("fail to get log record: %w", err)
+		}
+
+		// reset HEAD
 		if isSoft || isMixed || isHard {
-			if err := resetHead(args[0], client.RootGoitPath, client.Head, client.Refs, client.Conf); err != nil {
+			if err := resetHead(args[0], client.RootGoitPath, logRecord, client.Head, client.Refs, client.Conf); err != nil {
 				return fmt.Errorf("fail to reset HEAD: %w", err)
+			}
+		}
+
+		// reset index
+		if isMixed || isHard {
+			if err := resetIndex(client.RootGoitPath, logRecord, client.Idx); err != nil {
+				return fmt.Errorf("fail to reset index: %w", err)
 			}
 		}
 

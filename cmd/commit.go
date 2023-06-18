@@ -98,44 +98,9 @@ func commit() error {
 	return nil
 }
 
-func getEntriesFromTree(rootName string, nodes []*object.Node) ([]*store.Entry, error) {
-	var entries []*store.Entry
-
-	for _, node := range nodes {
-		if len(node.Children) == 0 {
-			var entryName string
-			if rootName == "" {
-				entryName = node.Name
-			} else {
-				entryName = fmt.Sprintf("%s/%s", rootName, node.Name)
-			}
-			newEntry := &store.Entry{
-				Hash:       node.Hash,
-				NameLength: uint16(len(entryName)),
-				Path:       []byte(entryName),
-			}
-			entries = append(entries, newEntry)
-		} else {
-			var newRootName string
-			if rootName == "" {
-				newRootName = node.Name
-			} else {
-				newRootName = fmt.Sprintf("%s/%s", rootName, node.Name)
-			}
-			childEntries, err := getEntriesFromTree(newRootName, node.Children)
-			if err != nil {
-				return nil, err
-			}
-			entries = append(entries, childEntries...)
-		}
-	}
-
-	return entries, nil
-}
-
 func isIndexDifferentFromTree(index *store.Index, tree *object.Tree) (bool, error) {
 	rootName := ""
-	gotEntries, err := getEntriesFromTree(rootName, tree.Children)
+	gotEntries, err := store.GetEntriesFromTree(rootName, tree.Children)
 	if err != nil {
 		return false, err
 	}
