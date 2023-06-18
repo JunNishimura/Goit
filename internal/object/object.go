@@ -155,3 +155,19 @@ func (o *Object) Write(rootGoitPath string) error {
 	}
 	return nil
 }
+
+func (o *Object) ReflectToWorkingTree(rootGoitPath, path string) error {
+	rootDir := filepath.Dir(rootGoitPath)
+	filePath := filepath.Join(rootDir, path)
+	f, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("fail to create file %s: %w", filePath, err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(o.Data); err != nil {
+		return fmt.Errorf("fail to write object to %s: %w", filePath, err)
+	}
+
+	return nil
+}

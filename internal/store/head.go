@@ -121,3 +121,29 @@ func (h *Head) Update(refs *Refs, rootGoitPath, newRef string) error {
 
 	return nil
 }
+
+// reset Head to the specified state by hash
+// This method does not change Head.Reference, just change Commit
+func (h *Head) Reset(rootGoitPath string, refs *Refs, hash sha.SHA1) error {
+	// write branch hash
+	if err := refs.UpdateBranchHash(rootGoitPath, h.Reference, hash); err != nil {
+		return fmt.Errorf("fail to update branch hash: %w", err)
+	}
+
+	// get commit object
+	commitObject, err := object.GetObject(rootGoitPath, hash)
+	if err != nil {
+		return fmt.Errorf("fail to get commit object: %w", err)
+	}
+
+	// get commit
+	commit, err := object.NewCommit(commitObject)
+	if err != nil {
+		return fmt.Errorf("fail to get commit: %w", err)
+	}
+
+	// update commit
+	h.Commit = commit
+
+	return nil
+}
