@@ -19,7 +19,7 @@ var (
 
 type WalkFunc func(commit *object.Commit) error
 
-func walkHistory(hash sha.SHA1, walkFunc WalkFunc) error {
+func walkHistory(rootGoitPath string, hash sha.SHA1, walkFunc WalkFunc) error {
 	queue := []sha.SHA1{hash}
 	visitMap := map[string]struct{}{}
 
@@ -37,7 +37,7 @@ func walkHistory(hash sha.SHA1, walkFunc WalkFunc) error {
 		}
 		visitMap[currentHash.String()] = struct{}{}
 
-		commitObject, err := object.GetObject(client.RootGoitPath, currentHash)
+		commitObject, err := object.GetObject(rootGoitPath, currentHash)
 		if err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ var logCmd = &cobra.Command{
 		}
 
 		// print log
-		if err := walkHistory(client.Head.Commit.Hash, func(commit *object.Commit) error {
+		if err := walkHistory(client.RootGoitPath, client.Head.Commit.Hash, func(commit *object.Commit) error {
 			fmt.Println(commit)
 			return nil
 		}); err != nil {
