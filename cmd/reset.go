@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/JunNishimura/Goit/internal/log"
+	"github.com/JunNishimura/Goit/internal/object"
 	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
@@ -46,6 +47,20 @@ func resetIndex(rootGoitPath string, logRecord *store.LogRecord, index *store.In
 	// reset index
 	if err := index.Reset(rootGoitPath, logRecord.Hash); err != nil {
 		return fmt.Errorf("fail to reset index: %w", err)
+	}
+
+	return nil
+}
+
+func resetWorkingTree(rootGoitPath string, index *store.Index) error {
+	for _, entry := range index.Entries {
+		obj, err := object.GetObject(rootGoitPath, entry.Hash)
+		if err != nil {
+			fmt.Errorf("fail to get object: %w", err)
+		}
+		if err := obj.ReflectToWorkingTree(rootGoitPath, string(entry.Path)); err != nil {
+			fmt.Errorf("fail to reflect %s to working directory: %w", string(entry.Path), err)
+		}
 	}
 
 	return nil
@@ -104,6 +119,13 @@ var resetCmd = &cobra.Command{
 		if isMixed || isHard {
 			if err := resetIndex(client.RootGoitPath, logRecord, client.Idx); err != nil {
 				return fmt.Errorf("fail to reset index: %w", err)
+			}
+		}
+
+		// reset working tree
+		if isHard {
+			if err := resetWorkingTree(client.RootGoitPath, client.Idx); err != nil {
+				return fmt.Errorf("fail to reset working tree: %w", err)
 			}
 		}
 
