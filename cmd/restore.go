@@ -12,12 +12,13 @@ import (
 
 	"github.com/JunNishimura/Goit/internal/file"
 	"github.com/JunNishimura/Goit/internal/object"
+	"github.com/JunNishimura/Goit/internal/store"
 	"github.com/spf13/cobra"
 )
 
-func restoreIndex(tree *object.Tree, path string) error {
+func restoreIndex(rootGoitPath, path string, index *store.Index, tree *object.Tree) error {
 	// get entry
-	_, entry, isEntryFound := client.Idx.GetEntry([]byte(path))
+	_, entry, isEntryFound := index.GetEntry([]byte(path))
 	if !isEntryFound {
 		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", path)
 	}
@@ -28,7 +29,7 @@ func restoreIndex(tree *object.Tree, path string) error {
 	// restore index
 	if isNodeFound { // if node is in the last commit
 		// change hash
-		isUpdated, err := client.Idx.Update(client.RootGoitPath, node.Hash, []byte(path))
+		isUpdated, err := client.Idx.Update(rootGoitPath, node.Hash, []byte(path))
 		if err != nil {
 			return fmt.Errorf("fail to update index: %w", err)
 		}
@@ -37,7 +38,7 @@ func restoreIndex(tree *object.Tree, path string) error {
 		}
 	} else { // if node is not in the last commit
 		// delete entry
-		if err := client.Idx.DeleteEntry(client.RootGoitPath, entry); err != nil {
+		if err := index.DeleteEntry(rootGoitPath, entry); err != nil {
 			return fmt.Errorf("fail to delete entry: %w", err)
 		}
 	}
@@ -45,13 +46,13 @@ func restoreIndex(tree *object.Tree, path string) error {
 	return nil
 }
 
-func restoreWorkingDirectory(path string) error {
-	_, entry, isEntryFound := client.Idx.GetEntry([]byte(path))
+func restoreWorkingDirectory(rootGoitPath, path string, index *store.Index) error {
+	_, entry, isEntryFound := index.GetEntry([]byte(path))
 	if !isEntryFound {
 		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", path)
 	}
 
-	obj, err := object.GetObject(client.RootGoitPath, entry.Hash)
+	obj, err := object.GetObject(rootGoitPath, entry.Hash)
 	if err != nil {
 		return fmt.Errorf("fail to get object '%s': %w", path, err)
 	}
@@ -154,7 +155,7 @@ var restoreCmd = &cobra.Command{
 						cleanedRelPath := strings.ReplaceAll(relPath, `\`, "/")
 
 						// restore index
-						if err := restoreIndex(tree, cleanedRelPath); err != nil {
+						if err := restoreIndex(client.RootGoitPath, cleanedRelPath, client.Idx, tree); err != nil {
 							return err
 						}
 					}
@@ -163,7 +164,7 @@ var restoreCmd = &cobra.Command{
 					cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
 
 					// restore index
-					if err := restoreIndex(tree, cleanedArg); err != nil {
+					if err := restoreIndex(client.RootGoitPath, cleanedArg, client.Idx, tree); err != nil {
 						return err
 					}
 				}
@@ -197,7 +198,7 @@ var restoreCmd = &cobra.Command{
 						cleanedRelPath := strings.ReplaceAll(relPath, `\`, "/")
 
 						// restore working directory
-						if err := restoreWorkingDirectory(cleanedRelPath); err != nil {
+						if err := restoreWorkingDirectory(client.RootGoitPath, cleanedRelPath, client.Idx); err != nil {
 							return err
 						}
 					}
@@ -206,7 +207,7 @@ var restoreCmd = &cobra.Command{
 					cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
 
 					// restore working directory
-					if err := restoreWorkingDirectory(cleanedArg); err != nil {
+					if err := restoreWorkingDirectory(client.RootGoitPath, cleanedArg, client.Idx); err != nil {
 						return err
 					}
 				}
