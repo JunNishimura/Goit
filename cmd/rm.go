@@ -4,6 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -31,7 +32,9 @@ var rmCmd = &cobra.Command{
 			// check if the arg is registered in the Index
 			cleanedArg := filepath.Clean(arg)
 			cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
-			client.Idx.GetEntry([]byte())
+			if _, _, isRegistered := client.Idx.GetEntry([]byte(cleanedArg)); !isRegistered {
+				return fmt.Errorf("fatal: pathspec '%s' did not match any files", arg)
+			}
 		}
 
 		return nil
