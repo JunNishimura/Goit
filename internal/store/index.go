@@ -112,10 +112,10 @@ func (idx *Index) Update(rootGoitPath string, hash sha.SHA1, path []byte) (bool,
 	return true, nil
 }
 
-func (idx *Index) DeleteEntry(rootGoitPath string, entry *Entry) error {
-	pos, _, isFound := idx.GetEntry(entry.Path)
+func (idx *Index) DeleteEntry(rootGoitPath string, path []byte) error {
+	pos, _, isFound := idx.GetEntry(path)
 	if !isFound {
-		return fmt.Errorf("'%s' is not registered in index, so fail to delete", entry.Path)
+		return fmt.Errorf("'%s' is not registered in index, so fail to delete", path)
 	}
 
 	// delete target entry

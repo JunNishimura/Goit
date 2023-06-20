@@ -385,7 +385,7 @@ func TestDeleteEntry(t *testing.T) {
 		path []byte
 	}
 	type args struct {
-		entry *Entry
+		path []byte
 	}
 	type test struct {
 		name    string
@@ -399,8 +399,6 @@ func TestDeleteEntry(t *testing.T) {
 			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
-			entry := NewEntry(hash, path)
-
 			return &test{
 				name: "success",
 				fields: fields{
@@ -408,7 +406,7 @@ func TestDeleteEntry(t *testing.T) {
 					path: path,
 				},
 				args: args{
-					entry: entry,
+					path: path,
 				},
 				wantErr: false,
 			}
@@ -418,8 +416,6 @@ func TestDeleteEntry(t *testing.T) {
 			hash = sha.SHA1(hash)
 			path := []byte("cmd/main.go")
 
-			dummyEntry := NewEntry([]byte{}, []byte("not_exist.txt"))
-
 			return &test{
 				name: "not found",
 				fields: fields{
@@ -427,7 +423,7 @@ func TestDeleteEntry(t *testing.T) {
 					path: path,
 				},
 				args: args{
-					entry: dummyEntry,
+					path: []byte("not_exist.txt"),
 				},
 				wantErr: true,
 			}
@@ -490,7 +486,7 @@ func TestDeleteEntry(t *testing.T) {
 				t.Log(err)
 			}
 
-			if err := index.DeleteEntry(goitDir, tt.args.entry); (err != nil) != tt.wantErr {
+			if err := index.DeleteEntry(goitDir, tt.args.path); (err != nil) != tt.wantErr {
 				t.Errorf("got = %v, want = %v", err, tt.wantErr)
 			}
 		})

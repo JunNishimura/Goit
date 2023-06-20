@@ -18,7 +18,7 @@ import (
 
 func restoreIndex(rootGoitPath, path string, index *store.Index, tree *object.Tree) error {
 	// get entry
-	_, entry, isEntryFound := index.GetEntry([]byte(path))
+	_, _, isEntryFound := index.GetEntry([]byte(path))
 	if !isEntryFound {
 		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", path)
 	}
@@ -38,7 +38,7 @@ func restoreIndex(rootGoitPath, path string, index *store.Index, tree *object.Tr
 		}
 	} else { // if node is not in the last commit
 		// delete entry
-		if err := index.DeleteEntry(rootGoitPath, entry); err != nil {
+		if err := index.DeleteEntry(rootGoitPath, []byte(path)); err != nil {
 			return fmt.Errorf("fail to delete entry: %w", err)
 		}
 	}
