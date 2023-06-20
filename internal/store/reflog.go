@@ -14,7 +14,7 @@ import (
 
 type LogRecord struct {
 	Hash       sha.SHA1
-	isHead     bool
+	Head       string
 	references []string
 	recType    log.RecordType
 	message    string
@@ -71,7 +71,7 @@ func (r *Reflog) load(rootGoitPath string, head *Head, refs *Refs) error {
 
 			// references
 			if head.Commit.Hash.Compare(hash) {
-				record.isHead = true
+				record.Head = color.GreenString(head.Reference)
 			}
 			branches := refs.getBranchesByHash(hash)
 			for _, branch := range branches {
@@ -115,10 +115,16 @@ func (r *Reflog) Show() {
 
 		var referenceString string
 		if len(record.references) > 0 {
-			referenceString = strings.Join(record.references, ", ")
+			var refsExceptHead []string
+			for _, ref := range record.references {
+				if ref != record.Head {
+					refsExceptHead = append(refsExceptHead, ref)
+				}
+			}
+			referenceString = strings.Join(refsExceptHead, ", ")
 		}
-		if record.isHead {
-			referenceString = color.BlueString("HEAD -> ") + referenceString
+		if record.Head != "" {
+			referenceString = color.BlueString("HEAD -> ") + fmt.Sprintf("%s, ", record.Head) + referenceString
 		}
 
 		if referenceString == "" {
