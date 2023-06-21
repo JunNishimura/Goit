@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -34,6 +35,24 @@ var rmCmd = &cobra.Command{
 			cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
 			if _, _, isRegistered := client.Idx.GetEntry([]byte(cleanedArg)); !isRegistered {
 				return fmt.Errorf("fatal: pathspec '%s' did not match any files", arg)
+			}
+		}
+
+		// remove file from working tree and index
+		for _, arg := range args {
+			cleanedArg := filepath.Clean(arg)
+			cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+
+			// remove from the working tree
+			if _, err := os.Stat(cleanedArg); !os.IsNotExist(err) {
+				if err := os.Remove(cleanedArg); err != nil {
+					return fmt.Errorf("fail to delete %s from the working tree: %w", cleanedArg, err)
+				}
+			}
+
+			// remove from the index
+			if err := client.Idx.DeleteEntry(client.RootGoitPath, []byte(cleanedArg)); err != nil {
+				return fmt.Errorf("fail to delete '%s' from the index: %w", cleanedArg, err)
 			}
 		}
 
