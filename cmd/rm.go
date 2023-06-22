@@ -9,12 +9,23 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/JunNishimura/Goit/internal/file"
 	"github.com/spf13/cobra"
 )
 
 var (
 	rFlag bool
 )
+
+func removeFromWorkingTree(path string) error {
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		if err := os.Remove(path); err != nil {
+			return fmt.Errorf("fail to delete %s from the working tree: %w", path, err)
+		}
+	}
+
+	return nil
+}
 
 // rmCmd represents the rm command
 var rmCmd = &cobra.Command{
@@ -33,26 +44,70 @@ var rmCmd = &cobra.Command{
 			// check if the arg is registered in the Index
 			cleanedArg := filepath.Clean(arg)
 			cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
-			if _, _, isRegistered := client.Idx.GetEntry([]byte(cleanedArg)); !isRegistered {
+
+			_, _, isRegistered := client.Idx.GetEntry([]byte(cleanedArg))
+			isRegisteredAsDir := client.Idx.IsRegisteredAsDirectory(cleanedArg)
+
+			if !(isRegistered || isRegisteredAsDir) {
 				return fmt.Errorf("fatal: pathspec '%s' did not match any files", arg)
 			}
 		}
 
 		// remove file from working tree and index
 		for _, arg := range args {
-			cleanedArg := filepath.Clean(arg)
-			cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
-
-			// remove from the working tree
-			if _, err := os.Stat(cleanedArg); !os.IsNotExist(err) {
-				if err := os.Remove(cleanedArg); err != nil {
-					return fmt.Errorf("fail to delete %s from the working tree: %w", cleanedArg, err)
+			// if the arg is directory
+			if f, err := os.Stat(arg); !os.IsNotExist(err) && f.IsDir() {
+				// get file paths under directory
+				absPath, err := filepath.Abs(arg)
+				if err != nil {
+					return fmt.Errorf("fail to convert %s to abs path: %w", arg, err)
 				}
-			}
+				filePaths, err := file.GetFilePathsUnderDirectory(absPath)
+				if err != nil {
+					return fmt.Errorf("fail to get file paths under directory: %w", err)
+				}
 
-			// remove from the index
-			if err := client.Idx.DeleteEntry(client.RootGoitPath, []byte(cleanedArg)); err != nil {
-				return fmt.Errorf("fail to delete '%s' from the index: %w", cleanedArg, err)
+				// filePaths are defined as abs paths
+				// so, translate them to rel paths
+				var relPaths []string
+				curPath, err := os.Getwd()
+				if err != nil {
+					return fmt.Errorf("fail to get current directory: %w", err)
+				}
+				for _, filePath := range filePaths {
+					relPath, err := filepath.Rel(curPath, filePath)
+					if err != nil {
+						return fmt.Errorf("fail to get relative path: %w", err)
+					}
+					cleanedRelPath := strings.ReplaceAll(relPath, `\`, "/")
+					relPaths = append(relPaths, cleanedRelPath)
+				}
+
+				// remove
+				for _, relPath := range relPaths {
+					// remove from the working tree
+					if err := removeFromWorkingTree(relPath); err != nil {
+						return err
+					}
+
+					// remove from the index
+					if err := client.Idx.DeleteEntry(client.RootGoitPath, []byte(relPath)); err != nil {
+						return fmt.Errorf("fail to delete '%s' from the index: %w", relPath, err)
+					}
+				}
+			} else {
+				cleanedArg := filepath.Clean(arg)
+				cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+
+				// remove from the working tree
+				if err := removeFromWorkingTree(cleanedArg); err != nil {
+					return err
+				}
+
+				// remove from the index
+				if err := client.Idx.DeleteEntry(client.RootGoitPath, []byte(cleanedArg)); err != nil {
+					return fmt.Errorf("fail to delete '%s' from the index: %w", cleanedArg, err)
+				}
 			}
 		}
 
