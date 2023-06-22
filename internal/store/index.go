@@ -95,7 +95,7 @@ func (idx *Index) IsRegisteredAsDirectory(dirName string) bool {
 		return false
 	}
 
-	dirRegexp := regexp.MustCompile(fmt.Sprintf(`.*%s\/.+`, dirName))
+	dirRegexp := regexp.MustCompile(fmt.Sprintf(`%s\/.+`, dirName))
 
 	left := 0
 	right := int(idx.EntryNum)
