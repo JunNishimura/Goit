@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 
 	"github.com/JunNishimura/Goit/internal/object"
@@ -87,6 +88,34 @@ func (idx *Index) GetEntry(path []byte) (int, *Entry, bool) {
 	}
 
 	return newEntryFlag, nil, false
+}
+
+func (idx *Index) IsRegisteredAsDirectory(dirName string) bool {
+	if idx.EntryNum == 0 {
+		return false
+	}
+
+	dirRegexp := regexp.MustCompile(fmt.Sprintf(`.*%s\/.+`, dirName))
+
+	left := 0
+	right := int(idx.EntryNum)
+	for {
+		middle := (left + right) / 2
+		entry := idx.Entries[middle]
+		if dirRegexp.MatchString(string(entry.Path)) {
+			return true
+		} else if string(entry.Path) < dirName {
+			left = middle + 1
+		} else {
+			right = middle
+		}
+
+		if right-left < 1 {
+			break
+		}
+	}
+
+	return false
 }
 
 func (idx *Index) Update(rootGoitPath string, hash sha.SHA1, path []byte) (bool, error) {
