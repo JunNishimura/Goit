@@ -96,11 +96,11 @@ var addCmd = &cobra.Command{
 
 			// If the file does not exist but is registered in the index, delete it from the index
 			if _, err := os.Stat(arg); os.IsNotExist(err) {
-				_, entry, isEntryFound := client.Idx.GetEntry([]byte(cleanedArg))
+				_, _, isEntryFound := client.Idx.GetEntry([]byte(cleanedArg))
 				if !isEntryFound {
 					return fmt.Errorf(`path "%s" did not match any files`, arg)
 				}
-				if err := client.Idx.DeleteEntry(client.RootGoitPath, entry); err != nil {
+				if err := client.Idx.DeleteEntry(client.RootGoitPath, []byte(cleanedArg)); err != nil {
 					return fmt.Errorf("fail to delete untracked file %s: %w", cleanedArg, err)
 				}
 				continue
