@@ -28,10 +28,11 @@ go install github.com/JunNishimura/Goit@latest
 - [x] `init` - initialize Goit, make .goit directory where you init
 - [x] `add` - make goit object and register to index
 - [x] `commit` - make commit object
+- [x] `rm` (**NEW FEATURE🎉**) - remove from the working tree and the index
 - [x] `branch` - manipulate branches
 - [x] `switch` - switch branches
 - [x] `restore` - restore files
-- [x] `reset` (**NEW FEATURE🎉**) - reset HEAD to the specified state
+- [x] `reset` - reset HEAD to the specified state
 - [x] `log` - show commit history
 - [x] `reflog` - show reference log
 - [x] `config` - set config. e.x.) name, email
@@ -45,7 +46,6 @@ go install github.com/JunNishimura/Goit@latest
 
 ### Future
 - [ ] tag
-- [ ] rm
 - [ ] checkout
 - [ ] merge
 - [ ] stash
