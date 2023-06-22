@@ -84,7 +84,7 @@ goit add test.txt
 ### 5. run `config` command to set config
 ```
 goit config --global user.name 'Goit'
-goit config --global uesr.email 'goit@example.com'
+goit config --global user.email 'goit@example.com'
 ```
 
 ### 6. run `commit` command to make commit object
