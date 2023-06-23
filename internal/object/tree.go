@@ -201,7 +201,11 @@ func GetNode(children []*Node, path string) (*Node, bool) {
 			if len(node.Children) == 0 {
 				return node, true
 			}
-			return GetNode(node.Children, pathSplit[1])
+			if len(pathSplit) > 1 {
+				return GetNode(node.Children, pathSplit[1])
+			} else {
+				return node, true
+			}
 		} else if node.Name < searchName {
 			left = middle + 1
 		} else {
