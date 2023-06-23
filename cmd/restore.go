@@ -69,17 +69,28 @@ func restoreWorkingDirectory(rootGoitPath, path string, index *store.Index) erro
 		return fmt.Errorf("fail to get object '%s': %w", path, err)
 	}
 
-	// restore file
+	// get abs path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return fmt.Errorf("fail to get abs path '%s': %w", path, err)
 	}
+
+	// make sure the parent path exists
+	parentPath := filepath.Dir(absPath)
+	if _, err := os.Stat(parentPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(parentPath, 0777); err != nil {
+			return fmt.Errorf("fail to make directory %s: %w", parentPath, err)
+		}
+	}
+
+	// restore file
 	f, err := os.Create(absPath)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrIOHandling, absPath)
 	}
 	defer f.Close()
 
+	// write contents to the file
 	if _, err := f.WriteString(string(obj.Data)); err != nil {
 		return fmt.Errorf("fail to write to file '%s': %w", absPath, err)
 	}
@@ -201,8 +212,31 @@ var restoreCmd = &cobra.Command{
 					return fmt.Errorf("fail to get arg abs path: %w", err)
 				}
 				f, err := os.Stat(argAbsPath)
-				if err != nil {
-					return fmt.Errorf("%w: %s", ErrIOHandling, argAbsPath)
+				if os.IsNotExist(err) {
+					// check if the arg is registered in the index
+					cleanedArg := filepath.Clean(arg)
+					cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+					_, _, isRegistered := client.Idx.GetEntry([]byte(cleanedArg))
+					isRegisteredAsDir := client.Idx.IsRegisteredAsDirectory(cleanedArg)
+
+					if !(isRegistered || isRegisteredAsDir) {
+						return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", arg)
+					}
+
+					if isRegisteredAsDir {
+						entries := client.Idx.GetEntriesByDirectory(cleanedArg)
+						for _, entry := range entries {
+							if err := restoreWorkingDirectory(client.RootGoitPath, string(entry.Path), client.Idx); err != nil {
+								return err
+							}
+						}
+					} else {
+						if err := restoreWorkingDirectory(client.RootGoitPath, cleanedArg, client.Idx); err != nil {
+							return err
+						}
+					}
+
+					continue
 				}
 
 				if f.IsDir() { // directory
