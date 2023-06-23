@@ -36,7 +36,7 @@ func TestNewGetPaths(t *testing.T) {
 			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
 
 			return &test{
-				name: "success: empty",
+				name: "success: multiple nodes",
 				fields: fields{
 					node: Node{
 						Hash: hash,
