@@ -394,8 +394,6 @@ func TestGetEntriesByDirectory(t *testing.T) {
 	}
 	tests := []*test{
 		func() *test {
-			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
-			hash = sha.SHA1(hash)
 			return &test{
 				name: "success: empty",
 				args: args{
