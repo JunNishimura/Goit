@@ -17,6 +17,34 @@ type Node struct {
 	Children []*Node
 }
 
+func (n *Node) GetPaths() []string {
+	if len(n.Children) == 0 {
+		return []string{n.Name}
+	}
+
+	var paths []string
+	for _, child := range n.Children {
+		ps := child.getPaths(n.Name)
+		paths = append(paths, ps...)
+	}
+
+	return paths
+}
+
+func (n *Node) getPaths(parentDir string) []string {
+	if len(n.Children) == 0 {
+		return []string{fmt.Sprintf("%s/%s", parentDir, n.Name)}
+	}
+
+	var paths []string
+	for _, child := range n.Children {
+		ps := child.getPaths(fmt.Sprintf("%s/%s", parentDir, n.Name))
+		paths = append(paths, ps...)
+	}
+
+	return paths
+}
+
 type Tree struct {
 	object   *Object
 	Children []*Node
