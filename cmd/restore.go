@@ -19,27 +19,39 @@ import (
 func restoreIndex(rootGoitPath, path string, index *store.Index, tree *object.Tree) error {
 	// get entry
 	_, _, isEntryFound := index.GetEntry([]byte(path))
-	if !isEntryFound {
-		return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", path)
-	}
 
 	// get node
 	node, isNodeFound := object.GetNode(tree.Children, path)
 
-	// restore index
-	if isNodeFound { // if node is in the last commit
-		// change hash
-		isUpdated, err := client.Idx.Update(rootGoitPath, node.Hash, []byte(path))
-		if err != nil {
-			return fmt.Errorf("fail to update index: %w", err)
+	// if the path is registered in the Index
+	if isEntryFound {
+		// restore index
+		if isNodeFound { // if the file is updated
+			// change hash
+			isUpdated, err := index.Update(rootGoitPath, node.Hash, []byte(path))
+			if err != nil {
+				return fmt.Errorf("fail to update index: %w", err)
+			}
+			if !isUpdated {
+				return errors.New("fail to restore index")
+			}
+		} else { // if the file is newly added
+			// delete entry
+			if err := index.DeleteEntry(rootGoitPath, []byte(path)); err != nil {
+				return fmt.Errorf("fail to delete entry: %w", err)
+			}
 		}
-		if !isUpdated {
-			return errors.New("fail to restore index")
-		}
-	} else { // if node is not in the last commit
-		// delete entry
-		if err := index.DeleteEntry(rootGoitPath, []byte(path)); err != nil {
-			return fmt.Errorf("fail to delete entry: %w", err)
+	} else { // if the path is not registered in the index,
+		if isNodeFound { // if the file is deleted
+			isUpdated, err := index.Update(rootGoitPath, node.Hash, []byte(path))
+			if err != nil {
+				return fmt.Errorf("fail to update index: %w", err)
+			}
+			if !isUpdated {
+				return errors.New("fail to restore index")
+			}
+		} else {
+			return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", path)
 		}
 	}
 
@@ -92,17 +104,6 @@ var restoreCmd = &cobra.Command{
 			return errors.New("fatal: you must specify path(s) to restore")
 		}
 
-		// check if arg exists
-		for _, arg := range args {
-			argPath, err := filepath.Abs(arg)
-			if err != nil {
-				return fmt.Errorf("fail to get absolute path of %s: %w", arg, err)
-			}
-			if _, err := os.Stat(argPath); os.IsNotExist(err) {
-				return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", arg)
-			}
-		}
-
 		// get staged option
 		isStaged, err := cmd.Flags().GetBool("staged")
 		if err != nil {
@@ -134,8 +135,31 @@ var restoreCmd = &cobra.Command{
 					return fmt.Errorf("fail to get arg abs path: %w", err)
 				}
 				f, err := os.Stat(argAbsPath)
-				if err != nil {
-					return fmt.Errorf("%w: %s", ErrIOHandling, argAbsPath)
+				if os.IsNotExist(err) { // even if the file is not found, the file might be the deleted file
+					// get node
+					cleanedArg := filepath.Clean(arg)
+					cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
+					node, isNodeFound := object.GetNode(tree.Children, cleanedArg)
+					if !isNodeFound {
+						return fmt.Errorf("error: pathspec '%s' did not match any file(s) known to goit", arg)
+					}
+
+					// check if the arg is dir or not
+					if len(node.Children) > 0 { // node is directory
+						paths := node.GetPaths()
+
+						for _, path := range paths {
+							if err := restoreIndex(client.RootGoitPath, path, client.Idx, tree); err != nil {
+								return err
+							}
+						}
+					} else { // node is a file
+						if err := restoreIndex(client.RootGoitPath, cleanedArg, client.Idx, tree); err != nil {
+							return err
+						}
+					}
+
+					continue
 				}
 
 				if f.IsDir() { // directory
