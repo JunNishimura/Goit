@@ -90,6 +90,19 @@ func (idx *Index) GetEntry(path []byte) (int, *Entry, bool) {
 	return newEntryFlag, nil, false
 }
 
+func (idx *Index) GetEntriesByDirectory(dirName string) []*Entry {
+	var entries []*Entry
+
+	dirRegexp := regexp.MustCompile(fmt.Sprintf(`%s\/.+`, dirName))
+	for _, entry := range idx.Entries {
+		if dirRegexp.Match(entry.Path) {
+			entries = append(entries, entry)
+		}
+	}
+
+	return entries
+}
+
 func (idx *Index) IsRegisteredAsDirectory(dirName string) bool {
 	if idx.EntryNum == 0 {
 		return false

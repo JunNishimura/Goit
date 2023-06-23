@@ -379,6 +379,103 @@ func TestGetEntry(t *testing.T) {
 	}
 }
 
+func TestGetEntriesByDirectory(t *testing.T) {
+	type args struct {
+		dirName string
+	}
+	type fields struct {
+		entries []*Entry
+	}
+	type test struct {
+		name   string
+		args   args
+		fields fields
+		want   []*Entry
+	}
+	tests := []*test{
+		func() *test {
+			return &test{
+				name: "success: empty",
+				args: args{
+					dirName: "sample",
+				},
+				fields: fields{
+					entries: []*Entry{},
+				},
+				want: nil,
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
+			return &test{
+				name: "success: directory",
+				args: args{
+					dirName: "dir",
+				},
+				fields: fields{
+					entries: []*Entry{
+						NewEntry(hash, []byte("dir/dir2/test.txt")),
+						NewEntry(hash, []byte("dir/test.txt")),
+						NewEntry(hash, []byte("test.txt")),
+					},
+				},
+				want: []*Entry{
+					NewEntry(hash, []byte("dir/dir2/test.txt")),
+					NewEntry(hash, []byte("dir/test.txt")),
+				},
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			hash = sha.SHA1(hash)
+			return &test{
+				name: "true: sub directory",
+				args: args{
+					dirName: "dir/dir2",
+				},
+				fields: fields{
+					entries: []*Entry{
+						NewEntry(hash, []byte("dir/dir2/test.txt")),
+						NewEntry(hash, []byte("dir/test.txt")),
+						NewEntry(hash, []byte("test.txt")),
+					},
+				},
+				want: []*Entry{
+					NewEntry(hash, []byte("dir/dir2/test.txt")),
+				},
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			// .goit initialization
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+
+			index, err := NewIndex(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+
+			for _, entry := range tt.fields.entries {
+				_, err = index.Update(goitDir, entry.Hash, entry.Path)
+				if err != nil {
+					t.Log(err)
+				}
+			}
+
+			got := index.GetEntriesByDirectory(tt.args.dirName)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got = %v, want = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestIsRegisteredAsDirectory(t *testing.T) {
 	type args struct {
 		dirName string

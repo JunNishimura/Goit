@@ -7,6 +7,89 @@ import (
 	"testing"
 )
 
+func TestNewGetPaths(t *testing.T) {
+	type fields struct {
+		node Node
+	}
+	type test struct {
+		name   string
+		fields fields
+		want   []string
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+
+			return &test{
+				name: "success: empty",
+				fields: fields{
+					node: Node{
+						Hash:     hash,
+						Name:     "test.txt",
+						Children: nil,
+					},
+				},
+				want: []string{"test.txt"},
+			}
+		}(),
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+
+			return &test{
+				name: "success: multiple nodes",
+				fields: fields{
+					node: Node{
+						Hash: hash,
+						Name: "dir",
+						Children: []*Node{
+							{
+								Hash: hash,
+								Name: "dir2",
+								Children: []*Node{
+									{
+										Hash:     hash,
+										Name:     "test.txt",
+										Children: nil,
+									},
+									{
+										Hash:     hash,
+										Name:     "test2.txt",
+										Children: nil,
+									},
+								},
+							},
+							{
+								Hash:     hash,
+								Name:     "test.txt",
+								Children: nil,
+							},
+							{
+								Hash:     hash,
+								Name:     "test2.txt",
+								Children: nil,
+							},
+						},
+					},
+				},
+				want: []string{
+					"dir/dir2/test.txt",
+					"dir/dir2/test2.txt",
+					"dir/test.txt",
+					"dir/test2.txt",
+				},
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.fields.node.GetPaths()
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got = %v, want = %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestNewTree(t *testing.T) {
 	type args struct {
 		object *Object
