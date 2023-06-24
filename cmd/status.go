@@ -1,40 +1,101 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/JunNishimura/Goit/internal/file"
+	"github.com/JunNishimura/Goit/internal/object"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 // statusCmd represents the status command
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "show the working tree status",
+	Long:  "show the working tree status",
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if client.RootGoitPath == "" {
+			return ErrGoitNotInitialized
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var statusMessage string
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("status called")
+		// set branch info
+		statusMessage += fmt.Sprintf("On branch #%s\n", client.Head.Reference)
+
+		// walk through working directory
+		var newFiles []string
+		var modifiedFiles []string
+		filePaths, err := file.GetFilePathsUnderDirectoryWithIgnore(".", client.Ignore)
+		if err != nil {
+			return fmt.Errorf("fail to get files: %w", err)
+		}
+		for _, filePath := range filePaths {
+			_, entry, isRegistered := client.Idx.GetEntry([]byte(filePath))
+
+			if !isRegistered { // new file
+				newFiles = append(newFiles, filePath)
+			} else {
+				// check if the file is modified
+				data, err := os.ReadFile(filePath)
+				if err != nil {
+					return fmt.Errorf("fail to read %s: %w", filePath, err)
+				}
+				obj, err := object.NewObject(object.BlobObject, data)
+				if err != nil {
+					return fmt.Errorf("fail to get new object: %w", err)
+				}
+				if !entry.Hash.Compare(obj.Hash) {
+					modifiedFiles = append(modifiedFiles, filePath)
+				}
+			}
+		}
+
+		// walk through index
+		var deletedFiles []string
+		for _, entry := range client.Idx.Entries {
+			filePath := string(entry.Path)
+			if _, err := os.Stat(filePath); os.IsNotExist(err) {
+				deletedFiles = append(deletedFiles, filePath)
+			}
+		}
+
+		// construct message
+		if len(modifiedFiles) > 0 {
+			statusMessage += "\nChanges not staged for commit:\n  (use 'goit add/rm <file>...' to update what will be committed)\n  (use 'goit restore <file>...' to discard changes in working directory)\n"
+			for _, file := range modifiedFiles {
+				statusMessage += color.RedString("\t%-13s%s\n", "modified:", file)
+			}
+		}
+		if len(deletedFiles) > 0 {
+			if len(modifiedFiles) == 0 {
+				statusMessage += "\nChanges not staged for commit:\n  (use 'goit add/rm <file>...' to update what will be committed)\n  (use 'goit restore <file>...' to discard changes in working directory)\n"
+			}
+			for _, file := range deletedFiles {
+				statusMessage += color.RedString("\t%-13s%s\n", "deleted:", file)
+			}
+		}
+		if len(newFiles) > 0 {
+			statusMessage += "\nUntracked files:\n  (use 'goit add <file>...' to include in what will be committed)\n"
+			for _, file := range newFiles {
+				statusMessage += color.RedString("\t%s\n", file)
+			}
+		}
+
+		// show message
+		fmt.Println(statusMessage)
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// statusCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// statusCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
