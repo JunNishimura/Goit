@@ -28,7 +28,7 @@ var statusCmd = &cobra.Command{
 		var statusMessage string
 
 		// set branch info
-		statusMessage += fmt.Sprintf("On branch #%s\n", client.Head.Reference)
+		statusMessage += fmt.Sprintf("On branch %s\n", client.Head.Reference)
 
 		// walk through working directory
 		var newFiles []string
