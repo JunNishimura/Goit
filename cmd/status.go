@@ -67,7 +67,27 @@ var statusCmd = &cobra.Command{
 			}
 		}
 
+		// compare index with HEAD commit
+		treeObj, err := object.GetObject(client.RootGoitPath, client.Head.Commit.Tree)
+		if err != nil {
+			return fmt.Errorf("fail to get tree object: %w", err)
+		}
+		tree, err := object.NewTree(client.RootGoitPath, treeObj)
+		if err != nil {
+			return fmt.Errorf("fail to get tree: %w", err)
+		}
+		diffEntries, err := client.Idx.DiffWithTree(tree)
+		if err != nil {
+			return fmt.Errorf("fail to get diff entries: %w", err)
+		}
+
 		// construct message
+		if len(diffEntries) > 0 {
+			statusMessage += "\nChanges to be committed:\n  (use 'goit restore --staged <file>...' to unstage)\n"
+			for _, diffEntry := range diffEntries {
+				statusMessage += color.GreenString("\t%-13s%s\n", diffEntry.Dt, diffEntry.Entry.Path)
+			}
+		}
 		if len(modifiedFiles) > 0 {
 			statusMessage += "\nChanges not staged for commit:\n  (use 'goit add/rm <file>...' to update what will be committed)\n  (use 'goit restore <file>...' to discard changes in working directory)\n"
 			for _, file := range modifiedFiles {
