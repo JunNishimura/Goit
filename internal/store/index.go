@@ -362,7 +362,7 @@ func (idx *Index) DiffWithTree(tree *object.Tree) ([]*DiffEntry, error) {
 		if !isRegistered {
 			diffEntries = append(diffEntries, &DiffEntry{
 				Dt:    diffDelete,
-				Entry: entry,
+				Entry: gotEntry,
 			})
 		} else if !entry.Hash.Compare(gotEntry.Hash) {
 			diffEntries = append(diffEntries, &DiffEntry{

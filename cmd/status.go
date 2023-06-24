@@ -33,7 +33,7 @@ var statusCmd = &cobra.Command{
 		// walk through working directory
 		var newFiles []string
 		var modifiedFiles []string
-		filePaths, err := file.GetFilePathsUnderDirectoryWithIgnore(".", client.Ignore)
+		filePaths, err := file.GetFilePathsUnderDirectoryWithIgnore(".", client.Idx, client.Ignore)
 		if err != nil {
 			return fmt.Errorf("fail to get files: %w", err)
 		}

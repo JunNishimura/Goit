@@ -52,7 +52,7 @@ func GetFilePathsUnderDirectory(path string) ([]string, error) {
 	return filePaths, nil
 }
 
-func GetFilePathsUnderDirectoryWithIgnore(path string, ignore *store.Ignore) ([]string, error) {
+func GetFilePathsUnderDirectoryWithIgnore(path string, index *store.Index, ignore *store.Ignore) ([]string, error) {
 	files, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
@@ -66,12 +66,12 @@ func GetFilePathsUnderDirectoryWithIgnore(path string, ignore *store.Ignore) ([]
 		} else {
 			filePath = fmt.Sprintf("%s/%s", path, file.Name())
 		}
-		if ignore.IsIncluded(filePath) {
+		if ignore.IsIncluded(filePath, index) {
 			continue
 		}
 
 		if file.IsDir() {
-			gotFilePaths, err := GetFilePathsUnderDirectoryWithIgnore(filePath, ignore)
+			gotFilePaths, err := GetFilePathsUnderDirectoryWithIgnore(filePath, index, ignore)
 			if err != nil {
 				return nil, err
 			}

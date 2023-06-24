@@ -59,11 +59,17 @@ func (i *Ignore) load(rootGoitPath string) error {
 }
 
 // return true if the parameter is included in ignore list
-func (i *Ignore) IsIncluded(path string) bool {
+func (i *Ignore) IsIncluded(path string, index *Index) bool {
 	target := path
-	info, _ := os.Stat(path)
-	if info.IsDir() && !directoryRegexp.MatchString(path) {
-		target = fmt.Sprintf("%s/", path)
+	info, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		if len(index.GetEntriesByDirectory(path)) > 0 {
+			target = fmt.Sprintf("%s/", path)
+		}
+	} else {
+		if info.IsDir() && !directoryRegexp.MatchString(path) {
+			target = fmt.Sprintf("%s/", path)
+		}
 	}
 	for _, exFile := range i.paths {
 		exRegexp := regexp.MustCompile(exFile)
