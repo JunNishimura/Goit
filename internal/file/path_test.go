@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/JunNishimura/Goit/internal/store"
 )
 
 func TestFindGoitRoot(t *testing.T) {
@@ -151,6 +153,123 @@ func TestGetFilePathsUnderDirectory(t *testing.T) {
 			sort.Slice(filePaths, func(i, j int) bool { return filePaths[i] < filePaths[j] })
 			if !reflect.DeepEqual(got, filePaths) {
 				t.Errorf("got = %v, want = %v", got, filePaths)
+			}
+		})
+	}
+}
+
+func TestGetFilePathsUnderDirectoryWithIgnore(t *testing.T) {
+	type args struct {
+		path string
+	}
+	type fields struct {
+		goitignore string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		fields  fields
+		want    []string
+		wantErr bool
+	}{
+		{
+			name: "success: no ignore",
+			args: args{
+				path: ".",
+			},
+			fields: fields{
+				goitignore: "",
+			},
+			want:    []string{".goitignore", "dir/dir2/test1.txt", "dir/dir2/test2.txt", "dir/test1.txt", "dir/test2.txt", "test1.txt", "test2.txt"},
+			wantErr: false,
+		},
+		{
+			name: "success: ignore",
+			args: args{
+				path: ".",
+			},
+			fields: fields{
+				goitignore: "dir/dir2/\n",
+			},
+			want:    []string{".goitignore", "dir/test1.txt", "dir/test2.txt", "test1.txt", "test2.txt"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			goitDir := filepath.Join(tmpDir, ".goit")
+			if err := os.Mkdir(goitDir, os.ModePerm); err != nil {
+				t.Logf("%v: %s", err, goitDir)
+			}
+			f, err := os.Create(filepath.Join(tmpDir, ".goitignore"))
+			if err != nil {
+				t.Log(err)
+			}
+			if _, err := f.WriteString(tt.fields.goitignore); err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			f, err = os.Create(filepath.Join(tmpDir, "test1.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			f, err = os.Create(filepath.Join(tmpDir, "test2.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			if err := os.MkdirAll(filepath.Join(tmpDir, "dir/dir2"), os.ModePerm); err != nil {
+				t.Log(err)
+			}
+			f, err = os.Create(filepath.Join(tmpDir, "dir/test1.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			f, err = os.Create(filepath.Join(tmpDir, "dir/test2.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			f, err = os.Create(filepath.Join(tmpDir, "dir/dir2/test1.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+			f, err = os.Create(filepath.Join(tmpDir, "dir/dir2/test2.txt"))
+			if err != nil {
+				t.Log(err)
+			}
+			f.Close()
+
+			index, err := store.NewIndex(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+			ignore, err := store.NewIgnore(goitDir)
+			if err != nil {
+				t.Log(err)
+			}
+
+			var wantPaths []string
+			for _, filePath := range tt.want {
+				wantPaths = append(wantPaths, filepath.Join(tmpDir, filePath))
+			}
+
+			got, err := GetFilePathsUnderDirectoryWithIgnore(filepath.Join(tmpDir, tt.args.path), index, ignore)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+
+			var gotPaths []string
+			for _, filePath := range got {
+				gotPaths = append(gotPaths, filepath.Clean(filePath))
+			}
+
+			if !reflect.DeepEqual(gotPaths, wantPaths) {
+				t.Errorf("got = %v, want = %v", gotPaths, wantPaths)
 			}
 		})
 	}

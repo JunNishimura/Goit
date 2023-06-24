@@ -14,6 +14,9 @@ import (
 )
 
 const (
+	diffDelete diffType = iota
+	diffNew
+	diffModified
 	newEntryFlag = -1
 )
 
@@ -29,6 +32,26 @@ func NewEntry(hash sha.SHA1, path []byte) *Entry {
 		NameLength: uint16(len(path)),
 		Path:       path,
 	}
+}
+
+type diffType int
+
+func (t diffType) String() string {
+	switch t {
+	case diffDelete:
+		return "deleted:"
+	case diffNew:
+		return "new file:"
+	case diffModified:
+		return "modified:"
+	default:
+		return ""
+	}
+}
+
+type DiffEntry struct {
+	Dt    diffType
+	Entry *Entry
 }
 
 type Header struct {
@@ -250,7 +273,7 @@ func (idx *Index) write(rootGoitPath string) error {
 	return nil
 }
 
-func GetEntriesFromTree(rootName string, nodes []*object.Node) ([]*Entry, error) {
+func getEntriesFromTree(rootName string, nodes []*object.Node) ([]*Entry, error) {
 	var entries []*Entry
 
 	for _, node := range nodes {
@@ -274,7 +297,7 @@ func GetEntriesFromTree(rootName string, nodes []*object.Node) ([]*Entry, error)
 			} else {
 				newRootName = fmt.Sprintf("%s/%s", rootName, node.Name)
 			}
-			childEntries, err := GetEntriesFromTree(newRootName, node.Children)
+			childEntries, err := getEntriesFromTree(newRootName, node.Children)
 			if err != nil {
 				return nil, err
 			}
@@ -311,7 +334,7 @@ func (idx *Index) Reset(rootGoitPath string, hash sha.SHA1) error {
 	}
 
 	// update index from tree
-	entries, err := GetEntriesFromTree("", tree.Children)
+	entries, err := getEntriesFromTree("", tree.Children)
 	if err != nil {
 		return fmt.Errorf("fail to get entries from tree: %w", err)
 	}
@@ -324,4 +347,41 @@ func (idx *Index) Reset(rootGoitPath string, hash sha.SHA1) error {
 	}
 
 	return nil
+}
+
+func (idx *Index) DiffWithTree(tree *object.Tree) ([]*DiffEntry, error) {
+	rootName := ""
+	gotEntries, err := getEntriesFromTree(rootName, tree.Children)
+	if err != nil {
+		return nil, err
+	}
+
+	var diffEntries []*DiffEntry
+	for _, gotEntry := range gotEntries {
+		_, entry, isRegistered := idx.GetEntry(gotEntry.Path)
+		if !isRegistered {
+			diffEntries = append(diffEntries, &DiffEntry{
+				Dt:    diffDelete,
+				Entry: gotEntry,
+			})
+		} else if !entry.Hash.Compare(gotEntry.Hash) {
+			diffEntries = append(diffEntries, &DiffEntry{
+				Dt:    diffModified,
+				Entry: entry,
+			})
+		}
+	}
+
+	// check if there are new files
+	for _, entry := range idx.Entries {
+		_, isFound := object.GetNode(tree.Children, string(entry.Path))
+		if !isFound {
+			diffEntries = append(diffEntries, &DiffEntry{
+				Dt:    diffNew,
+				Entry: entry,
+			})
+		}
+	}
+
+	return diffEntries, nil
 }

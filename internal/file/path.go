@@ -2,8 +2,11 @@ package file
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/JunNishimura/Goit/internal/store"
 )
 
 var (
@@ -43,6 +46,38 @@ func GetFilePathsUnderDirectory(path string) ([]string, error) {
 			filePaths = append(filePaths, getFilePaths...)
 		} else {
 			filePaths = append(filePaths, filepath.Join(path, file.Name()))
+		}
+	}
+
+	return filePaths, nil
+}
+
+func GetFilePathsUnderDirectoryWithIgnore(path string, index *store.Index, ignore *store.Ignore) ([]string, error) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var filePaths []string
+	for _, file := range files {
+		var filePath string
+		if path == "" || path == "." {
+			filePath = file.Name()
+		} else {
+			filePath = fmt.Sprintf("%s/%s", path, file.Name())
+		}
+		if ignore.IsIncluded(filePath, index) {
+			continue
+		}
+
+		if file.IsDir() {
+			gotFilePaths, err := GetFilePathsUnderDirectoryWithIgnore(filePath, index, ignore)
+			if err != nil {
+				return nil, err
+			}
+			filePaths = append(filePaths, gotFilePaths...)
+		} else {
+			filePaths = append(filePaths, filePath)
 		}
 	}
 

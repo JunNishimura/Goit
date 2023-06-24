@@ -90,7 +90,7 @@ var addCmd = &cobra.Command{
 			// check if the arg is the target of excluding path
 			cleanedArg := filepath.Clean(arg)
 			cleanedArg = strings.ReplaceAll(cleanedArg, `\`, "/")
-			if client.Ignore.IsIncluded(cleanedArg) {
+			if client.Ignore.IsIncluded(cleanedArg, client.Idx) {
 				continue
 			}
 
