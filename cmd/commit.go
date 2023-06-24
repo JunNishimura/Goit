@@ -98,27 +98,6 @@ func commit(rootGoitPath string, index *store.Index, head *store.Head, conf *sto
 	return nil
 }
 
-func isIndexDifferentFromTree(index *store.Index, tree *object.Tree) (bool, error) {
-	rootName := ""
-	gotEntries, err := store.GetEntriesFromTree(rootName, tree.Children)
-	if err != nil {
-		return false, err
-	}
-
-	if len(gotEntries) != int(index.EntryNum) {
-		return true, nil
-	}
-	for i := 0; i < len(gotEntries); i++ {
-		if string(gotEntries[i].Path) != string(index.Entries[i].Path) {
-			return true, nil
-		}
-		if !gotEntries[i].Hash.Compare(index.Entries[i].Hash) {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 func isCommitNecessary(rootGoitPath string, index *store.Index, commitObj *object.Commit) (bool, error) {
 	// get tree object
 	treeObject, err := object.GetObject(rootGoitPath, commitObj.Tree)
@@ -133,12 +112,12 @@ func isCommitNecessary(rootGoitPath string, index *store.Index, commitObj *objec
 	}
 
 	// compare index with tree
-	isDiff, err := isIndexDifferentFromTree(index, tree)
+	diffEntries, err := index.DiffWithTree(tree)
 	if err != nil {
 		return false, fmt.Errorf("fail to compare index with tree: %w", err)
 	}
 
-	return isDiff, nil
+	return len(diffEntries) != 0, nil
 }
 
 // commitCmd represents the commit command
