@@ -774,3 +774,129 @@ func TestGetEntriesFromTree(t *testing.T) {
 		})
 	}
 }
+
+func TestDiffWithTree(t *testing.T) {
+	type args struct {
+		tree *object.Tree
+	}
+	type fields struct {
+		entries []*Entry
+	}
+	type test struct {
+		name    string
+		args    args
+		fields  fields
+		want    []*DiffEntry
+		wantErr bool
+	}
+	tests := []*test{
+		func() *test {
+			hash, _ := hex.DecodeString("87f3c49bccf2597484ece08746d3ee5defaba335")
+			newHash, _ := hex.DecodeString("9993c49bccf2597484ece08746d3ee5defaba335")
+
+			return &test{
+				name: "success",
+				args: args{
+					tree: &object.Tree{
+						Children: []*object.Node{
+							{
+								Hash:     hash,
+								Name:     "a.txt",
+								Children: []*object.Node{},
+							},
+							{
+								Hash: hash,
+								Name: "b",
+								Children: []*object.Node{
+									{
+										Hash:     hash,
+										Name:     "a.txt",
+										Children: []*object.Node{},
+									},
+									{
+										Hash:     hash,
+										Name:     "b.txt",
+										Children: []*object.Node{},
+									},
+								},
+							},
+						},
+					},
+				},
+				fields: fields{
+					entries: []*Entry{
+						{
+							Hash:       hash,
+							NameLength: uint16(len("a.txt")),
+							Path:       []byte("a.txt"),
+						},
+						{
+							Hash:       newHash,
+							NameLength: uint16(len("b/b.txt")),
+							Path:       []byte("b/b.txt"),
+						},
+						{
+							Hash:       hash,
+							NameLength: uint16(len("c.txt")),
+							Path:       []byte("c.txt"),
+						},
+					},
+				},
+				want: []*DiffEntry{
+					{
+						Dt: diffDelete,
+						Entry: &Entry{
+							Hash:       hash,
+							NameLength: uint16(len("b/a.txt")),
+							Path:       []byte("b/a.txt"),
+						},
+					},
+					{
+						Dt: diffModified,
+						Entry: &Entry{
+							Hash:       newHash,
+							NameLength: uint16(len("b/b.txt")),
+							Path:       []byte("b/b.txt"),
+						},
+					},
+					{
+						Dt: diffNew,
+						Entry: &Entry{
+							Hash:       hash,
+							NameLength: uint16(len("c.txt")),
+							Path:       []byte("c.txt"),
+						},
+					},
+				},
+				wantErr: false,
+			}
+		}(),
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			index := &Index{
+				Entries: tt.fields.entries,
+			}
+			index.EntryNum = uint32(len(index.Entries))
+
+			got, err := index.DiffWithTree(tt.args.tree)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("got = %v, want = %v", err, tt.wantErr)
+			}
+			if len(got) != len(tt.want) {
+				t.Errorf("got len = %d, want len = %d", len(got), len(tt.want))
+			}
+			for i := range got {
+				if got[i].Dt != tt.want[i].Dt {
+					t.Errorf("got dt = %v, want dt = %v", got[i].Dt, tt.want[i].Dt)
+				}
+				if !got[i].Entry.Hash.Compare(tt.want[i].Entry.Hash) {
+					t.Errorf("got entry hash = %v, want entry hash = %v", got[i].Entry.Hash, tt.want[i].Entry.Hash)
+				}
+				if string(got[i].Entry.Path) != string(tt.want[i].Entry.Path) {
+					t.Errorf("got entry path = %v, want entry path = %v", string(got[i].Entry.Path), string(tt.want[i].Entry.Path))
+				}
+			}
+		})
+	}
+}
