@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/JunNishimura/Goit/internal/diff"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,12 @@ var diffCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("diff called")
+		d := diff.NewDiff([]rune(args[0]), []rune(args[1]))
+
+		d.Compose()
+
+		fmt.Println(d.EditDistance)
+
 		return nil
 	},
 }

@@ -6,7 +6,7 @@ type Diff struct {
 	lenTextLong  int
 	lenTextShort int
 	isReversed   bool
-	editDistance int
+	EditDistance int
 }
 
 func NewDiff(text1, text2 []rune) *Diff {
@@ -42,9 +42,10 @@ func (d *Diff) Compose() {
 		for k := delta + p; k > delta; k-- {
 			fp[k+offset] = d.snake(k, max(fp[k+offset-1]+1, fp[k+offset+1]))
 		}
-		fp[delta+offset] = d.snake(delta+offset, max(fp[delta+offset-1]+1, fp[delta+offset+1]))
+		fp[delta+offset] = d.snake(delta, max(fp[delta+offset-1]+1, fp[delta+offset+1]))
 		if fp[delta+offset] == d.lenTextLong {
-			d.editDistance = p
+			d.EditDistance = p
+			break
 		}
 	}
 }
